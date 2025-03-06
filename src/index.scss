@@ -1,0 +1,4 @@
+@forward './uswds-theme.scss';
+@forward '~uswds/packages/uswds';
+
+@use '~uswds/packages/uswds-core' as *;
