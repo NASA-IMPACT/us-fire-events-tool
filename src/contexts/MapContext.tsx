@@ -1,12 +1,10 @@
 import { createContext, useContext, useState, useEffect, ReactNode, useRef } from 'react';
 import { ViewState } from 'react-map-gl/mapbox';
-import { GeoJsonLayer } from '@deck.gl/layers';
 import { ClipExtension } from '@deck.gl/extensions';
 import * as WeatherLayers from 'weatherlayers-gl';
 import { getClosestWeatherData, WeatherDataset } from '../api/weather';
 import { useAppState } from './AppStateContext';
 import { useEvents } from './EventsContext';
-import { EventFeature } from '../api/events';
 
 const DEFAULT_VIEW_STATE: ViewState = {
   longitude: -95.7129,
@@ -39,10 +37,9 @@ export const MapProvider = ({ children }: { children: ReactNode }) => {
     show3DMap,
     showSatelliteImagery,
     timeRange,
-    selectedEventId
   } = useAppState();
 
-  const { events, selectedEvent } = useEvents();
+  const { events } = useEvents();
 
   const [viewState, setViewState] = useState<ViewState>(DEFAULT_VIEW_STATE);
   const [layers, setLayers] = useState<any[]>([]);
@@ -134,58 +131,12 @@ export const MapProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     const newLayers = [];
 
-    if (events.length > 0) {
-      newLayers.push(
-        new GeoJsonLayer({
-          id: 'fire-perimeters',
-          data: events,
-          filled: true,
-          stroked: true,
-          getFillColor: (d: EventFeature) => {
-            const isActive = d.properties.isactive === 1;
-            const isSelected = selectedEventId && d.properties.fireid === selectedEventId;
-
-            if (isSelected) {
-              return [255, 255, 255, 180];
-            }
-            return isActive
-              ? [255, 140, 0, 180]
-              : [139, 0, 0, 150];
-          },
-          getLineColor: (d: EventFeature) => {
-            const isActive = d.properties.isactive === 1;
-            const isSelected = selectedEventId && d.properties.fireid === selectedEventId;
-
-            if (isSelected) {
-              return [255, 255, 255, 255];
-            }
-            return isActive
-              ? [255, 69, 0, 255]
-              : [178, 34, 34, 255];
-          },
-          lineWidthMinPixels: 1,
-          lineWidthScale: 1,
-          getLineWidth: (d: EventFeature) => {
-            return selectedEventId && d.properties.fireid === selectedEventId ? 3 : 1;
-          },
-          pickable: true,
-          autoHighlight: true,
-          highlightColor: [255, 255, 255, 100],
-          updateTriggers: {
-            getFillColor: [events, selectedEventId],
-            getLineColor: [events, selectedEventId],
-            getLineWidth: [selectedEventId]
-          }
-        })
-      );
-    }
-
     if (windLayer && showWindLayer) {
       newLayers.push(windLayer);
     }
 
     setLayers(newLayers);
-  }, [events, windLayer, showWindLayer, selectedEventId]);
+  }, [events, windLayer, showWindLayer]);
 
   useEffect(() => {
     if (show3DMap) {
@@ -202,34 +153,6 @@ export const MapProvider = ({ children }: { children: ReactNode }) => {
       }));
     }
   }, [show3DMap]);
-
-  useEffect(() => {
-    if (selectedEvent) {
-      const coordinates = selectedEvent.geometry.coordinates[0];
-
-      let minLng = Infinity;
-      let minLat = Infinity;
-      let maxLng = -Infinity;
-      let maxLat = -Infinity;
-
-      coordinates.forEach((coord: number[]) => {
-        const [lng, lat] = coord;
-        minLng = Math.min(minLng, lng);
-        minLat = Math.min(minLat, lat);
-        maxLng = Math.max(maxLng, lng);
-        maxLat = Math.max(maxLat, lat);
-      });
-
-      const padding = 0.5;
-
-      flyToBounds([
-        minLng - padding,
-        minLat - padding,
-        maxLng + padding,
-        maxLat + padding
-      ]);
-    }
-  }, [selectedEvent]);
 
   const flyToEvent = (eventId: string) => {
     const event = events.find(e => e.properties.fireid === eventId);

@@ -1,152 +1,215 @@
-import { useCallback } from 'react';
+import React, { useMemo } from 'react';
 import { format } from 'date-fns';
-import { EventFeature } from '../../types/events';
-import { ArrowLeft, HelpCircle } from 'lucide-react';
+import { useAppState } from '../../contexts/AppStateContext';
+import { useEvents, getFeatureProperties, getFireId } from '../../contexts/EventsContext';
 
-interface EventDetailViewProps {
-  event: EventFeature | null;
+interface EventDetailsProps {
   onBack: () => void;
 }
 
-const EventDetailView: React.FC<EventDetailViewProps> = ({ event, onBack }) => {
-  if (!event) return null;
+const EventDetails: React.FC<EventDetailsProps> = ({ onBack }) => {
+  const { selectedEventId, events } = useEvents();
+  const { showWindLayer, show3DMap, toggleWindLayer, toggle3DMap } = useAppState();
 
-  const {
-    name,
-    fireid,
-    t,
-    farea,
-    duration,
-    meanfrp,
-    fperim,
-    isactive,
-    n_pixels,
-    pixel_density,
-    new_pixels
-  } = event.properties;
+  const selectedEvent = useMemo(() => {
+    if (!selectedEventId) return null;
+    return events.find(event => getFireId(event) === selectedEventId) || null;
+  }, [selectedEventId, events]);
 
-  const formatDate = useCallback((dateString: string) => {
-    return format(new Date(dateString), 'MMM d, yyyy');
-  }, []);
+  const eventProperties = useMemo(() => {
+    if (!selectedEvent) return null;
+    return getFeatureProperties(selectedEvent);
+  }, [selectedEvent]);
 
-  const getEndDate = useCallback((startDate: string, days: number) => {
-    const date = new Date(startDate);
-    date.setDate(date.getDate() + days);
+  if (!selectedEvent || !eventProperties) {
+    return (
+      <div className="padding-4 display-flex flex-column flex-align-center flex-justify-center">
+        <p>No event selected</p>
+        <button className="usa-button" onClick={onBack}>
+          Back to list
+        </button>
+      </div>
+    );
+  }
+
+  const fireId = getFireId(selectedEvent);
+  const isActive = eventProperties.isactive === 1;
+  const eventName = eventProperties.name || `Fire Event ${fireId}`;
+
+  const startDate = eventProperties.t ? new Date(eventProperties.t) : null;
+  const endDate = startDate && eventProperties.duration ?
+    new Date(startDate.getTime() + (eventProperties.duration * 24 * 60 * 60 * 1000)) :
+    null;
+
+  const formatDate = (date: Date | null) => {
+    if (!date) return 'Unknown';
     return format(date, 'MMM d, yyyy');
-  }, []);
+  };
 
-  const startDate = formatDate(t);
-  const endDate = duration ? getEndDate(t, duration) : startDate;
-
-  const eventName = name || `Fire Event ${fireid}`;
+  const area = eventProperties.farea ? Number(eventProperties.farea).toFixed(2) : '0.00';
+  const durationDays = eventProperties.duration ? Math.round(eventProperties.duration) : 0;
+  const meanRFP = eventProperties.meanfrp ? Number(eventProperties.meanfrp).toFixed(2) : '0.00';
+  const perimeter = eventProperties.fperim ? Number(eventProperties.fperim).toFixed(2) : '0.00';
+  const pixelDensity = eventProperties.pixden ? Number(eventProperties.pixden).toFixed(2) : '0.00';
+  const newPixels = eventProperties.n_newpixels || 0;
+  const totalPixels = eventProperties.n_pixels || 0;
 
   return (
-    <div className="bg-white width-full height-full overflow-y-auto">
-      <div className="padding-y-05 padding-x-2 border-bottom border-base-lighter">
+    <div className="height-full display-flex flex-column bg-white">
+      <div className="padding-y-2 padding-x-3 bg-base-darkest display-flex flex-row flex-align-center">
         <button
+          className="usa-button usa-button--unstyled text-white display-flex flex-align-center"
           onClick={onBack}
-          className="display-flex flex-align-center text-primary font-sans-micro border-0 bg-transparent cursor-pointer"
         >
-          <ArrowLeft size={14} className="margin-right-05" />
-          Back to all fire events
+          <svg className="margin-right-1" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M20 11H7.83L13.42 5.41L12 4L4 12L12 20L13.41 18.59L7.83 13H20V11Z" fill="currentColor"/>
+          </svg>
+          <span className="text-underline">Back to all fire events</span>
         </button>
       </div>
 
-      <div className="padding-x-2 padding-top-1">
-        <div className="display-flex flex-align-center margin-bottom-05">
-          <h1 className={`font-sans-md text-bold margin-0 flex-fill ${isactive ? "text-error" : "text-base-dark"}`}>
+      <div className="padding-x-3 padding-y-3 overflow-auto flex-fill">
+        <div className="display-flex flex-align-center margin-bottom-1">
+          <span className={`margin-right-1 ${isActive ? 'text-error' : 'text-base-dark'}`}>
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+              <circle cx="12" cy="12" r="10" fill={isActive ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2"/>
+            </svg>
+          </span>
+          <h1 className={`font-heading-lg margin-0 ${isActive ? 'text-error' : 'text-base-dark'}`}>
             {eventName}
           </h1>
         </div>
 
-        <div className="font-sans-2xs text-base-dark margin-bottom-1">
-          {startDate} <span className="margin-x-05">→</span> {endDate}
+        <div className="margin-bottom-3">
+          <span className="text-base-dark font-sans-sm">
+            {formatDate(startDate)} → {formatDate(endDate)}
+          </span>
         </div>
 
-        <div className="grid-row grid-gap-1 margin-bottom-1">
-          <div className="grid-col-6 margin-bottom-05">
-            <div className="border-1px border-base-lighter radius-md padding-1">
-              <div className="text-base-dark font-sans-micro margin-bottom-05">Area</div>
-              <div className="display-flex flex-align-end">
-                <span className="font-sans-lg text-bold margin-right-05">
-                  {farea ? Number(farea).toFixed(2) : "0.00"}
-                </span>
-                <span className="font-sans-micro text-base-dark">km²</span>
-              </div>
+        <div className="display-flex flex-row margin-bottom-3 grid-gap-2">
+          <div className="border-1px border-base-lighter radius-md padding-3 flex-fill">
+            <h3 className="margin-0 margin-bottom-1 font-sans-sm text-base-dark font-normal">Area</h3>
+            <div className="margin-0 text-base-dark">
+              <span className="font-heading-xl">{area}</span> <span className="font-sans-xs">km²</span>
             </div>
           </div>
 
-          <div className="grid-col-6 margin-bottom-05">
-            <div className="border-1px border-base-lighter radius-md padding-1">
-              <div className="text-base-dark font-sans-micro margin-bottom-05">Duration</div>
-              <div className="display-flex flex-align-end">
-                <span className="font-sans-lg text-bold margin-right-05">
-                  {duration ? Number(duration).toFixed(1) : "0.0"}
-                </span>
-                <span className="font-sans-micro text-base-dark">days</span>
-              </div>
-            </div>
-          </div>
-
-          <div className="grid-col-6 margin-bottom-05">
-            <div className="border-1px border-base-lighter radius-md padding-1">
-              <div className="display-flex flex-align-center">
-                <span className="text-base-dark font-sans-micro margin-bottom-05 flex-fill">Mean RFP</span>
-                <HelpCircle size={12} color="#71767a" />
-              </div>
-              <div className="display-flex flex-align-end">
-                <span className="font-sans-lg text-bold margin-right-05">
-                  {meanfrp ? Number(meanfrp).toFixed(2) : "0.00"}
-                </span>
-                <span className="font-sans-micro text-base-dark">MW</span>
-              </div>
-            </div>
-          </div>
-
-          <div className="grid-col-6 margin-bottom-05">
-            <div className="border-1px border-base-lighter radius-md padding-1">
-              <div className="text-base-dark font-sans-micro margin-bottom-05">Perimeter</div>
-              <div className="display-flex flex-align-end">
-                <span className="font-sans-lg text-bold margin-right-05">
-                  {fperim ? Number(fperim).toFixed(2) : "0.00"}
-                </span>
-                <span className="font-sans-micro text-base-dark">km</span>
-              </div>
+          <div className="border-1px border-base-lighter radius-md padding-3 flex-fill">
+            <h3 className="margin-0 margin-bottom-1 font-sans-sm text-base-dark font-normal">Duration</h3>
+            <div className="margin-0 text-base-dark">
+              <span className="font-heading-xl">{durationDays}</span> <span className="font-sans-xs">days</span>
             </div>
           </div>
         </div>
 
-        <div className="margin-top-1">
-          <div className="border-top border-base-lighter width-full">
-            <div className="display-flex flex-justify border-bottom border-base-lighter padding-y-1">
-              <span className="font-sans-2xs text-bold">Status</span>
-              <span className={`radius-sm font-sans-micro padding-y-01 padding-x-05 ${isactive ? "bg-error" : "bg-base-dark"} text-white`}>
-                {isactive ? "Active" : "Inactive"}
+        <div className="display-flex flex-row margin-bottom-3 grid-gap-2">
+          <div className="border-1px border-base-lighter radius-md padding-3 flex-fill">
+            <h3 className="margin-0 margin-bottom-1 font-sans-sm text-base-dark font-normal display-flex flex-align-center">
+              Mean RFP
+              <span className="margin-left-1 text-base-dark">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                  <path d="M8 0C3.6 0 0 3.6 0 8s3.6 8 8 8 8-3.6 8-8-3.6-8-8-8zm0 14c-3.3 0-6-2.7-6-6s2.7-6 6-6 6 2.7 6 6-2.7 6-6 6z"/>
+                  <path d="M9 4H7v5h2V4zm0 6H7v2h2v-2z"/>
+                </svg>
               </span>
-            </div>
-            <div className="display-flex flex-justify border-bottom border-base-lighter padding-y-1">
-              <span className="font-sans-2xs text-bold">Pixel density</span>
-              <span className="font-sans-2xs">
-                {pixel_density ? Number(pixel_density).toFixed(2) : "0.00"} px/km²
-              </span>
-            </div>
-            <div className="display-flex flex-justify border-bottom border-base-lighter padding-y-1">
-              <span className="font-sans-2xs text-bold">New pixels</span>
-              <span className="font-sans-2xs">
-                {new_pixels || "0"}
-              </span>
-            </div>
-            <div className="display-flex flex-justify border-bottom border-base-lighter padding-y-1">
-              <span className="font-sans-2xs text-bold">Total pixels</span>
-              <span className="font-sans-2xs">
-                {n_pixels || "0"}
-              </span>
+            </h3>
+            <div className="margin-0 text-base-dark">
+              <span className="font-heading-xl">{meanRFP}</span> <span className="font-sans-xs">MW</span>
             </div>
           </div>
+
+          <div className="border-1px border-base-lighter radius-md padding-3 flex-fill">
+            <h3 className="margin-0 margin-bottom-1 font-sans-sm text-base-dark font-normal">Perimeter</h3>
+            <div className="margin-0 text-base-dark">
+              <span className="font-heading-xl">{perimeter}</span> <span className="font-sans-xs">km</span>
+            </div>
+          </div>
+        </div>
+
+        <table className="usa-table usa-table--borderless width-full">
+          <tbody>
+            <tr className="border-bottom border-base-lighter">
+              <th scope="row" className="text-base-dark font-sans-sm padding-y-2 padding-x-0">Status</th>
+              <td className="text-base-dark font-sans-sm text-right padding-y-2 padding-x-0">
+                <span className={`margin-left-1 font-sans-2xs text-white bg-${isActive ? 'error' : 'base-dark'} radius-pill padding-x-2 padding-y-05`}>
+                  {isActive ? 'Active' : 'Inactive'}
+                </span>
+              </td>
+            </tr>
+            <tr className="border-bottom border-base-lighter">
+              <th scope="row" className="text-base-dark font-sans-sm padding-y-2 padding-x-0">Pixel density</th>
+              <td className="text-base-dark font-sans-sm text-right padding-y-2 padding-x-0">{pixelDensity} px/km²</td>
+            </tr>
+            <tr className="border-bottom border-base-lighter">
+              <th scope="row" className="text-base-dark font-sans-sm padding-y-2 padding-x-0">New pixels</th>
+              <td className="text-base-dark font-sans-sm text-right padding-y-2 padding-x-0">{newPixels}</td>
+            </tr>
+            <tr>
+              <th scope="row" className="text-base-dark font-sans-sm padding-y-2 padding-x-0">Total pixels</th>
+              <td className="text-base-dark font-sans-sm text-right padding-y-2 padding-x-0">{totalPixels}</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div className="margin-top-4 margin-bottom-2">
+          <h3 className="margin-top-0 margin-bottom-2 font-sans-md text-base-dark">Fire spread</h3>
+
+          <div className="display-flex flex-align-center margin-bottom-2">
+            <div className="width-3 height-3 bg-base-dark margin-right-1"></div>
+            <span className="text-base-dark font-sans-sm">Previous</span>
+
+            <div className="width-3 height-3 bg-error margin-right-1 margin-left-3"></div>
+            <span className="text-base-dark font-sans-sm">Current</span>
+
+            <div className="width-3 height-3 bg-warning margin-right-1 margin-left-3"></div>
+            <span className="text-base-dark font-sans-sm">Perimeter</span>
+          </div>
+        </div>
+
+        <div className="margin-bottom-3">
+          <div className="margin-bottom-1">
+            <label className="text-base-dark font-sans-sm">Opacity</label>
+          </div>
+          <div className="display-flex flex-align-center">
+            <input
+              type="range"
+              className="usa-range flex-fill"
+              min="0"
+              max="100"
+              defaultValue="100"
+            />
+            <span className="margin-left-2 text-base-dark font-sans-sm border-1px border-base-lighter padding-x-2 padding-y-1">
+              100%
+            </span>
+          </div>
+        </div>
+
+        <div className="margin-top-2">
+          <label className="usa-checkbox">
+            <input
+              className="usa-checkbox__input"
+              type="checkbox"
+              name="wind-direction"
+              checked={showWindLayer}
+              onChange={toggleWindLayer}
+            />
+            <span className="usa-checkbox__label font-sans-sm">Wind direction</span>
+          </label>
+
+          <label className="usa-checkbox margin-top-2">
+            <input
+              className="usa-checkbox__input"
+              type="checkbox"
+              name="3d-map"
+              checked={show3DMap}
+              onChange={toggle3DMap}
+            />
+            <span className="usa-checkbox__label font-sans-sm">3D map</span>
+          </label>
         </div>
       </div>
     </div>
   );
 };
 
-export default EventDetailView;
+export default EventDetails;

@@ -1,15 +1,41 @@
-import { createContext, useContext, useState, useEffect, ReactNode, useMemo } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import {
-  fetchFireEvents, fetchFireStatistics,
-  EventFeature,
-  EventFilterParams
-} from '../api/events';
+import { createContext, useContext, useState, useEffect, ReactNode, useMemo, useCallback, useRef } from 'react';
+import { EventFilterParams } from '../api/events';
 import { useAppState } from './AppStateContext';
+
+export interface MVTFeature {
+  geometry: {
+    type: string;
+    coordinates?: any;
+  };
+  properties: {
+    fireid?: number;
+    farea?: number;
+    isactive?: number;
+    duration?: number;
+    flinelen?: number;
+    fperim?: number;
+    geom_counts?: string;
+    layerName?: string;
+    low_confidence_grouping?: number;
+    meanfrp?: number;
+    n_newpixels?: number;
+    n_pixels?: number;
+    pixden?: number;
+    primarykey?: string;
+    region?: string;
+    t?: string;
+    [key: string]: any;
+  };
+  object?: {
+    properties?: any;
+    geometry?: any;
+  };
+  type?: string;
+}
 
 export interface GroupedEvents {
   [fireId: string]: {
-    events: EventFeature[];
+    events: MVTFeature[];
     totalArea: number;
     maxArea: number;
     isActive: boolean;
@@ -17,27 +43,64 @@ export interface GroupedEvents {
 }
 
 interface EventsContextValue {
-  events: EventFeature[];
-  selectedEvent: EventFeature | null;
-  eventTimeSeries: EventFeature[];
+  events: MVTFeature[];
+  updateEvents: (mvtFeatures: any[]) => void;
+  eventTimeSeries: MVTFeature[];
   groupedEvents: GroupedEvents;
-  isLoading: boolean;
-  error: Error | null;
   totalEvents: number;
   activeEvents: number;
   inactiveEvents: number;
   totalArea: number;
   applyFilters: (filters: EventFilterParams) => void;
   currentFilters: EventFilterParams;
+  selectedEventId: string | null;
+  selectEvent: (eventId: string | null) => void;
+  getFilteredEvents: (start: Date, end: Date) => MVTFeature[];
 }
 
 const EventsContext = createContext<EventsContextValue | undefined>(undefined);
 
+export const getFeatureProperties = (feature: MVTFeature | null) => {
+  if (!feature) return {};
+  return feature.properties || (feature.object && feature.object.properties) || {};
+};
+
+export const getFeatureGeometry = (feature: MVTFeature) => {
+  return feature.geometry || (feature.object && feature.object.geometry) || { type: 'Polygon' };
+};
+
+export const getFireId = (feature: MVTFeature) => {
+  const props = getFeatureProperties(feature);
+  return props.fireid?.toString() || '';
+};
+
+export const isFeatureActive = (feature: MVTFeature) => {
+  const props = getFeatureProperties(feature);
+  return Number(props.isactive) === 1;
+};
+
+export const getFeatureArea = (feature: MVTFeature) => {
+  const props = getFeatureProperties(feature);
+  return props.farea || 0;
+};
+
+const areFeatureArraysEqual = (prevFeatures: MVTFeature[], nextFeatures: MVTFeature[]) => {
+  if (prevFeatures.length !== nextFeatures.length) return false;
+
+  return true;
+};
+
 export const EventsProvider = ({ children }: { children: ReactNode }) => {
-  const { timeRange, selectedEventId } = useAppState();
+  const { timeRange } = useAppState();
   const [filters, setFilters] = useState<EventFilterParams>({
     dateRange: [timeRange.start, timeRange.end]
   });
+
+  const [events, setEvents] = useState<MVTFeature[]>([]);
+  const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
+  const prevFeaturesRef = useRef<MVTFeature[]>([]);
+  const pendingFeaturesRef = useRef<MVTFeature[] | null>(null);
+  const updateTimeoutRef = useRef<number | null>(null);
 
   useEffect(() => {
     setFilters(prev => ({
@@ -46,53 +109,69 @@ export const EventsProvider = ({ children }: { children: ReactNode }) => {
     }));
   }, [timeRange]);
 
-  const {
-    data: events = [],
-    isLoading: isLoadingEvents,
-    error: eventsError
-  } = useQuery({
-    queryKey: ['fireEvents', filters],
-    queryFn: () => fetchFireEvents(filters),
-    staleTime: 5 * 60 * 1000,
-  });
+  const updateEvents = useCallback((mvtFeatures: MVTFeature[]) => {
+    const validFeatures = mvtFeatures.filter(feature => {
+      const props = getFeatureProperties(feature);
+      return !!props.fireid;
+    });
 
-  const {
-    data: statistics,
-    isLoading: isLoadingStats,
-    error: statsError
-  } = useQuery({
-    queryKey: ['fireStatistics', timeRange],
-    queryFn: () => fetchFireStatistics(timeRange.start, timeRange.end),
-    staleTime: 5 * 60 * 1000,
-  });
+    pendingFeaturesRef.current = validFeatures;
 
-  const selectedEvent = useMemo(() => {
-    if (!selectedEventId) return null;
-    const found = events.find(event => event.properties.fireid === selectedEventId) || null;
-    return found;
-  }, [selectedEventId, events]);
+    if (updateTimeoutRef.current !== null) {
+      window.clearTimeout(updateTimeoutRef.current);
+    }
 
-  const applyFilters = (newFilters: EventFilterParams) => {
+    updateTimeoutRef.current = window.setTimeout(() => {
+      const newFeatures = pendingFeaturesRef.current;
+
+      if (newFeatures && !areFeatureArraysEqual(prevFeaturesRef.current, newFeatures)) {
+        setEvents(newFeatures);
+        prevFeaturesRef.current = newFeatures;
+      }
+
+      pendingFeaturesRef.current = null;
+      updateTimeoutRef.current = null;
+    }, 300);
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (updateTimeoutRef.current !== null) {
+        window.clearTimeout(updateTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  const applyFilters = useCallback((newFilters: EventFilterParams) => {
     setFilters(prev => ({
       ...prev,
       ...newFilters
     }));
-  };
+  }, []);
+
+  const selectEvent = useCallback((eventId: string | null) => {
+    setSelectedEventId(eventId);
+  }, []);
+
+  const getFilteredEvents = useCallback((start: Date, end: Date) => {
+    return events.filter(event => {
+      const props = getFeatureProperties(event);
+      const eventTime = new Date(props.t).getTime();
+      return eventTime >= start.getTime() && eventTime <= end.getTime();
+    });
+  }, [events]);
+
 
   const eventTimeSeries = useMemo(() => {
-    if (selectedEventId) {
-      const eventFireId = selectedEvent?.properties.fireid.toString();
-      if (eventFireId) {
-        return events.filter(e => e.properties.fireid.toString() === eventFireId);
-      }
-      return [];
-    }
     return events;
-  }, [events, selectedEvent, selectedEventId]);
+  }, [events]);
 
   const groupedEvents = useMemo<GroupedEvents>(() => {
     return events.reduce((groups, event) => {
-      const fireId = event.properties.fireid.toString();
+      const props = getFeatureProperties(event);
+      const fireId = props.fireid?.toString() || '';
+
+      if (!fireId) return groups;
 
       if (!groups[fireId]) {
         groups[fireId] = {
@@ -104,35 +183,37 @@ export const EventsProvider = ({ children }: { children: ReactNode }) => {
       }
 
       groups[fireId].events.push(event);
-      groups[fireId].totalArea += event.properties.farea || 0;
-      groups[fireId].maxArea = Math.max(groups[fireId].maxArea, event.properties.farea || 0);
-      groups[fireId].isActive = groups[fireId].isActive || event.properties.isactive === 1;
+      groups[fireId].totalArea += props.farea || 0;
+      groups[fireId].maxArea = Math.max(groups[fireId].maxArea, props.farea || 0);
+      groups[fireId].isActive = groups[fireId].isActive || Number(props.isactive) === 1;
 
       return groups;
     }, {} as GroupedEvents);
   }, [events]);
 
-  const totalEvents = events.length;
-  const activeEvents = events.filter(event => event.properties.isactive === 1).length;
-  const inactiveEvents = totalEvents - activeEvents;
-  const totalArea = events.reduce((sum, event) => sum + (event.properties.farea || 0), 0);
+  const metrics = useMemo(() => {
+    const totalEvents = events.length;
+    const activeEvents = events.filter(event => Number(getFeatureProperties(event).isactive) === 1).length;
+    const inactiveEvents = totalEvents - activeEvents;
+    const totalArea = events.reduce((sum, event) => sum + (getFeatureProperties(event).farea || 0), 0);
 
-  const isLoading = isLoadingEvents || isLoadingStats;
-  const error = eventsError || statsError;
+    return { totalEvents, activeEvents, inactiveEvents, totalArea };
+  }, [events]);
 
   const value: EventsContextValue = {
     events,
-    selectedEvent,
+    updateEvents,
     eventTimeSeries,
     groupedEvents,
-    isLoading,
-    error,
-    totalEvents,
-    activeEvents,
-    inactiveEvents,
-    totalArea: statistics?.totalArea || totalArea,
+    totalEvents: metrics.totalEvents,
+    activeEvents: metrics.activeEvents,
+    inactiveEvents: metrics.inactiveEvents,
+    totalArea: metrics.totalArea,
     applyFilters,
-    currentFilters: filters
+    currentFilters: filters,
+    selectedEventId,
+    selectEvent,
+    getFilteredEvents
   };
 
   return (

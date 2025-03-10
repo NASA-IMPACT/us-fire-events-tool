@@ -1,278 +1,242 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { format } from 'date-fns';
-import { EventFeature } from '../../types';
 import { Calendar } from 'lucide-react';
 import ReactSlider from 'react-slider';
+import { useEvents } from '../../contexts/EventsContext';
+import { useAppState } from '../../contexts/AppStateContext';
 
-interface RangeSliderProps {
-  events: EventFeature[];
-  onRangeChange?: (range: { start: Date; end: Date }) => void;
-}
-
-const styles = `
-  .range-slider {
-    width: 100%;
-    height: 24px;
-    margin-top: 12px;
-    position: relative;
-  }
-
-  .range-slider .track {
-    top: 8px;
-    height: 4px;
-    background: #d9d9d9;
-    border-radius: 2px;
-  }
-
-  .range-slider .track-1 {
-    background: #1a6baa;
-  }
-
-  .range-slider .thumb {
-    width: 16px;
-    height: 16px;
-    cursor: pointer;
-    background: #fff;
-    border-radius: 50%;
-    border: 2px solid #1a6baa;
-    top: 2px;
-    outline: none;
-    box-shadow: 0 1px 2px rgba(0,0,0,0.2);
-  }
-
-  .range-slider .thumb:hover {
-    box-shadow: 0 0 0 2px rgba(26, 107, 170, 0.3);
-  }
-
-  .chart-container {
-    height: 120px;
-    width: 100%;
-    position: relative;
-    margin-bottom: 20px;
-  }
-
-  .bar {
-    position: absolute;
-    bottom: 30px; /* Space for x-axis labels */
-    background-color: #d9d9d9;
-    width: 12px;
-    border-radius: 2px 2px 0 0;
-  }
-
-  .bar.highlighted {
-    background-color: #1a6baa;
-  }
-
-  .x-axis {
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    width: 100%;
-    height: 30px;
-    display: flex;
-    justify-content: space-between;
-    padding: 0 10px;
-  }
-
-  .x-axis-label {
-    font-size: 14px;
-    color: #71767a;
-    position: relative;
-    text-align: center;
-  }
-
-  .x-axis-label::before {
-    content: '';
-    position: absolute;
-    top: -8px;
-    left: 50%;
-    transform: translateX(-50%);
-    height: 5px;
-    width: 1px;
-    background-color: #d9d9d9;
-  }
-
-  .x-axis-tick {
-    position: absolute;
-    bottom: 30px;
-    width: 1px;
-    background-color: #d9d9d9;
-    z-index: 0;
-  }
-
-  .highlighted-area {
-    position: absolute;
-    background-color: rgba(26, 107, 170, 0.1);
-    bottom: 30px;
-    top: 0;
-    z-index: 1;
-  }
-`;
-
-const RangeSlider: React.FC<RangeSliderProps> = ({ events, onRangeChange }) => {
-  const [dateRange, setDateRange] = useState<{ start: Date; end: Date }>({
-    start: new Date(),
-    end: new Date()
-  });
+const TimeRangeSlider = () => {
+  const { timeRange, setTimeRange } = useAppState();
+  const { events } = useEvents();
 
   const [highlightedArea, setHighlightedArea] = useState({ left: 0, width: 0 });
-  const chartRef = useRef<HTMLDivElement>(null);
+  const chartRef = useRef(null);
 
-  const { minDate, maxDate, totalRange, months } = useMemo(() => {
-    if (!events.length) {
-      const now = new Date();
-      const sixMonthsAgo = new Date();
-      sixMonthsAgo.setMonth(now.getMonth() - 6);
+  console.log('events ', events)
 
-      const monthLabels = [];
-      const currentDate = new Date(sixMonthsAgo);
-      while (currentDate <= now) {
-        monthLabels.push(format(currentDate, 'MMM'));
-        currentDate.setMonth(currentDate.getMonth() + 1);
-      }
+  const { minDate, maxDate, totalRange } = useMemo(() => {
+    const now = new Date();
+    now.setHours(23, 59, 59, 999);
 
-      return {
-        minDate: sixMonthsAgo,
-        maxDate: now,
-        totalRange: now.getTime() - sixMonthsAgo.getTime(),
-        months: monthLabels
-      };
-    }
-
-    const timestamps = events.map(e => new Date(e.properties.t).getTime());
-    const min = new Date(Math.min(...timestamps));
-    const max = new Date(Math.max(...timestamps));
-
-    const extendedMin = new Date(min);
-    extendedMin.setDate(1);
-    extendedMin.setHours(0, 0, 0, 0);
-
-    const extendedMax = new Date(max);
-    extendedMax.setMonth(extendedMax.getMonth() + 1);
-    extendedMax.setDate(0);
-    extendedMax.setHours(23, 59, 59, 999);
-
-    const monthLabels = [];
-    const currentDate = new Date(extendedMin);
-    while (currentDate <= extendedMax) {
-      monthLabels.push(format(currentDate, 'MMM'));
-      currentDate.setMonth(currentDate.getMonth() + 1);
-    }
+    const fixedStartDate = new Date();
+    fixedStartDate.setDate(now.getDate() - 20);
+    fixedStartDate.setHours(0, 0, 0, 0);
 
     return {
-      minDate: extendedMin,
-      maxDate: extendedMax,
-      totalRange: extendedMax.getTime() - extendedMin.getTime(),
-      months: monthLabels
+      minDate: fixedStartDate,
+      maxDate: now,
+      totalRange: now.getTime() - fixedStartDate.getTime(),
+      months: []
     };
-  }, [events]);
+  }, []);
 
-  const eventsByDay = useMemo(() => {
+  const HOURS_PER_BIN = 12;
+  const totalHours = (maxDate.getTime() - minDate.getTime()) / (1000 * 60 * 60);
+  const FIXED_BINS = Math.ceil(totalHours / HOURS_PER_BIN);
+
+  const eventsByTime = useMemo(() => {
     if (!events.length) return [];
 
-    const dayMap = new Map();
+    const timeMap = new Map();
+    const binSize = totalRange / FIXED_BINS;
 
-    const startDate = new Date(minDate);
-    const endDate = new Date(maxDate);
-
-    const currentDay = new Date(startDate);
-    while (currentDay <= endDate) {
-      const dayKey = currentDay.getTime();
-      dayMap.set(dayKey, 0);
-      currentDay.setDate(currentDay.getDate() + 1);
+    for (let i = 0; i < FIXED_BINS; i++) {
+      timeMap.set(i, 0);
     }
 
     events.forEach(event => {
-      const date = new Date(event.properties.t);
-      date.setHours(0, 0, 0, 0);
-      const dayKey = date.getTime();
-
-      if (dayMap.has(dayKey)) {
-        dayMap.set(dayKey, dayMap.get(dayKey) + 1);
+      const eventTime = new Date(event.object.properties.t).getTime();
+      if (eventTime >= minDate.getTime() && eventTime <= maxDate.getTime()) {
+        const binIndex = Math.floor((eventTime - minDate.getTime()) / binSize);
+        if (binIndex >= 0 && binIndex < FIXED_BINS && timeMap.has(binIndex)) {
+          timeMap.set(binIndex, timeMap.get(binIndex) + 1);
+        }
       }
     });
 
-    return Array.from(dayMap.entries()).map(([timestamp, count]) => ({
-      date: new Date(timestamp),
-      timestamp: Number(timestamp),
-      count: Number(count)
+    return Array.from(timeMap.entries()).map(([index, count]) => ({
+      timestamp: minDate.getTime() + index * binSize,
+      count
     }));
-  }, [events, minDate, maxDate]);
+  }, [events, minDate, maxDate, totalRange, FIXED_BINS]);
 
-  const [sliderValues, setSliderValues] = useState([25, 40]);
+
+
+  const [sliderValues, setSliderValues] = useState([50, 100]);
 
   useEffect(() => {
-    if (!chartRef.current) return;
+    const tenDaysAgo = new Date();
+    tenDaysAgo.setDate(maxDate.getDate() - 10);
+    tenDaysAgo.setHours(0, 0, 0, 0);
 
-    const getDateFromPercent = (percent: number) => {
+    const startPercent = ((tenDaysAgo.getTime() - minDate.getTime()) / totalRange) * 100;
+    const endPercent = 100;
+
+    setSliderValues([startPercent, endPercent]);
+  }, [minDate, maxDate, totalRange]);
+
+  useEffect(() => {
+    const getDateFromPercent = (percent) => {
       const milliseconds = minDate.getTime() + (totalRange * (percent / 100));
       return new Date(milliseconds);
     };
 
-    const start = getDateFromPercent(sliderValues[0]);
-    const end = getDateFromPercent(sliderValues[1]);
+    const filteredStart = getDateFromPercent(sliderValues[0]);
+    const filteredEnd = getDateFromPercent(sliderValues[1]);
 
-    setDateRange({ start, end });
+    setTimeRange({ start: filteredStart, end: filteredEnd });
 
-    const chartWidth = chartRef.current.clientWidth;
-    const left = (sliderValues[0] / 100) * chartWidth;
-    const width = ((sliderValues[1] - sliderValues[0]) / 100) * chartWidth;
-    setHighlightedArea({ left, width });
+    if (chartRef.current) {
+      const chartWidth = chartRef.current.clientWidth;
+      const left = (sliderValues[0] / 100) * chartWidth;
+      const width = ((sliderValues[1] - sliderValues[0]) / 100) * chartWidth;
 
-    if (onRangeChange) {
-      onRangeChange({ start, end });
+      setHighlightedArea({ left, width });
     }
-  }, [sliderValues, minDate, maxDate, totalRange, onRangeChange]);
-
-  useEffect(() => {
-    if (events.length > 0 && chartRef.current) {
-      setSliderValues([25, 40]);
-    }
-  }, [events.length, chartRef]);
+  }, [sliderValues, minDate, totalRange, setTimeRange]);
 
   const renderBars = () => {
-    if (!chartRef.current || eventsByDay.length === 0) return null;
+    if (!chartRef.current || eventsByTime.length === 0) return null;
 
     const chartWidth = chartRef.current.clientWidth;
     const maxHeight = 90;
-    const barWidth = Math.max(2, chartWidth / eventsByDay.length);
+    const barWidth = Math.max(chartWidth / FIXED_BINS, 2);
 
-    const maxCount = Math.max(...eventsByDay.map(day => day.count));
+    const maxCount = Math.max(...eventsByTime.map(day => day.count));
 
-    return eventsByDay.map((day, index) => {
-      const left = (index / eventsByDay.length) * chartWidth;
+    return eventsByTime.map((day) => {
+      const normalizedPosition = (day.timestamp - minDate.getTime()) / totalRange;
+      const left = normalizedPosition * chartWidth;
+
       const height = maxCount > 0 ? (day.count / maxCount) * maxHeight : 0;
 
-      const isHighlighted = day.timestamp >= dateRange.start.getTime() &&
-                            day.timestamp <= dateRange.end.getTime();
+      const isHighlighted =
+        day.timestamp >= timeRange.start.getTime() &&
+        day.timestamp <= timeRange.end.getTime();
 
       return (
         <div
           key={day.timestamp}
-          className={`bar ${isHighlighted ? 'highlighted' : ''}`}
+          className="bar"
           style={{
             left: `${left}px`,
             height: `${height}px`,
-            width: `${barWidth}px`
+            width: `${barWidth}px`,
+            backgroundColor: isHighlighted ? '#1a6baa' : '#cccccc',
+            opacity: isHighlighted ? 1 : 0.5
           }}
         />
       );
     });
   };
 
-  return (
-    <div className="bg-white border-1px border-base-lighter padding-2 radius-md">
-      <style>{styles}</style>
 
-      <div className="display-flex flex-align-center margin-bottom-2">
-        <div className="font-sans-sm text-base margin-right-2">y-axis: Number of fire events</div>
-        <div className="font-sans-sm text-base margin-right-2">Time period:</div>
-        <div className="display-flex flex-align-center border-1px border-base padding-1 font-sans-sm">
-          {format(dateRange.start, 'MMM d, yyyy')} - {format(dateRange.end, 'MMM d, yyyy')}
+  return (
+    <div className="position-absolute bottom-3 left-3 bg-white radius-md padding-3 shadow-2 z-top" style={{ width: "800px" }}>
+      <style>
+        {`
+          .chart-container {
+            height: 120px;
+            width: 100%;
+            position: relative;
+            margin-bottom: 20px;
+          }
+
+          .bar {
+            position: absolute;
+            bottom: 30px;
+            background-color: #d9d9d9;
+            width: 3px;
+            border-radius: 2px 2px 0 0;
+          }
+
+          .bar.highlighted {
+            background-color: #1a6baa;
+          }
+
+          .x-axis {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 30px;
+            display: flex;
+            justify-content: space-between;
+          }
+
+          .x-axis-label {
+            font-size: 14px;
+            color: #71767a;
+            position: relative;
+            text-align: center;
+          }
+
+          .x-axis-label::before {
+            content: '';
+            position: absolute;
+            top: -8px;
+            left: 50%;
+            transform: translateX(-50%);
+            height: 5px;
+            width: 1px;
+            background-color: #d9d9d9;
+          }
+
+          .highlighted-area {
+            position: absolute;
+            background-color: rgba(26, 107, 170, 0.1);
+            bottom: 30px;
+            top: 0;
+            z-index: 1;
+          }
+
+          .range-slider {
+            width: 100%;
+            height: 24px;
+            margin-top: 12px;
+            position: relative;
+          }
+
+          .range-slider .track {
+            top: 8px;
+            height: 4px;
+            background: #d9d9d9;
+            border-radius: 2px;
+          }
+
+          .range-slider .track-1 {
+            background: #1a6baa;
+          }
+
+          .range-slider .thumb {
+            width: 16px;
+            height: 16px;
+            cursor: pointer;
+            background: #fff;
+            border-radius: 50%;
+            border: 2px solid #1a6baa;
+            top: 2px;
+            outline: none;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+          }
+
+          .range-slider .thumb:hover {
+            box-shadow: 0 0 0 2px rgba(26, 107, 170, 0.3);
+          }
+        `}
+      </style>
+
+      <div className="display-flex flex-align-center flex-justify flex-row margin-bottom-1">
+        <div className="font-sans-sm text-base-dark">
+          <span>y-axis: Number of fire events</span>
+          <span className="margin-left-2">Time period:</span>
         </div>
-        <button className="border-0 bg-transparent padding-1 margin-left-1">
-          <Calendar size={16} color="#71767a" />
-        </button>
+        <div className="display-flex flex-align-center border-1px border-base-light padding-y-05 padding-x-2 radius-sm font-sans-sm">
+          {format(timeRange.start, 'MMM d, yyyy')} - {format(timeRange.end, 'MMM d, yyyy')}
+          <button className="border-0 bg-transparent padding-1 margin-left-1">
+            <Calendar size={16} color="#71767a" />
+          </button>
+        </div>
       </div>
 
       <div className="chart-container" ref={chartRef}>
@@ -287,21 +251,9 @@ const RangeSlider: React.FC<RangeSliderProps> = ({ events, onRangeChange }) => {
         />
 
         <div className="x-axis">
-          {months.map((month, index) => (
-            <div key={index} className="x-axis-label">{month}</div>
-          ))}
+          <div className="x-axis-label">{format(minDate, 'MMM d')}</div>
+          <div className="x-axis-label">{format(maxDate, 'MMM d')}</div>
         </div>
-
-        {chartRef.current && Array.from({ length: Math.floor(chartRef.current.clientWidth / 30) }).map((_, index) => (
-          <div
-            key={`tick-${index}`}
-            className="x-axis-tick"
-            style={{
-              left: `${(index * 30) + 15}px`,
-              height: `${index % 3 === 0 ? 10 : 5}px`
-            }}
-          />
-        ))}
       </div>
 
       <ReactSlider
@@ -320,4 +272,4 @@ const RangeSlider: React.FC<RangeSliderProps> = ({ events, onRangeChange }) => {
   );
 };
 
-export default RangeSlider;
+export default TimeRangeSlider;

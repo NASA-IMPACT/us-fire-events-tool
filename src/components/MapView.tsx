@@ -1,15 +1,16 @@
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import { ClipExtension } from '@deck.gl/extensions';
 import * as WeatherLayersClient from 'weatherlayers-gl/client';
 import * as WeatherLayers from 'weatherlayers-gl';
 import DeckGL from '@deck.gl/react';
 import { Map } from 'react-map-gl/mapbox';
 import { MVTLayer } from '@deck.gl/geo-layers';
-import { FlyToInterpolator, WebMercatorViewport } from '@deck.gl/core';
+import { WebMercatorViewport } from '@deck.gl/core';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { MapViewState } from '@deck.gl/core';
 import { useEvents } from '../contexts/EventsContext';
 import { useAppState } from '../contexts/AppStateContext';
+import _ from 'lodash';
 
 const INITIAL_VIEW_STATE: MapViewState = {
     longitude: -95.7129,
@@ -27,20 +28,72 @@ const INITIAL_VIEW_STATE: MapViewState = {
 const USA_BBOX = [-125.0, 24.5, -66.0, 49.5];
 
 const MapView = () => {
-    const { selectedEvent } = useEvents();
-    const { showWindLayer, show3DMap, setMapBounds } = useAppState();
+    const { updateEvents } = useEvents();
+    const { showWindLayer, show3DMap, setMapBounds, timeRange } = useAppState();
 
     const [layers, setLayers] = useState([]);
     const [viewState, setViewState] = useState(INITIAL_VIEW_STATE);
     const [windLayer, setWindLayer] = useState(null);
     const [, setIsLayersLoading] = useState(false);
+    const [isInteracting, setIsInteracting] = useState(false);
     const deckRef = useRef(null);
+    const interactionTimeoutRef = useRef<number | null>(null);
+    const lastBoundsRef = useRef(null);
 
-    const updateBounds = (viewState) => {
+    const collectVisibleFeaturesRef = useRef(null);
+
+    const updateBounds = useCallback((viewState) => {
         const viewport = new WebMercatorViewport(viewState);
         const bounds = viewport.getBounds();
-        setMapBounds(bounds);
-    };
+
+        lastBoundsRef.current = bounds;
+
+        if (!isInteracting) {
+            setMapBounds(bounds);
+        }
+    }, [setMapBounds, isInteracting]);
+
+    const updateContextAfterInteraction = useCallback(() => {
+        if (lastBoundsRef.current) {
+          setMapBounds(lastBoundsRef.current);
+        }
+
+        if (deckRef.current) {
+          const { width, height } = deckRef.current.deck;
+
+          const features = deckRef.current.pickObjects({
+            x: 0,
+            y: 0,
+            width,
+            height,
+            layerIds: ['fire-perimeters-mvt'],
+            ignoreVisibility: true
+          });
+
+          updateEvents(features);
+        }
+      }, [setMapBounds, updateEvents]);
+
+
+    useEffect(() => {
+        collectVisibleFeaturesRef.current = _.debounce(() => {
+            if (isInteracting) return;
+
+            updateContextAfterInteraction();
+        }, 600);
+
+        return () => {
+            if (collectVisibleFeaturesRef.current) {
+                collectVisibleFeaturesRef.current.cancel();
+            }
+        };
+    }, [isInteracting, updateContextAfterInteraction]);
+
+    const collectVisibleFeatures = useCallback(() => {
+        if (collectVisibleFeaturesRef.current) {
+            collectVisibleFeaturesRef.current();
+        }
+    }, []);
 
     useEffect(() => {
         if (showWindLayer && !windLayer) {
@@ -102,18 +155,51 @@ const MapView = () => {
         }
     }, [windLayer, showWindLayer]);
 
+    const handleTileLoad = useCallback((tile) => {
+        loadedTilesRef.current.add(tile.id);
+        allFeaturesRef.current = [...allFeaturesRef.current, ...newFeatures];
+
+        if (tile && tile.data && tile.data.length > 0) {
+            if (!isInteracting) {
+                collectVisibleFeatures();
+            }
+        }
+    }, [collectVisibleFeatures, isInteracting]);
+
     useEffect(() => {
         const newLayers = [
             new MVTLayer({
                 id: 'fire-perimeters-mvt',
                 data: 'https://firenrt.delta-backend.com/collections/public.eis_fire_snapshot_perimeter_nrt/tiles/{z}/{x}/{y}',
-                getFillColor: [255, 140, 0, 180],
-                getLineColor: [255, 69, 0, 255],
+                getFillColor: (feature) => {
+                    const featureTime = new Date(feature.properties.t).getTime();
+                    const isInRange = featureTime >= timeRange.start.getTime() && featureTime <= timeRange.end.getTime();
+                    return isInRange ? [255, 140, 0, 180] : [255, 140, 0, 0];
+                },
+                getLineColor: (feature) => {
+                    const featureTime = new Date(feature.properties.t).getTime();
+                    const isInRange = featureTime >= timeRange.start.getTime() && featureTime <= timeRange.end.getTime();
+                    return isInRange ? [255, 69, 0, 255] : [255, 69, 0, 0];
+                },
                 lineWidthMinPixels: 1,
                 pickable: true,
                 autoHighlight: true,
-                highlightColor: [255, 255, 255, 120]
+                highlightColor: [255, 255, 255, 120],
+
+                updateTriggers: {
+                    getFillColor: timeRange,
+                    getLineColor: timeRange
+                },
+
+                onTileLoad: (tile) => {
+                    if (tile && tile.data && tile.data.length > 0) {
+                        if (!isInteracting) {
+                            collectVisibleFeatures();
+                        }
+                    }
+                }
             })
+
         ];
 
         if (windLayer && showWindLayer) {
@@ -121,7 +207,7 @@ const MapView = () => {
         }
 
         setLayers(newLayers);
-    }, [windLayer, showWindLayer]);
+    }, [windLayer, showWindLayer, handleTileLoad, isInteracting, timeRange]);
 
     useEffect(() => {
         if (show3DMap) {
@@ -131,46 +217,37 @@ const MapView = () => {
         }
     }, [show3DMap]);
 
-    useEffect(() => {
-        if (selectedEvent) {
-            const coordinates = selectedEvent.geometry.coordinates[0];
-            let minLng = Infinity, minLat = Infinity, maxLng = -Infinity, maxLat = -Infinity;
+    const handleInteractionStateChange = useCallback(({ isDragging, isPanning, isRotating, isZooming }) => {
+        const isCurrentlyInteracting = isDragging || isPanning || isRotating || isZooming;
 
-            coordinates.forEach(([lng, lat]) => {
-                minLng = Math.min(minLng, lng);
-                minLat = Math.min(minLat, lat);
-                maxLng = Math.max(maxLng, lng);
-                maxLat = Math.max(maxLat, lat);
-            });
-
-            const centerLng = (minLng + maxLng) / 2;
-            const centerLat = (minLat + maxLat) / 2;
-            const maxDelta = Math.max(Math.abs(maxLng - minLng), Math.abs(maxLat - minLat));
-            const zoom = Math.floor(8 - Math.log2(maxDelta));
-
-            setViewState({
-                ...viewState,
-                longitude: centerLng,
-                latitude: centerLat,
-                zoom: Math.min(Math.max(zoom, 3), 15),
-                transitionDuration: 1000,
-                transitionInterpolator: new FlyToInterpolator(),
-                transitionEasing: t => t
-            });
+        if (interactionTimeoutRef.current !== null) {
+            window.clearTimeout(interactionTimeoutRef.current);
+            interactionTimeoutRef.current = null;
         }
-    }, [selectedEvent]);
+
+        setIsInteracting(isCurrentlyInteracting);
+
+        if (!isCurrentlyInteracting) {
+            interactionTimeoutRef.current = window.setTimeout(() => {
+                updateContextAfterInteraction();
+            }, 500);
+        }
+    }, [updateContextAfterInteraction]);
+
+    const handleViewStateChange = useCallback(({ viewState }) => {
+        setViewState(viewState);
+
+        updateBounds(viewState);
+    }, [updateBounds]);
 
     return (
         <DeckGL
             ref={deckRef}
             viewState={viewState}
-            onViewStateChange={({ viewState }) => {
-                setViewState(viewState);
-                updateBounds(viewState);
-            }}
+            onViewStateChange={handleViewStateChange}
+            onInteractionStateChange={handleInteractionStateChange}
             layers={layers}
             controller={{ doubleClickZoom: false }}
-            getTooltip={({ object }) => object && `${object.properties.fireid || 'Fire'} - Area: ${object.properties.farea} km²`}
         >
             <Map
                 mapboxAccessToken={import.meta.env.VITE_MAPBOX_TOKEN}

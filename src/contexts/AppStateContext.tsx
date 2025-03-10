@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useRef, useCallback, ReactNode } from 'react';
+import { createContext, useContext, useState, useCallback, ReactNode } from 'react';
 
 export type ViewMode = 'explorer' | 'detail';
 export type TimeMode = 'recent' | 'yearToDate' | 'historical';
@@ -23,7 +23,6 @@ interface AppContextValue extends AppState {
   setViewMode: (mode: ViewMode) => void;
   selectEvent: (eventId: string | null) => void;
   setTimeRange: (range: { start: Date; end: Date }) => void;
-  setTimeMode: (mode: TimeMode) => void;
   togglePlay: () => void;
   setPlaybackSpeed: (speed: number) => void;
   toggleWindLayer: () => void;
@@ -54,13 +53,13 @@ const defaultState: AppState = {
   viewMode: 'explorer',
   selectedEventId: null,
   timeRange: {
-    start: createStableDate('2024-01-01'),
-    end: createStableDate('2024-12-31'),
+    start: createStableDate(new Date(new Date().setDate(new Date().getDate() - 10))),
+    end: createStableDate(new Date()),
   },
   timeMode: 'historical',
   isPlaying: false,
   playbackSpeed: 1,
-  showWindLayer: true,
+  showWindLayer: false,
   show3DMap: false,
   showSatelliteImagery: false,
   mapBounds: null
@@ -69,7 +68,6 @@ const defaultState: AppState = {
 const AppStateContext = createContext<AppContextValue | undefined>(undefined);
 
 export const AppStateProvider = ({ children }: { children: ReactNode }) => {
-  const isUpdatingTimeRange = useRef(false);
   const [state, setState] = useState<AppState>(defaultState);
 
 
@@ -97,79 +95,9 @@ export const AppStateProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const setTimeRange = useCallback((range: { start: Date; end: Date }) => {
-    if (isUpdatingTimeRange.current) {
-      return;
-    }
-
     setState(prev => {
-      if (areTimeRangesEqual(prev.timeRange, range)) {
-        return prev;
-      }
-
-      const stableRange = {
-        start: createStableDate(range.start),
-        end: createStableDate(range.end)
-      };
-
-      let newTimeMode = prev.timeMode;
-      const endYear = stableRange.end.getFullYear();
-      const currentYear = new Date().getFullYear();
-
-      if (endYear >= 2018 && endYear <= 2021) {
-        newTimeMode = 'historical';
-      } else if (endYear === currentYear) {
-        newTimeMode = 'yearToDate';
-      } else {
-        newTimeMode = 'recent';
-      }
-
-      isUpdatingTimeRange.current = true;
-      setTimeout(() => {
-        isUpdatingTimeRange.current = false;
-      }, 50);
-
-      return {
-        ...prev,
-        timeRange: stableRange,
-        timeMode: newTimeMode
-      };
-    });
-  }, []);
-
-  const setTimeMode = useCallback((mode: TimeMode) => {
-    setState(prev => {
-      if (prev.timeMode === mode) {
-        return prev;
-      }
-
-      let newTimeRange = { ...prev.timeRange };
-      const currentYear = new Date().getFullYear();
-
-      if (mode === 'recent') {
-        const now = new Date();
-        const twentyDaysAgo = new Date();
-        twentyDaysAgo.setDate(now.getDate() - 20);
-        newTimeRange = {
-          start: createStableDate(twentyDaysAgo),
-          end: createStableDate(now)
-        };
-      } else if (mode === 'yearToDate') {
-        newTimeRange = {
-          start: createStableDate(`${currentYear}-01-01`),
-          end: createStableDate(new Date())
-        };
-      } else if (mode === 'historical') {
-        newTimeRange = {
-          start: createStableDate('2024-01-01'),
-          end: createStableDate('2024-12-31')
-        };
-      }
-
-      return {
-        ...prev,
-        timeMode: mode,
-        timeRange: newTimeRange
-      };
+      if (areTimeRangesEqual(prev.timeRange, range)) return prev;
+      return { ...prev, timeRange: range };
     });
   }, []);
 
@@ -211,7 +139,6 @@ export const AppStateProvider = ({ children }: { children: ReactNode }) => {
     setViewMode,
     selectEvent,
     setTimeRange,
-    setTimeMode,
     togglePlay,
     setPlaybackSpeed,
     toggleWindLayer,
