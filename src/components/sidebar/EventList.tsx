@@ -45,7 +45,7 @@ const EventItem = memo(({ event, onClick, formatEventDates, getEventEndDate, fea
   return (
     <div
       onClick={handleEventClick}
-      className={`bg-white margin-bottom-2 radius-md cursor-pointer hover:shadow-2`}
+      className={`bg-white radius-md cursor-pointer hover:shadow-2`}
     >
       <div className="padding-3">
         <div className="display-flex flex-align-center margin-bottom-1">
@@ -182,7 +182,8 @@ const EventList: React.FC<EventListProps> = memo(({ features }) => {
     const event = sortedGroupedEvents[index];
 
     return (
-      <div style={style} className="padding-x-2">
+      <div style={style}>
+      <div className='padding-1'>
         <EventItem
           event={event}
           formatEventDates={formatEventDates}
@@ -190,26 +191,25 @@ const EventList: React.FC<EventListProps> = memo(({ features }) => {
           features={features}
         />
       </div>
+    </div>
     );
   };
 
   return (
     <div className="display-flex flex-column height-full">
-      <div className="margin-bottom-2">
-        <div className="width-full bg-white radius-md border-0 overflow-hidden">
-          <div className="display-flex flex-row height-full">
-            <div className="flex-fill display-flex flex-column flex-align-center flex-justify-center padding-y-2 border-right border-base-lighter">
-              <div className="text-base-dark font-sans-sm margin-bottom-05">Total</div>
-              <div className="font-sans-xl text-bold text-base-dark">{totalEvents}</div>
-            </div>
-            <div className="flex-fill display-flex flex-column flex-align-center flex-justify-center padding-y-2 border-right border-base-lighter">
-              <div className="text-error font-sans-sm margin-bottom-05">Active</div>
-              <div className="font-sans-xl text-bold text-error">{activeEvents}</div>
-            </div>
-            <div className="flex-fill display-flex flex-column flex-align-center flex-justify-center padding-y-2">
-              <div className="text-base-dark font-sans-sm margin-bottom-05">Inactive</div>
-              <div className="font-sans-xl text-bold text-base-dark">{inactiveEvents}</div>
-            </div>
+      <div className="width-full bg-white radius-md border-0 overflow-hidden">
+        <div className="display-flex flex-row height-full">
+          <div className="flex-fill display-flex flex-column flex-align-center flex-justify-center padding-y-2 border-right border-base-lighter">
+            <div className="text-base-dark font-sans-sm margin-bottom-05">Total</div>
+            <div className="font-sans-xl text-bold text-base-dark">{totalEvents}</div>
+          </div>
+          <div className="flex-fill display-flex flex-column flex-align-center flex-justify-center padding-y-2 border-right border-base-lighter">
+            <div className="text-error font-sans-sm margin-bottom-05">Active</div>
+            <div className="font-sans-xl text-bold text-error">{activeEvents}</div>
+          </div>
+          <div className="flex-fill display-flex flex-column flex-align-center flex-justify-center padding-y-2">
+            <div className="text-base-dark font-sans-sm margin-bottom-05">Inactive</div>
+            <div className="font-sans-xl text-bold text-base-dark">{inactiveEvents}</div>
           </div>
         </div>
       </div>

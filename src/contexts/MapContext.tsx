@@ -221,7 +221,8 @@ export const MapProvider = ({ children }: { children: ReactNode }) => {
     }
 
     try {
-      // Placeholder for the actual implementation
+      // TODO: Placeholder for the actual implementation
+      // of the export functionality for gifs / videos
       return null;
     } catch (error) {
       console.error('Error exporting map image:', error);

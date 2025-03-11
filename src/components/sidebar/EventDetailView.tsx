@@ -56,9 +56,9 @@ const EventDetails: React.FC<EventDetailsProps> = ({ onBack }) => {
 
   return (
     <div className="height-full display-flex flex-column bg-white">
-      <div className="padding-y-2 padding-x-3 bg-base-darkest display-flex flex-row flex-align-center">
+      <div className="padding-y-2 padding-x-3 border-bottom border-base-lighter display-flex flex-row flex-align-center">
         <button
-          className="usa-button usa-button--unstyled text-white display-flex flex-align-center"
+          className="usa-button usa-button--unstyled text-base-dark display-flex flex-align-center"
           onClick={onBack}
         >
           <svg className="margin-right-1" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -75,7 +75,7 @@ const EventDetails: React.FC<EventDetailsProps> = ({ onBack }) => {
               <circle cx="12" cy="12" r="10" fill={isActive ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2"/>
             </svg>
           </span>
-          <h1 className={`font-heading-lg margin-0 ${isActive ? 'text-error' : 'text-base-dark'}`}>
+          <h1 className={`font-sans-md margin-0 ${isActive ? 'text-error' : 'text-base-dark'}`}>
             {eventName}
           </h1>
         </div>
@@ -86,24 +86,24 @@ const EventDetails: React.FC<EventDetailsProps> = ({ onBack }) => {
           </span>
         </div>
 
-        <div className="display-flex flex-row margin-bottom-3 grid-gap-2">
-          <div className="border-1px border-base-lighter radius-md padding-3 flex-fill">
+        <div className="display-flex flex-row margin-bottom-2 grid-gap-3">
+          <div className="border-1px border-base-lighter radius-md padding-3 flex-fill margin-right-2">
             <h3 className="margin-0 margin-bottom-1 font-sans-sm text-base-dark font-normal">Area</h3>
             <div className="margin-0 text-base-dark">
-              <span className="font-heading-xl">{area}</span> <span className="font-sans-xs">km²</span>
+              <span className="font-sans-xl">{area}</span> <span className="font-sans-xs">km²</span>
             </div>
           </div>
 
           <div className="border-1px border-base-lighter radius-md padding-3 flex-fill">
             <h3 className="margin-0 margin-bottom-1 font-sans-sm text-base-dark font-normal">Duration</h3>
             <div className="margin-0 text-base-dark">
-              <span className="font-heading-xl">{durationDays}</span> <span className="font-sans-xs">days</span>
+              <span className="font-sans-xl">{durationDays}</span> <span className="font-sans-xs">days</span>
             </div>
           </div>
         </div>
 
-        <div className="display-flex flex-row margin-bottom-3 grid-gap-2">
-          <div className="border-1px border-base-lighter radius-md padding-3 flex-fill">
+        <div className="display-flex flex-row margin-bottom-2 grid-gap-3">
+          <div className="border-1px border-base-lighter radius-md padding-3 flex-fill margin-right-2">
             <h3 className="margin-0 margin-bottom-1 font-sans-sm text-base-dark font-normal display-flex flex-align-center">
               Mean RFP
               <span className="margin-left-1 text-base-dark">
@@ -114,98 +114,108 @@ const EventDetails: React.FC<EventDetailsProps> = ({ onBack }) => {
               </span>
             </h3>
             <div className="margin-0 text-base-dark">
-              <span className="font-heading-xl">{meanRFP}</span> <span className="font-sans-xs">MW</span>
+              <span className="font-sans-xl">{meanRFP}</span> <span className="font-sans-xs">MW</span>
             </div>
           </div>
 
           <div className="border-1px border-base-lighter radius-md padding-3 flex-fill">
             <h3 className="margin-0 margin-bottom-1 font-sans-sm text-base-dark font-normal">Perimeter</h3>
             <div className="margin-0 text-base-dark">
-              <span className="font-heading-xl">{perimeter}</span> <span className="font-sans-xs">km</span>
+              <span className="font-sans-xl">{perimeter}</span> <span className="font-sans-xs">km</span>
             </div>
           </div>
         </div>
 
-        <table className="usa-table usa-table--borderless width-full">
-          <tbody>
-            <tr className="border-bottom border-base-lighter">
-              <th scope="row" className="text-base-dark font-sans-sm padding-y-2 padding-x-0">Status</th>
-              <td className="text-base-dark font-sans-sm text-right padding-y-2 padding-x-0">
-                <span className={`margin-left-1 font-sans-2xs text-white bg-${isActive ? 'error' : 'base-dark'} radius-pill padding-x-2 padding-y-05`}>
-                  {isActive ? 'Active' : 'Inactive'}
-                </span>
-              </td>
-            </tr>
-            <tr className="border-bottom border-base-lighter">
-              <th scope="row" className="text-base-dark font-sans-sm padding-y-2 padding-x-0">Pixel density</th>
-              <td className="text-base-dark font-sans-sm text-right padding-y-2 padding-x-0">{pixelDensity} px/km²</td>
-            </tr>
-            <tr className="border-bottom border-base-lighter">
-              <th scope="row" className="text-base-dark font-sans-sm padding-y-2 padding-x-0">New pixels</th>
-              <td className="text-base-dark font-sans-sm text-right padding-y-2 padding-x-0">{newPixels}</td>
-            </tr>
-            <tr>
-              <th scope="row" className="text-base-dark font-sans-sm padding-y-2 padding-x-0">Total pixels</th>
-              <td className="text-base-dark font-sans-sm text-right padding-y-2 padding-x-0">{totalPixels}</td>
-            </tr>
-          </tbody>
-        </table>
+        <div className="border-top-0">
+          <table className="usa-table usa-table--borderless width-full">
+            <tbody>
+              <tr className="border-top-0">
+                <th scope="row" className="text-base-dark font-sans-sm padding-y-2 padding-x-0 border-top-0">Status</th>
+                <td className="text-base-dark font-sans-sm text-right padding-y-2 padding-x-0 border-top-0">
+                  <span className={`margin-left-1 font-sans-2xs text-white bg-${isActive ? 'error' : 'base-dark'} radius-pill padding-x-2 padding-y-05`}>
+                    {isActive ? 'Active' : 'Inactive'}
+                  </span>
+                </td>
+              </tr>
+              <tr>
+                <th scope="row" className="text-base-dark font-sans-sm padding-y-2 padding-x-0">Pixel density</th>
+                <td className="text-base-dark font-sans-sm text-right padding-y-2 padding-x-0">{pixelDensity} px/km²</td>
+              </tr>
+              <tr>
+                <th scope="row" className="text-base-dark font-sans-sm padding-y-2 padding-x-0">New pixels</th>
+                <td className="text-base-dark font-sans-sm text-right padding-y-2 padding-x-0">{newPixels}</td>
+              </tr>
+              <tr>
+                <th scope="row" className="text-base-dark font-sans-sm padding-y-2 padding-x-0">Total pixels</th>
+                <td className="text-base-dark font-sans-sm text-right padding-y-2 padding-x-0">{totalPixels}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
 
-        <div className="margin-top-4 margin-bottom-2">
+        <div className="margin-top-4 margin-bottom-3 border-top-1px border-bottom-1px border-base-lighter padding-y-2">
           <h3 className="margin-top-0 margin-bottom-2 font-sans-md text-base-dark">Fire spread</h3>
 
-          <div className="display-flex flex-align-center margin-bottom-2">
-            <div className="width-3 height-3 bg-base-dark margin-right-1"></div>
-            <span className="text-base-dark font-sans-sm">Previous</span>
+          <div className="display-flex flex-wrap">
+            <div className="display-flex flex-align-center margin-right-4 margin-bottom-1">
+              <div className="width-3 height-3 bg-base-dark margin-right-1"></div>
+              <span className="text-base-dark font-sans-sm">Previous</span>
+            </div>
 
-            <div className="width-3 height-3 bg-error margin-right-1 margin-left-3"></div>
-            <span className="text-base-dark font-sans-sm">Current</span>
+            <div className="display-flex flex-align-center margin-right-4 margin-bottom-1">
+              <div className="width-3 height-3 bg-error margin-right-1"></div>
+              <span className="text-base-dark font-sans-sm">Current</span>
+            </div>
 
-            <div className="width-3 height-3 bg-warning margin-right-1 margin-left-3"></div>
-            <span className="text-base-dark font-sans-sm">Perimeter</span>
+            <div className="display-flex flex-align-center margin-bottom-1">
+              <div className="width-3 height-3 bg-warning margin-right-1"></div>
+              <span className="text-base-dark font-sans-sm">Perimeter</span>
+            </div>
+          </div>
+
+          <div className="margin-top-3">
+            <div className="margin-bottom-1">
+              <label className="text-base-dark font-sans-sm">Opacity</label>
+            </div>
+            <div className="display-flex flex-align-center">
+              <input
+                type="range"
+                className="usa-range flex-fill"
+                min="0"
+                max="100"
+                defaultValue="100"
+              />
+              <span className="margin-left-2 text-base-dark font-sans-sm border-1px border-base-lighter padding-x-2 padding-y-1">
+                100%
+              </span>
+            </div>
           </div>
         </div>
 
-        <div className="margin-bottom-3">
-          <div className="margin-bottom-1">
-            <label className="text-base-dark font-sans-sm">Opacity</label>
-          </div>
+        <div className="margin-top-1 padding-top-1">
           <div className="display-flex flex-align-center">
-            <input
-              type="range"
-              className="usa-range flex-fill"
-              min="0"
-              max="100"
-              defaultValue="100"
-            />
-            <span className="margin-left-2 text-base-dark font-sans-sm border-1px border-base-lighter padding-x-2 padding-y-1">
-              100%
-            </span>
+            <label className="usa-checkbox margin-right-4">
+              <input
+                className="usa-checkbox__input"
+                type="checkbox"
+                name="wind-direction"
+                checked={showWindLayer}
+                onChange={toggleWindLayer}
+              />
+              <span className="usa-checkbox__label font-sans-sm">Wind direction</span>
+            </label>
+
+            <label className="usa-checkbox">
+              <input
+                className="usa-checkbox__input"
+                type="checkbox"
+                name="3d-map"
+                checked={show3DMap}
+                onChange={toggle3DMap}
+              />
+              <span className="usa-checkbox__label font-sans-sm">3D map</span>
+            </label>
           </div>
-        </div>
-
-        <div className="margin-top-2">
-          <label className="usa-checkbox">
-            <input
-              className="usa-checkbox__input"
-              type="checkbox"
-              name="wind-direction"
-              checked={showWindLayer}
-              onChange={toggleWindLayer}
-            />
-            <span className="usa-checkbox__label font-sans-sm">Wind direction</span>
-          </label>
-
-          <label className="usa-checkbox margin-top-2">
-            <input
-              className="usa-checkbox__input"
-              type="checkbox"
-              name="3d-map"
-              checked={show3DMap}
-              onChange={toggle3DMap}
-            />
-            <span className="usa-checkbox__label font-sans-sm">3D map</span>
-          </label>
         </div>
       </div>
     </div>

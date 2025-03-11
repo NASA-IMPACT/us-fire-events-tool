@@ -12,8 +12,6 @@ const TimeRangeSlider = () => {
   const [highlightedArea, setHighlightedArea] = useState({ left: 0, width: 0 });
   const chartRef = useRef(null);
 
-  console.log('events ', events)
-
   const { minDate, maxDate, totalRange } = useMemo(() => {
     const now = new Date();
     now.setHours(23, 59, 59, 999);

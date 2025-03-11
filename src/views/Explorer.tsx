@@ -56,13 +56,9 @@ const Explorer: React.FC = () => {
         {viewMode === 'detail' ? (
           <EventDetails onBack={handleBackToList} />
         ) : (
-          <div className="bg-base-darkest usa-backdrop-blur text-white height-full display-flex flex-column">
-            <div className="flex-fill overflow-auto">
-              <EventList
-                features={filteredEvents}
-              />
-            </div>
-          </div>
+          <EventList
+              features={filteredEvents}
+          />
         )}
       </div>
     </div>

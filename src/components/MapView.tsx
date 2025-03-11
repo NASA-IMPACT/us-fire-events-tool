@@ -10,6 +10,7 @@ import 'mapbox-gl/dist/mapbox-gl.css';
 import { MapViewState } from '@deck.gl/core';
 import { useEvents } from '../contexts/EventsContext';
 import { useAppState } from '../contexts/AppStateContext';
+import { useFilters } from '../contexts/FiltersContext';
 import _ from 'lodash';
 
 const INITIAL_VIEW_STATE: MapViewState = {
@@ -20,9 +21,6 @@ const INITIAL_VIEW_STATE: MapViewState = {
     bearing: 0,
     maxZoom: 20,
     minZoom: 0,
-    maxPitch: 0,
-    minPitch: 0,
-    transitionDuration: 300
 };
 
 const USA_BBOX = [-125.0, 24.5, -66.0, 49.5];
@@ -30,6 +28,15 @@ const USA_BBOX = [-125.0, 24.5, -66.0, 49.5];
 const MapView = () => {
     const { updateEvents } = useEvents();
     const { showWindLayer, show3DMap, setMapBounds, timeRange } = useAppState();
+    const {
+        fireArea,
+        duration,
+        meanFrp,
+        searchTerm,
+        region,
+        isActive,
+        showAdvancedFilters
+    } = useFilters();
 
     const [layers, setLayers] = useState([]);
     const [viewState, setViewState] = useState(INITIAL_VIEW_STATE);
@@ -39,6 +46,8 @@ const MapView = () => {
     const deckRef = useRef(null);
     const interactionTimeoutRef = useRef<number | null>(null);
     const lastBoundsRef = useRef(null);
+    const loadedTilesRef = useRef(new Set());
+    const allFeaturesRef = useRef([]);
 
     const collectVisibleFeaturesRef = useRef(null);
 
@@ -80,7 +89,7 @@ const MapView = () => {
             if (isInteracting) return;
 
             updateContextAfterInteraction();
-        }, 600);
+        }, 1500);
 
         return () => {
             if (collectVisibleFeaturesRef.current) {
@@ -119,15 +128,15 @@ const MapView = () => {
                         bounds: data.bounds,
                         extensions: [new ClipExtension()],
                         clipBounds: USA_BBOX,
-                        numParticles: 5000,
-                        color: [50, 50, 50, 255],
+                        numParticles: 3000,
+                        color: [70, 70, 70, 255],
                         fadeOpacity: 0.92,
                         dropRate: 0.003,
                         dropRateBump: 0.01,
                         speedFactor: 20,
                         lineWidth: { type: 'exponential', value: 2.0, slope: 0.5, min: 1.0, max: 4.5 },
-                        maxAge: 30,
-                        paths: 30,
+                        maxAge: 10,
+                        paths: 20,
                         fadeIn: true,
                         useWorkers: true,
                         updateRate: 16,
@@ -156,15 +165,47 @@ const MapView = () => {
     }, [windLayer, showWindLayer]);
 
     const handleTileLoad = useCallback((tile) => {
-        loadedTilesRef.current.add(tile.id);
-        allFeaturesRef.current = [...allFeaturesRef.current, ...newFeatures];
-
         if (tile && tile.data && tile.data.length > 0) {
+            loadedTilesRef.current.add(tile.id);
+            allFeaturesRef.current = [...allFeaturesRef.current, ...tile.data];
+
             if (!isInteracting) {
                 collectVisibleFeatures();
             }
         }
     }, [collectVisibleFeatures, isInteracting]);
+
+    const featurePassesFilters = useCallback((feature) => {
+        if (!feature || !feature.properties) return false;
+
+        const featureTime = new Date(feature.properties.t).getTime();
+        const isInTimeRange = featureTime >= timeRange.start.getTime() && featureTime <= timeRange.end.getTime();
+        if (!isInTimeRange) return false;
+
+        if (showAdvancedFilters) {
+            const area = feature.properties.area || 0;
+            if (area < fireArea.min || area > fireArea.max) return false;
+
+            const durationInDays = feature.properties.duration_days || 0;
+            if (durationInDays < duration.min || durationInDays > duration.max) return false;
+
+            const frp = feature.properties.mean_frp || 0;
+            if (frp < meanFrp.min || frp > meanFrp.max) return false;
+
+            if (region && feature.properties.region !== region) return false;
+
+            if (isActive !== null && feature.properties.is_active !== isActive) return false;
+
+            if (searchTerm) {
+                const searchLower = searchTerm.toLowerCase();
+                const nameMatch = feature.properties.name && feature.properties.name.toLowerCase().includes(searchLower);
+                const idMatch = feature.properties.id && feature.properties.id.toLowerCase().includes(searchLower);
+                if (!nameMatch && !idMatch) return false;
+            }
+        }
+
+        return true;
+    }, [timeRange, showAdvancedFilters, fireArea, duration, meanFrp, region, isActive, searchTerm]);
 
     useEffect(() => {
         const newLayers = [
@@ -172,14 +213,12 @@ const MapView = () => {
                 id: 'fire-perimeters-mvt',
                 data: 'https://firenrt.delta-backend.com/collections/public.eis_fire_snapshot_perimeter_nrt/tiles/{z}/{x}/{y}',
                 getFillColor: (feature) => {
-                    const featureTime = new Date(feature.properties.t).getTime();
-                    const isInRange = featureTime >= timeRange.start.getTime() && featureTime <= timeRange.end.getTime();
-                    return isInRange ? [255, 140, 0, 180] : [255, 140, 0, 0];
+                    const passes = featurePassesFilters(feature);
+                    return passes ? [255, 140, 0, 180] : [255, 140, 0, 0];
                 },
                 getLineColor: (feature) => {
-                    const featureTime = new Date(feature.properties.t).getTime();
-                    const isInRange = featureTime >= timeRange.start.getTime() && featureTime <= timeRange.end.getTime();
-                    return isInRange ? [255, 69, 0, 255] : [255, 69, 0, 0];
+                    const passes = featurePassesFilters(feature);
+                    return passes ? [255, 69, 0, 255] : [255, 69, 0, 0];
                 },
                 lineWidthMinPixels: 1,
                 pickable: true,
@@ -187,19 +226,12 @@ const MapView = () => {
                 highlightColor: [255, 255, 255, 120],
 
                 updateTriggers: {
-                    getFillColor: timeRange,
-                    getLineColor: timeRange
+                    getFillColor: [timeRange, showAdvancedFilters, fireArea, duration, meanFrp, region, isActive, searchTerm],
+                    getLineColor: [timeRange, showAdvancedFilters, fireArea, duration, meanFrp, region, isActive, searchTerm]
                 },
 
-                onTileLoad: (tile) => {
-                    if (tile && tile.data && tile.data.length > 0) {
-                        if (!isInteracting) {
-                            collectVisibleFeatures();
-                        }
-                    }
-                }
+                onTileLoad: handleTileLoad
             })
-
         ];
 
         if (windLayer && showWindLayer) {
@@ -207,7 +239,26 @@ const MapView = () => {
         }
 
         setLayers(newLayers);
-    }, [windLayer, showWindLayer, handleTileLoad, isInteracting, timeRange]);
+
+        if (!isInteracting) {
+            collectVisibleFeatures();
+        }
+    }, [
+        windLayer,
+        showWindLayer,
+        handleTileLoad,
+        isInteracting,
+        timeRange,
+        featurePassesFilters,
+        showAdvancedFilters,
+        fireArea,
+        duration,
+        meanFrp,
+        region,
+        isActive,
+        searchTerm,
+        collectVisibleFeatures
+    ]);
 
     useEffect(() => {
         if (show3DMap) {
