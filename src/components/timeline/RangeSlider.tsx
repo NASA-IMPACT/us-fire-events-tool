@@ -4,6 +4,7 @@ import { Calendar } from 'lucide-react';
 import ReactSlider from 'react-slider';
 import { useEvents } from '../../contexts/EventsContext';
 import { useAppState } from '../../contexts/AppStateContext';
+import { BarChart, Bar, ResponsiveContainer, XAxis } from 'recharts';
 
 const TimeRangeSlider = () => {
   const { timeRange, setTimeRange } = useAppState();
@@ -54,11 +55,11 @@ const TimeRangeSlider = () => {
 
     return Array.from(timeMap.entries()).map(([index, count]) => ({
       timestamp: minDate.getTime() + index * binSize,
-      count
+      date: new Date(minDate.getTime() + index * binSize),
+      count,
+      isHighlighted: false
     }));
   }, [events, minDate, maxDate, totalRange, FIXED_BINS]);
-
-
 
   const [sliderValues, setSliderValues] = useState([50, 100]);
 
@@ -82,7 +83,11 @@ const TimeRangeSlider = () => {
     const filteredStart = getDateFromPercent(sliderValues[0]);
     const filteredEnd = getDateFromPercent(sliderValues[1]);
 
-    setTimeRange({ start: filteredStart, end: filteredEnd });
+    if (!timeRange ||
+        timeRange.start.getTime() !== filteredStart.getTime() ||
+        timeRange.end.getTime() !== filteredEnd.getTime()) {
+      setTimeRange({ start: filteredStart, end: filteredEnd });
+    }
 
     if (chartRef.current) {
       const chartWidth = chartRef.current.clientWidth;
@@ -91,107 +96,26 @@ const TimeRangeSlider = () => {
 
       setHighlightedArea({ left, width });
     }
-  }, [sliderValues, minDate, totalRange, setTimeRange]);
+  }, [sliderValues, minDate, totalRange, setTimeRange, timeRange]);
 
-  const renderBars = () => {
-    if (!chartRef.current || eventsByTime.length === 0) return null;
+  const chartData = useMemo(() => {
+    if (!timeRange || !eventsByTime.length) return [];
 
-    const chartWidth = chartRef.current.clientWidth;
-    const maxHeight = 90;
-    const barWidth = Math.max(chartWidth / FIXED_BINS, 2);
-
-    const maxCount = Math.max(...eventsByTime.map(day => day.count));
-
-    return eventsByTime.map((day) => {
-      const normalizedPosition = (day.timestamp - minDate.getTime()) / totalRange;
-      const left = normalizedPosition * chartWidth;
-
-      const height = maxCount > 0 ? (day.count / maxCount) * maxHeight : 0;
-
-      const isHighlighted =
-        day.timestamp >= timeRange.start.getTime() &&
-        day.timestamp <= timeRange.end.getTime();
-
-      return (
-        <div
-          key={day.timestamp}
-          className="bar"
-          style={{
-            left: `${left}px`,
-            height: `${height}px`,
-            width: `${barWidth}px`,
-            backgroundColor: isHighlighted ? '#1a6baa' : '#cccccc',
-            opacity: isHighlighted ? 1 : 0.5
-          }}
-        />
-      );
-    });
-  };
-
+    return eventsByTime.map(item => ({
+      ...item,
+      isHighlighted:
+        item.timestamp >= timeRange.start.getTime() &&
+        item.timestamp <= timeRange.end.getTime()
+    }));
+  }, [eventsByTime, timeRange]);
 
   return (
     <div className="position-absolute bottom-3 left-3 bg-white radius-md padding-3 shadow-2 z-top" style={{ width: "800px" }}>
       <style>
         {`
-          .chart-container {
-            height: 120px;
-            width: 100%;
-            position: relative;
-            margin-bottom: 20px;
-          }
-
-          .bar {
-            position: absolute;
-            bottom: 30px;
-            background-color: #d9d9d9;
-            width: 3px;
-            border-radius: 2px 2px 0 0;
-          }
-
-          .bar.highlighted {
-            background-color: #1a6baa;
-          }
-
-          .x-axis {
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            width: 100%;
-            height: 30px;
-            display: flex;
-            justify-content: space-between;
-          }
-
-          .x-axis-label {
-            font-size: 14px;
-            color: #71767a;
-            position: relative;
-            text-align: center;
-          }
-
-          .x-axis-label::before {
-            content: '';
-            position: absolute;
-            top: -8px;
-            left: 50%;
-            transform: translateX(-50%);
-            height: 5px;
-            width: 1px;
-            background-color: #d9d9d9;
-          }
-
-          .highlighted-area {
-            position: absolute;
-            background-color: rgba(26, 107, 170, 0.1);
-            bottom: 30px;
-            top: 0;
-            z-index: 1;
-          }
-
           .range-slider {
             width: 100%;
             height: 24px;
-            margin-top: 12px;
             position: relative;
           }
 
@@ -221,6 +145,13 @@ const TimeRangeSlider = () => {
           .range-slider .thumb:hover {
             box-shadow: 0 0 0 2px rgba(26, 107, 170, 0.3);
           }
+
+          .highlighted-area {
+            position: absolute;
+            background-color: rgba(26, 107, 170, 0.1);
+            height: 90px;
+            z-index: 1;
+          }
         `}
       </style>
 
@@ -237,9 +168,7 @@ const TimeRangeSlider = () => {
         </div>
       </div>
 
-      <div className="chart-container" ref={chartRef}>
-        {renderBars()}
-
+      <div style={{ height: '120px', position: 'relative' }} ref={chartRef}>
         <div
           className="highlighted-area"
           style={{
@@ -247,11 +176,41 @@ const TimeRangeSlider = () => {
             width: highlightedArea.width
           }}
         />
-
-        <div className="x-axis">
-          <div className="x-axis-label">{format(minDate, 'MMM d')}</div>
-          <div className="x-axis-label">{format(maxDate, 'MMM d')}</div>
-        </div>
+        <ResponsiveContainer width="100%" height="100%">
+          <BarChart data={chartData} barGap={0} barCategoryGap={0}>
+            <XAxis
+              dataKey="date"
+              scale="time"
+              tickFormatter={(date) => format(date, 'MMM d')}
+              tickLine={false}
+              axisLine={false}
+              height={30}
+              tickMargin={8}
+              style={{
+                fontSize: '14px',
+                color: '#71767a',
+                marginTop: '50px'
+              }}
+            />
+            <Bar
+              dataKey="count"
+              shape={(props) => {
+                const isHighlighted = props.payload.isHighlighted;
+                return (
+                  <rect
+                    x={props.x}
+                    y={props.y}
+                    width={props.width}
+                    height={props.height}
+                    fill={isHighlighted ? '#1a6baa' : '#cccccc'}
+                    opacity={isHighlighted ? 1 : 0.5}
+                  />
+                );
+              }}
+              isAnimationActive={false}
+            />
+          </BarChart>
+        </ResponsiveContainer>
       </div>
 
       <ReactSlider

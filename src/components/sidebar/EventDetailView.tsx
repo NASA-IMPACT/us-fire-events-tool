@@ -36,9 +36,9 @@ const EventDetails: React.FC<EventDetailsProps> = ({ onBack }) => {
   const isActive = eventProperties.isactive === 1;
   const eventName = eventProperties.name || `Fire Event ${fireId}`;
 
-  const startDate = eventProperties.t ? new Date(eventProperties.t) : null;
-  const endDate = startDate && eventProperties.duration ?
-    new Date(startDate.getTime() + (eventProperties.duration * 24 * 60 * 60 * 1000)) :
+  const endDate = eventProperties.t ? new Date(eventProperties.t) : null;
+  const startDate = endDate && eventProperties.duration ?
+    new Date(endDate.getTime() - (eventProperties.duration * 24 * 60 * 60 * 1000)) :
     null;
 
   const formatDate = (date: Date | null) => {

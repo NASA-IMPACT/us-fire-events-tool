@@ -9,6 +9,7 @@ import EventDetails from '../components/sidebar/EventDetailView';
 import TimeRangeSlider from '../components/timeline/RangeSlider';
 
 import 'mapbox-gl/dist/mapbox-gl.css';
+import DetailedTimeChart from '../components/timeline/DetailedTimeChart';
 
 const Explorer: React.FC = () => {
   const {
@@ -17,7 +18,7 @@ const Explorer: React.FC = () => {
     setViewMode
   } = useAppState();
 
-  const { getFilteredEvents, selectEvent } = useEvents();
+  const { getFilteredEvents, selectEvent, selectedEventId } = useEvents();
 
   const filteredEvents = useMemo(() => {
     return getFilteredEvents(timeRange.start, timeRange.end);
@@ -49,7 +50,11 @@ const Explorer: React.FC = () => {
           />
         </div>
 
-        <TimeRangeSlider />
+        {viewMode === 'detail' && selectedEventId ? (
+          <DetailedTimeChart />
+        ) : (
+          <TimeRangeSlider />
+        )}
       </div>
 
       <div className="width-mobile-lg overflow-hidden display-flex flex-column">

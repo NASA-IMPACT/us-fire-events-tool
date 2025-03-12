@@ -56,6 +56,7 @@ interface EventsContextValue {
   selectedEventId: string | null;
   selectEvent: (eventId: string | null) => void;
   getFilteredEvents: (start: Date, end: Date) => MVTFeature[];
+  firePerimeters: GeoJSON.FeatureCollection | null;
 }
 
 const EventsContext = createContext<EventsContextValue | undefined>(undefined);
@@ -90,6 +91,21 @@ const areFeatureArraysEqual = (prevFeatures: MVTFeature[], nextFeatures: MVTFeat
   return true;
 };
 
+export const fetchFirePerimeters = async (fireId: string) => {
+  const url = `https://firenrt.delta-backend.com/collections/public.eis_fire_lf_perimeter_nrt/items?filter=fireid%3D${fireId}&limit=50&f=geojson`;
+
+  try {
+    const response = await fetch(url);
+    if (!response.ok) {
+      throw new Error(`Failed to fetch fire perimeters: ${response.statusText}`);
+    }
+    return await response.json();
+  } catch (error) {
+    console.error("Error fetching fire perimeters:", error);
+    return null;
+  }
+};
+
 export const EventsProvider = ({ children }: { children: ReactNode }) => {
   const { timeRange } = useAppState();
   const [filters, setFilters] = useState<EventFilterParams>({
@@ -101,6 +117,7 @@ export const EventsProvider = ({ children }: { children: ReactNode }) => {
   const prevFeaturesRef = useRef<MVTFeature[]>([]);
   const pendingFeaturesRef = useRef<MVTFeature[] | null>(null);
   const updateTimeoutRef = useRef<number | null>(null);
+  const [firePerimeters, setFirePerimeters] = useState<GeoJSON.FeatureCollection | null>(null);
 
   useEffect(() => {
     setFilters(prev => ({
@@ -149,8 +166,15 @@ export const EventsProvider = ({ children }: { children: ReactNode }) => {
     }));
   }, []);
 
-  const selectEvent = useCallback((eventId: string | null) => {
+  const selectEvent = useCallback(async (eventId: string | null) => {
     setSelectedEventId(eventId);
+
+    if (eventId) {
+      const perimeters = await fetchFirePerimeters(eventId);
+      setFirePerimeters(perimeters);
+    } else {
+      setFirePerimeters(null);
+    }
   }, []);
 
   const getFilteredEvents = useCallback((start: Date, end: Date) => {
@@ -213,7 +237,8 @@ export const EventsProvider = ({ children }: { children: ReactNode }) => {
     currentFilters: filters,
     selectedEventId,
     selectEvent,
-    getFilteredEvents
+    getFilteredEvents,
+    firePerimeters
   };
 
   return (
