@@ -17,7 +17,9 @@ const Explorer: React.FC = () => {
     viewMode,
     setViewMode,
     toggle3DMap,
-    show3DMap
+    show3DMap,
+    showWindLayer,
+    toggleWindLayer,
   } = useAppState();
 
   const { getFilteredEvents, selectEvent, selectedEventId } = useEvents();
@@ -38,6 +40,9 @@ const Explorer: React.FC = () => {
     setViewMode('explorer');
     if (show3DMap) {
       toggle3DMap();
+    }
+    if (showWindLayer) {
+      toggleWindLayer();
     }
   };
 

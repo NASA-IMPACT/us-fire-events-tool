@@ -133,6 +133,7 @@ const MapView = () => {
 
                 const dataset = 'gfs/wind_10m_above_ground';
                 const currentDate = new Date().toISOString();
+
                 const datetimeRange = WeatherLayersClient.offsetDatetimeRange(currentDate, 0, 24);
                 const { datetimes } = await client.loadDatasetSlice(dataset, datetimeRange);
                 const data = await client.loadDatasetData(dataset, datetimes[0]);
