@@ -317,6 +317,7 @@ const MapView = () => {
                 },
                 lineWidthMinPixels: 1,
                 pickable: true,
+                opacity: layerOpacity / 100,
                 autoHighlight: true,
                 highlightColor: [255, 255, 255, 120],
                 onClick: handleClick,
