@@ -15,7 +15,9 @@ const Explorer: React.FC = () => {
   const {
     timeRange,
     viewMode,
-    setViewMode
+    setViewMode,
+    toggle3DMap,
+    show3DMap
   } = useAppState();
 
   const { getFilteredEvents, selectEvent, selectedEventId } = useEvents();
@@ -34,6 +36,9 @@ const Explorer: React.FC = () => {
   const handleBackToList = () => {
     selectEvent(null);
     setViewMode('explorer');
+    if (show3DMap) {
+      toggle3DMap();
+    }
   };
 
   return (
@@ -57,7 +62,7 @@ const Explorer: React.FC = () => {
         )}
       </div>
 
-      <div className="width-mobile-lg overflow-hidden display-flex flex-column">
+      <div className="overflow-hidden display-flex flex-column" style={{ width: '360px' }}>
         {viewMode === 'detail' ? (
           <EventDetails onBack={handleBackToList} />
         ) : (

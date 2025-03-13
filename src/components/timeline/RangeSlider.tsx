@@ -110,13 +110,14 @@ const TimeRangeSlider = () => {
   }, [eventsByTime, timeRange]);
 
   return (
-    <div className="position-absolute bottom-3 left-3 bg-white radius-md padding-3 shadow-2 z-top" style={{ width: "800px" }}>
+    <div className="position-absolute bottom-3 left-3 bg-base-lightest radius-md padding-3 shadow-2 z-top" style={{ width: "800px", height: '215px' }}>
       <style>
         {`
           .range-slider {
             width: 100%;
             height: 24px;
             position: relative;
+            margin-top: -33px;
           }
 
           .range-slider .track {
@@ -152,19 +153,35 @@ const TimeRangeSlider = () => {
             height: 90px;
             z-index: 1;
           }
+
+          .custom-bar-shape {
+            rx: 2px;
+            ry: 2px;
+          }
+
+          .date-picker {
+            background-color: white;
+          }
+
+          .recharts-xAxis {
+              transform: translate(0, 9px);
+              font-size: 12px;
+            }
         `}
       </style>
 
-      <div className="display-flex flex-align-center flex-justify flex-row margin-bottom-1">
-        <div className="font-sans-sm text-base-dark">
-          <span>y-axis: Number of fire events</span>
-          <span className="margin-left-2">Time period:</span>
+      <div className="display-flex flex-align-center margin-bottom-1">
+        <div className="font-body font-weight-regular font-sans-3xs text-base-dark">
+          <span>y-axis: <span className="font-weight-bold">Number of fire events</span></span>
         </div>
-        <div className="display-flex flex-align-center border-1px border-base-light padding-y-05 padding-x-2 radius-sm font-sans-sm">
-          {format(timeRange.start, 'MMM d, yyyy')} - {format(timeRange.end, 'MMM d, yyyy')}
-          <button className="border-0 bg-transparent padding-1 margin-left-1">
-            <Calendar size={16} color="#71767a" />
-          </button>
+        <div className="display-flex flex-align-center margin-left-4">
+          <span className="font-body font-weight-regular font-sans-3xs text-base margin-right-1">Time period:</span>
+          <div className="display-flex flex-align-center border-1px border-base-light padding-y-05 padding-x-1 radius-sm font-ui font-weight-regular font-sans-3xs text-base bg-white date-picker">
+            {format(timeRange.start, 'MMM d, yyyy')} - {format(timeRange.end, 'MMM d, yyyy')}
+            <button className="border-0 bg-transparent padding-1 margin-left-1">
+              <Calendar size={16} color="#71767a" />
+            </button>
+          </div>
         </div>
       </div>
 
@@ -177,7 +194,7 @@ const TimeRangeSlider = () => {
           }}
         />
         <ResponsiveContainer width="100%" height="100%">
-          <BarChart data={chartData} barGap={0} barCategoryGap={0}>
+          <BarChart data={chartData} barGap={2} barCategoryGap={0}>
             <XAxis
               dataKey="date"
               scale="time"
@@ -186,10 +203,8 @@ const TimeRangeSlider = () => {
               axisLine={false}
               height={30}
               tickMargin={8}
-              style={{
-                fontSize: '14px',
-                color: '#71767a',
-                marginTop: '50px'
+              tick={{
+                className: 'font-body font-weight-regular font-sans-3xs text-base'
               }}
             />
             <Bar
@@ -200,10 +215,13 @@ const TimeRangeSlider = () => {
                   <rect
                     x={props.x}
                     y={props.y}
-                    width={props.width}
+                    width={7}
                     height={props.height}
-                    fill={isHighlighted ? '#1a6baa' : '#cccccc'}
-                    opacity={isHighlighted ? 1 : 0.5}
+                    fill={isHighlighted ? '#005ea2' : '#A9AEB1'}
+                    opacity={isHighlighted ? 1 : 0.7}
+                    rx={2}
+                    ry={2}
+                    className="custom-bar-shape"
                   />
                 );
               }}

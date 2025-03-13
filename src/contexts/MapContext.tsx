@@ -15,6 +15,8 @@ const DEFAULT_VIEW_STATE: ViewState = {
   transitionDuration: 300
 };
 
+const DEFAULT_OPACITY = 100;
+
 interface MapContextValue {
   viewState: ViewState;
   setViewState: (viewState: ViewState) => void;
@@ -27,6 +29,8 @@ interface MapContextValue {
   flyToBounds: (bounds: [number, number, number, number]) => void;
   exportMapImage: () => Promise<string | null>;
   resetView: () => void;
+  layerOpacity: number;
+  setLayerOpacity: (opacity: number) => void;
 }
 
 const MapContext = createContext<MapContextValue | undefined>(undefined);
@@ -45,6 +49,7 @@ export const MapProvider = ({ children }: { children: ReactNode }) => {
   const [layers, setLayers] = useState<any[]>([]);
   const [windLayer, setWindLayer] = useState<any | null>(null);
   const [isLayersLoading, setIsLayersLoading] = useState(false);
+  const [layerOpacity, setLayerOpacity] = useState<number>(DEFAULT_OPACITY);
   const deckRef = useRef<DeckGL>(null);
 
   const mapboxStyle = showSatelliteImagery
@@ -248,7 +253,9 @@ export const MapProvider = ({ children }: { children: ReactNode }) => {
     flyToCoordinates,
     flyToBounds,
     exportMapImage,
-    resetView
+    resetView,
+    layerOpacity,
+    setLayerOpacity
   };
 
   return (

@@ -106,6 +106,21 @@ export const fetchFirePerimeters = async (fireId: string) => {
   }
 };
 
+export const fetchAlternativeFirePerimeters = async (fireId: string) => {
+  const url = `https://firenrt.delta-backend.com/collections/public.eis_fire_snapshot_perimeter_nrt/items?filter=fireid%3D${fireId}&limit=50&f=geojson`;
+
+  try {
+    const response = await fetch(url);
+    if (!response.ok) {
+      throw new Error(`Failed to fetch alternative fire perimeters: ${response.statusText}`);
+    }
+    return await response.json();
+  } catch (error) {
+    console.error("Error fetching alternative fire perimeters:", error);
+    return null;
+  }
+};
+
 export const EventsProvider = ({ children }: { children: ReactNode }) => {
   const { timeRange } = useAppState();
   const [filters, setFilters] = useState<EventFilterParams>({
@@ -170,12 +185,18 @@ export const EventsProvider = ({ children }: { children: ReactNode }) => {
     setSelectedEventId(eventId);
 
     if (eventId) {
-      const perimeters = await fetchFirePerimeters(eventId);
+      let perimeters = await fetchFirePerimeters(eventId);
+
+      if (!perimeters || !perimeters.features || perimeters.features.length === 0) {
+        perimeters = await fetchAlternativeFirePerimeters(eventId);
+      }
+
       setFirePerimeters(perimeters);
     } else {
       setFirePerimeters(null);
     }
   }, []);
+
 
   const getFilteredEvents = useCallback((start: Date, end: Date) => {
     return events.filter(event => {

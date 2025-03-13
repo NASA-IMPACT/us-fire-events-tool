@@ -8,12 +8,12 @@ import { YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } fro
 
 const DetailedTimeChart = () => {
   const { selectedEventId, firePerimeters } = useEvents();
-  const { timeRange, setTimeRange } = useAppState();
+  const { setTimeRange } = useAppState();
 
   const [sliderValue, setSliderValue] = useState(100);
   const [currentPerimeter, setCurrentPerimeter] = useState(null);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [animationSpeed, setAnimationSpeed] = useState(500);
+  const [animationSpeed] = useState(500);
   const chartRef = useRef(null);
   const sliderContainerRef = useRef(null);
   const animationRef = useRef(null);
@@ -27,7 +27,6 @@ const DetailedTimeChart = () => {
     maxDate,
     totalRange,
     perimeterData,
-    maxArea,
     timePoints,
     chartData
   } = useMemo(() => {
@@ -44,11 +43,13 @@ const DetailedTimeChart = () => {
     }
 
     const sortedFeatures = [...firePerimeters.features].sort((a, b) => {
-      return new Date(a.properties.t).getTime() - new Date(b.properties.t).getTime();
+      const timeA = new Date(a.properties.primarykey.split('|')[2]).getTime();
+      const timeB = new Date(b.properties.primarykey.split('|')[2]).getTime();
+      return timeA - timeB;
     });
 
     const data = sortedFeatures.map(feature => {
-      const time = new Date(feature.properties.t);
+      const time = new Date(feature.properties.primarykey.split('|')[2]);
       const areaKm2 = (feature.properties.farea || 0) / 1000000;
       const meanFrp = feature.properties.meanfrp || 0;
       const duration = feature.properties.duration || 0;
@@ -234,7 +235,7 @@ const DetailedTimeChart = () => {
       }
 
       return (
-        <div className="bg-white padding-2 radius-md border-1px border-base-lighter shadow-1">
+        <div className="bg-white padding-2 radius-md border-1px border-base-lighter shadow-1 z-top">
           <p className="text-bold">{format(data.time, 'HH:mm MMM d, yyyy')}</p>
           <p>
             {selectedYAxis}: {displayValue}{unit}
@@ -257,11 +258,11 @@ const DetailedTimeChart = () => {
   if (!selectedEventId) return null;
 
   return (
-    <div className="position-absolute bottom-3 left-3 bg-white radius-md padding-3 shadow-2 z-top" style={{ width: "800px" }}>
+    <div className="position-absolute bottom-3 left-3 bg-base-lightest radius-md padding-3 shadow-2 z-top" style={{ width: "800px", height: '215px' }}>
       <style>
         {`
           .chart-container {
-            height: 170px;
+            height: 90px;
             width: 100%;
             position: relative;
             margin-bottom: 10px;
@@ -275,6 +276,7 @@ const DetailedTimeChart = () => {
             margin-left: 33px;
             margin-top: -19px;
             box-sizing: border-box;
+            z-index: 9;
           }
 
           .time-slider {
@@ -348,7 +350,6 @@ const DetailedTimeChart = () => {
             background-color: #1a6baa;
             color: white;
             border: none;
-            border-radius: 4px;
             padding: 10px 16px;
             display: flex;
             align-items: center;
@@ -362,6 +363,10 @@ const DetailedTimeChart = () => {
           .recharts-cartesian-grid-horizontal line,
           .recharts-cartesian-grid-vertical line {
             stroke: #e6e6e6;
+          }
+
+          .recharts-tooltip-wrapper {
+            z-index: 1000;
           }
 
           .recharts-tooltip-cursor {
@@ -396,9 +401,9 @@ const DetailedTimeChart = () => {
         `}
       </style>
 
-      <div className="display-flex flex-align-center flex-justify-space-between margin-bottom-2">
+      <div className="display-flex flex-align-center flex-justify margin-bottom-2">
         <div className="display-flex flex-align-center">
-          <span className="margin-right-1">y-axis:</span>
+          <span className="margin-right-1 font-role-body font-weight-regular type-scale-3xs color-base-ink">y-axis:</span>
           <select
             className="y-axis-select"
             value={selectedYAxis}
@@ -416,7 +421,7 @@ const DetailedTimeChart = () => {
             onClick={togglePlayback}
             aria-label={isPlaying ? "Pause" : "Play"}
           >
-            <Play size={20} />
+            <Play size={24} />
           </button>
 
           <button
@@ -424,13 +429,13 @@ const DetailedTimeChart = () => {
             onClick={resetAnimation}
             aria-label="Reset"
           >
-            <RotateCw size={20} />
-          </button>
-
-          <button className="export-button margin-left-2">
-            Export video <Video size={18} className="margin-left-1" />
+            <RotateCw size={24} />
           </button>
         </div>
+
+        <button className="export-button border-radius-md padding-1 padding-x-105">
+          Export video <Video size={18} className="margin-left-1" />
+        </button>
       </div>
 
       <div className="chart-container" ref={chartRef}>
@@ -446,7 +451,8 @@ const DetailedTimeChart = () => {
             <YAxis
               dataKey={getYAxisKey()}
               tickFormatter={formatYAxisTick}
-              tick={{ fontSize: 10 }}
+              tick={{ fontSize: 12, fontFamily: "Source Sans Pro Web, Helvetica Neue, Helvetica, Roboto, Arial, sans-serif", fill: "#71767a" }}
+              className="font-role-body font-weight-regular type-scale-3xs color-base"
             />
             <Tooltip content={customTooltip} cursor={{fill: 'transparent'}} />
             <Bar
@@ -459,7 +465,7 @@ const DetailedTimeChart = () => {
                     y={props.y}
                     width={props.width}
                     height={props.height}
-                    fill={isHighlighted ? '#1a6baa' : '#cccccc'}
+                    fill={isHighlighted ? '#1a6baa' : '#DFE1E2'}
                     opacity={isHighlighted ? 1 : 0.5}
                   />
                 );
@@ -488,8 +494,8 @@ const DetailedTimeChart = () => {
       </div>
 
       <div className="time-labels display-flex flex-justify">
-        <div className="text-base-dark">{format(minDate, 'HH:mm MMM d, yyyy')}</div>
-        <div className="text-base-dark">{format(maxDate, 'HH:mm MMM d, yyyy')}</div>
+        <div className="theme-font-role-body theme-font-weight-regular theme-type-scale-3xs theme-color-base">{format(minDate, 'HH:mm MMM d, yyyy')}</div>
+        <div className="theme-font-role-body theme-font-weight-regular theme-type-scale-3xs theme-color-base">{format(maxDate, 'HH:mm MMM d, yyyy')}</div>
       </div>
     </div>
   );

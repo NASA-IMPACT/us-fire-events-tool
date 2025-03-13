@@ -36,8 +36,8 @@ const SearchBox: React.FC<SearchBoxProps> = ({
   }, []);
 
   return (
-    <div className="bg-white padding-2">
-      <div className="margin-bottom-1">
+    <div className="bg-white radius-md overflow-hidden border-0 shadow-1">
+      <div className="padding-2">
         <form onSubmit={handleSubmit} className="display-flex width-full">
           <div className="position-relative width-full">
             <input
@@ -50,79 +50,61 @@ const SearchBox: React.FC<SearchBoxProps> = ({
               onFocus={() => setIsFocused(true)}
               onBlur={() => setIsFocused(false)}
               placeholder="Search by event name or region"
+              className="font-body font-weight-regular font-sans-2xs border-1px border-right-0 radius-left-md padding-x-2 height-5 width-full"
               style={{
-                height: '44px',
-                width: '100%',
-                border: '1px solid #ccc',
-                borderRight: 'none',
                 borderTopRightRadius: 0,
-                borderBottomRightRadius: 0,
-                padding: '0 12px',
-                fontSize: '14px',
-                lineHeight: '22.4px',
-                fontFamily: 'Source Sans Pro, Helvetica Neue, Helvetica, Roboto, Arial, sans-serif',
-                fontWeight: 'normal'
+                borderBottomRightRadius: 0
               }}
             />
           </div>
           <button
             type="submit"
+            className="bg-primary border-0 display-flex flex-justify-center flex-align-center cursor-pointer height-5 width-5"
             style={{
-              backgroundColor: '#1a6baa',
-              width: '44px',
-              height: '44px',
-              border: 'none',
               borderTopLeftRadius: 0,
-              borderBottomLeftRadius: 0,
-              display: 'flex',
-              justifyContent: 'center',
-              alignItems: 'center',
-              padding: 0,
-              cursor: 'pointer'
+              borderBottomLeftRadius: 0
             }}
           >
             <Search size={18} color="white" />
-            <span style={{ position: 'absolute', width: '1px', height: '1px', padding: '0', margin: '-1px', overflow: 'hidden', clip: 'rect(0, 0, 0, 0)', whiteSpace: 'nowrap', border: '0' }}>Search</span>
+            <span className="usa-sr-only">Search</span>
           </button>
         </form>
       </div>
 
-      <button
-        type="button"
-        onClick={toggleAdvancedFilters}
-        style={{
-          color: '#1a6baa',
-          padding: 0,
-          background: 'none',
-          border: 'none',
-          display: 'flex',
-          alignItems: 'center',
-          fontSize: '14px',
-          lineHeight: '22.4px',
-          fontFamily: 'Source Sans Pro, Helvetica Neue, Helvetica, Roboto, Arial, sans-serif',
-          fontWeight: 'normal',
-          cursor: 'pointer'
-        }}
-      >
-        <svg
-          width="16"
-          height="16"
-          viewBox="0 0 24 24"
-          fill="none"
-          xmlns="http://www.w3.org/2000/svg"
-          style={{ marginRight: '8px', color: '#1a6baa' }}
+      <div className="padding-x-2 padding-bottom-2">
+        <button
+          type="button"
+          onClick={toggleAdvancedFilters}
+          className="usa-button usa-button--unstyled font-body font-weight-regular font-sans-3xs display-flex flex-align-center text-primary cursor-pointer"
         >
-          <path
-            d="M4 6H20M4 12H20M4 18H20"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-          />
-        </svg>
-        {showAdvancedFilters ? "Hide advanced filters" : "Show advanced filters"}
-      </button>
-      {showAdvancedFilters && <AdvancedFilters />}
+          <svg
+            width="13.26px"
+            height="12.31px"
+            viewBox="0 0 24 24"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+            className="margin-right-1 text-primary"
+            style={{
+              marginTop: '3.85px'
+            }}
+          >
+            {showAdvancedFilters ? (
+              <path
+                d="M12 8L6 14H18L12 8Z"
+                fill="currentColor"
+              />
+            ) : (
+              <path
+                d="M12 16L18 10H6L12 16Z"
+                fill="currentColor"
+              />
+            )}
+          </svg>
+          {showAdvancedFilters ? "Hide advanced filters" : "Show advanced filters"}
+        </button>
+      </div>
 
+      {showAdvancedFilters && <AdvancedFilters />}
     </div>
   );
 };

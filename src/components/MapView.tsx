@@ -12,6 +12,7 @@ import { useAppState } from '../contexts/AppStateContext';
 import { useFilters } from '../contexts/FiltersContext';
 import _ from 'lodash';
 import { GeoJsonLayer } from '@deck.gl/layers';
+import { useMap } from '../contexts/MapContext';
 
 const INITIAL_VIEW_STATE = {
     longitude: -95.7129,
@@ -41,6 +42,7 @@ const MapView = () => {
         isActive,
         showAdvancedFilters
     } = useFilters();
+    const { layerOpacity } = useMap()
 
     const [layers, setLayers] = useState([]);
     const [viewState, setViewState] = useState(INITIAL_VIEW_STATE);
@@ -143,15 +145,15 @@ const MapView = () => {
                     bounds: data.bounds,
                     extensions: [new ClipExtension()],
                     clipBounds: USA_BBOX,
-                    numParticles: 3000,
+                    numParticles: 4000,
                     color: [70, 70, 70, 255],
                     fadeOpacity: 0.92,
                     dropRate: 0.003,
                     dropRateBump: 0.01,
                     speedFactor: 20,
                     lineWidth: { type: 'exponential', value: 2.0, slope: 0.5, min: 1.0, max: 4.5 },
-                    maxAge: 10,
-                    paths: 20,
+                    maxAge: 15,
+                    paths: 25,
                     fadeIn: true,
                     useWorkers: true,
                     updateRate: 16,
@@ -197,27 +199,27 @@ const MapView = () => {
         if (!isInTimeRange) return false;
 
         if (showAdvancedFilters) {
-            const area = feature.properties.area || 0;
+            const area = feature.properties.farea || 0;
             if (area < fireArea.min || area > fireArea.max) return false;
 
-            const durationInDays = feature.properties.duration_days || 0;
+            const durationInDays = feature.properties.duration || 0;
             if (durationInDays < duration.min || durationInDays > duration.max) return false;
 
-            const frp = feature.properties.mean_frp || 0;
+            const frp = feature.properties.meanfrp || 0;
             if (frp < meanFrp.min || frp > meanFrp.max) return false;
 
             if (region && feature.properties.region !== region) return false;
 
-            if (isActive !== null && feature.properties.is_active !== isActive) return false;
+            if (isActive !== null && feature.properties.isactive !== isActive) return false;
 
             if (searchTerm) {
                 const searchLower = searchTerm.toLowerCase();
                 const nameMatch =
-                    feature.properties.name &&
-                    feature.properties.name.toLowerCase().includes(searchLower);
+                    feature.properties.primarykey &&
+                    feature.properties.primarykey.toLowerCase().includes(searchLower);
                 const idMatch =
-                    feature.properties.id &&
-                    feature.properties.id.toLowerCase().includes(searchLower);
+                    feature.properties.fireid &&
+                    feature.properties.fireid.toLowerCase().includes(searchLower);
 
                 if (!nameMatch && !idMatch) return false;
             }
@@ -260,8 +262,7 @@ const MapView = () => {
                 ...viewState,
                 longitude: newViewport.longitude,
                 latitude: newViewport.latitude,
-                zoom: newViewport.zoom,
-                transitionDuration: 500,
+                zoom: newViewport.zoom
             });
         } catch (error) {
             console.error('Error zooming to feature:', error);
@@ -284,9 +285,9 @@ const MapView = () => {
     }, [featurePassesFilters, zoomToFeature, selectEvent, setViewMode]);
 
     useEffect(() => {
-        const newLayers = [
-            createFirePerimetersLayer(),
-        ];
+        const newLayers = [];
+
+        newLayers.push(createFirePerimetersLayer());
 
         if (firePerimeters) {
             newLayers.push(createSelectedPerimetersLayer());
@@ -351,6 +352,7 @@ const MapView = () => {
                         [246, 184, 68, 255];
                 },
                 lineWidthMinPixels: 2,
+                opacity: layerOpacity / 100,
                 pickable: true,
                 updateTriggers: {
                     getFillColor: filterDependencies,
@@ -368,16 +370,27 @@ const MapView = () => {
         featurePassesFilters,
         collectVisibleFeatures,
         handleClick,
+        layerOpacity,
+        show3DMap,
         ...filterDependencies
     ]);
 
     useEffect(() => {
-        setViewState(prev => ({
-            ...prev,
-            pitch: show3DMap ? 45 : 0,
-            transitionDuration: 300
-        }));
+        if (show3DMap) {
+            setViewState(prev => ({
+                ...prev,
+                pitch: 45,
+                transitionDuration: 300,
+            }));
+        } else {
+            setViewState(prev => ({
+                ...prev,
+                pitch: 0,
+                transitionDuration: 300,
+            }));
+        }
     }, [show3DMap]);
+
 
     const handleInteractionStateChange = useCallback(({ isDragging, isPanning, isRotating, isZooming }) => {
         const isCurrentlyInteracting = isDragging || isPanning || isRotating || isZooming;
@@ -401,6 +414,7 @@ const MapView = () => {
         updateBounds(viewState);
     }, [updateBounds]);
 
+
     return (
         <DeckGL
             ref={deckRef}
@@ -417,7 +431,7 @@ const MapView = () => {
                 projection="mercator"
                 attributionControl={false}
                 reuseMaps
-            />
+            ></Map>
         </DeckGL>
     );
 };

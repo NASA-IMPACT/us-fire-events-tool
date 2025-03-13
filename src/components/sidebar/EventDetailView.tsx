@@ -2,6 +2,8 @@ import React, { useMemo } from 'react';
 import { format } from 'date-fns';
 import { useAppState } from '../../contexts/AppStateContext';
 import { useEvents, getFeatureProperties, getFireId } from '../../contexts/EventsContext';
+import ReactSlider from 'react-slider';
+import { useMap } from '../../contexts/MapContext';
 
 interface EventDetailsProps {
   onBack: () => void;
@@ -10,6 +12,7 @@ interface EventDetailsProps {
 const EventDetails: React.FC<EventDetailsProps> = ({ onBack }) => {
   const { selectedEventId, events } = useEvents();
   const { showWindLayer, show3DMap, toggleWindLayer, toggle3DMap } = useAppState();
+  const { layerOpacity, setLayerOpacity } = useMap();
 
   const selectedEvent = useMemo(() => {
     if (!selectedEventId) return null;
@@ -56,6 +59,46 @@ const EventDetails: React.FC<EventDetailsProps> = ({ onBack }) => {
 
   return (
     <div className="height-full display-flex flex-column bg-white">
+      <style>
+        {`
+          .opacity-slider {
+            width: 100%;
+            height: 6px;
+            position: relative;
+          }
+
+          .opacity-slider .track {
+            top: 2px;
+            height: 4px;
+            background: #d9d9d9;
+            border-radius: 2px;
+          }
+
+          .opacity-slider .track-0 {
+            background: #1a6baa;
+          }
+
+          .opacity-slider .thumb {
+            width: 14px;
+            height: 14px;
+            cursor: pointer;
+            background: #fff;
+            border-radius: 50%;
+            border: 2px solid #1a6baa;
+            top: -5px;
+            outline: none;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+          }
+
+          .opacity-slider .thumb:hover {
+            box-shadow: 0 0 0 2px rgba(26, 107, 170, 0.3);
+          }
+
+          .slider-value {
+            font-size: 12px;
+          }
+        `}
+      </style>
       <div className="padding-y-2 padding-x-3 border-bottom border-base-lighter display-flex flex-row flex-align-center">
         <button
           className="usa-button usa-button--unstyled text-base-dark display-flex flex-align-center"
@@ -64,7 +107,7 @@ const EventDetails: React.FC<EventDetailsProps> = ({ onBack }) => {
           <svg className="margin-right-1" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path d="M20 11H7.83L13.42 5.41L12 4L4 12L12 20L13.41 18.59L7.83 13H20V11Z" fill="currentColor"/>
           </svg>
-          <span className="text-underline">Back to all fire events</span>
+          <span className="font-body font-weight-regular font-sans-3xs text-underline">Back to all fire events</span>
         </button>
       </div>
 
@@ -75,126 +118,128 @@ const EventDetails: React.FC<EventDetailsProps> = ({ onBack }) => {
               <circle cx="12" cy="12" r="10" fill={isActive ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2"/>
             </svg>
           </span>
-          <h1 className={`font-sans-md margin-0 ${isActive ? 'text-error' : 'text-base-dark'}`}>
+          <h1 className={`font-body font-weight-700 font-sans-lg margin-0 ${isActive ? 'text-error' : 'text-base-ink'}`}>
             {eventName}
           </h1>
         </div>
 
         <div className="margin-bottom-3">
-          <span className="text-base-dark font-sans-sm">
+          <span className="font-body font-weight-regular font-sans-3xs text-base-dark">
             {formatDate(startDate)} → {formatDate(endDate)}
           </span>
         </div>
 
         <div className="display-flex flex-row margin-bottom-2 grid-gap-3">
-          <div className="border-1px border-base-lighter radius-md padding-3 flex-fill margin-right-2">
-            <h3 className="margin-0 margin-bottom-1 font-sans-sm text-base-dark font-normal">Area</h3>
-            <div className="margin-0 text-base-dark">
-              <span className="font-sans-xl">{area}</span> <span className="font-sans-xs">km²</span>
+          <div className="border-1px border-base-lighter radius-md padding-y-1 padding-x-2 flex-fill margin-right-2">
+            <h3 className="margin-0 margin-bottom-1 font-body font-weight-bold font-sans-3xs text-base">Area</h3>
+            <div className="margin-0 font-body font-weight-bold font-sans-lg text-base-ink">
+              <span>{area}</span> <span className="font-sans-xs">km²</span>
             </div>
           </div>
 
-          <div className="border-1px border-base-lighter radius-md padding-3 flex-fill">
-            <h3 className="margin-0 margin-bottom-1 font-sans-sm text-base-dark font-normal">Duration</h3>
-            <div className="margin-0 text-base-dark">
-              <span className="font-sans-xl">{durationDays}</span> <span className="font-sans-xs">days</span>
+          <div className="border-1px border-base-lighter radius-md padding-y-1 padding-x-2 flex-fill">
+            <h3 className="margin-0 margin-bottom-1 font-body font-weight-bold font-sans-3xs text-base">Duration</h3>
+            <div className="margin-0 font-body font-weight-bold font-sans-lg text-base-ink">
+              <span>{durationDays}</span> <span className="font-sans-xs">days</span>
             </div>
           </div>
         </div>
 
         <div className="display-flex flex-row margin-bottom-2 grid-gap-3">
-          <div className="border-1px border-base-lighter radius-md padding-3 flex-fill margin-right-2">
-            <h3 className="margin-0 margin-bottom-1 font-sans-sm text-base-dark font-normal display-flex flex-align-center">
+          <div className="border-1px border-base-lighter radius-md padding-y-1 padding-x-2 flex-fill margin-right-2">
+            <h3 className="margin-0 margin-bottom-1 font-body font-weight-bold font-sans-3xs text-base display-flex flex-align-center">
               Mean RFP
-              <span className="margin-left-1 text-base-dark">
+              <span className="margin-left-1 text-base">
                 <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
                   <path d="M8 0C3.6 0 0 3.6 0 8s3.6 8 8 8 8-3.6 8-8-3.6-8-8-8zm0 14c-3.3 0-6-2.7-6-6s2.7-6 6-6 6 2.7 6 6-2.7 6-6 6z"/>
                   <path d="M9 4H7v5h2V4zm0 6H7v2h2v-2z"/>
                 </svg>
               </span>
             </h3>
-            <div className="margin-0 text-base-dark">
-              <span className="font-sans-xl">{meanRFP}</span> <span className="font-sans-xs">MW</span>
+            <div className="margin-0 font-body font-weight-bold font-sans-lg text-base-ink">
+              <span>{meanRFP}</span> <span className="font-sans-xs">MW</span>
             </div>
           </div>
 
-          <div className="border-1px border-base-lighter radius-md padding-3 flex-fill">
-            <h3 className="margin-0 margin-bottom-1 font-sans-sm text-base-dark font-normal">Perimeter</h3>
-            <div className="margin-0 text-base-dark">
-              <span className="font-sans-xl">{perimeter}</span> <span className="font-sans-xs">km</span>
+          <div className="border-1px border-base-lighter radius-md padding-y-1 padding-x-2 flex-fill">
+            <h3 className="margin-0 margin-bottom-1 font-body font-weight-bold font-sans-3xs text-base">Perimeter</h3>
+            <div className="margin-0 font-body font-weight-bold font-sans-lg text-base-ink">
+              <span>{perimeter}</span> <span className="font-sans-xs">km</span>
             </div>
           </div>
         </div>
 
         <div className="border-top-0">
-          <table className="usa-table usa-table--borderless width-full">
+          <table className="usa-table usa-table--borderless width-full border-base-darker">
             <tbody>
               <tr className="border-top-0">
-                <th scope="row" className="text-base-dark font-sans-sm padding-y-2 padding-x-0 border-top-0">Status</th>
-                <td className="text-base-dark font-sans-sm text-right padding-y-2 padding-x-0 border-top-0">
-                  <span className={`margin-left-1 font-sans-2xs text-white bg-${isActive ? 'error' : 'base-dark'} radius-pill padding-x-2 padding-y-05`}>
+                <th scope="row" className="font-body font-weight-regular font-sans-3xs text-base-ink padding-y-2 padding-x-0 border-top-0">Status</th>
+                <td className="font-body font-weight-regular font-sans-3xs text-base-ink text-right padding-y-2 padding-x-0 border-top-0">
+                  <span className={`margin-left-1 font-sans-2xs text-white bg-${isActive ? 'error' : 'base-dark'} radius-sm padding-x-05 padding-y-05`}>
                     {isActive ? 'Active' : 'Inactive'}
                   </span>
                 </td>
               </tr>
-              <tr>
-                <th scope="row" className="text-base-dark font-sans-sm padding-y-2 padding-x-0">Pixel density</th>
-                <td className="text-base-dark font-sans-sm text-right padding-y-2 padding-x-0">{pixelDensity} px/km²</td>
+              <tr className="border-base-darker">
+                <th scope="row" className="font-body font-weight-regular font-sans-3xs text-base-ink padding-y-2 padding-x-0 border-base-darker">Pixel density</th>
+                <td className="font-body font-weight-regular font-sans-3xs text-base-ink text-right padding-y-2 padding-x-0 border-base-darker">{pixelDensity} px/km²</td>
               </tr>
-              <tr>
-                <th scope="row" className="text-base-dark font-sans-sm padding-y-2 padding-x-0">New pixels</th>
-                <td className="text-base-dark font-sans-sm text-right padding-y-2 padding-x-0">{newPixels}</td>
+              <tr className="border-base-darker">
+                <th scope="row" className="font-body font-weight-regular font-sans-3xs text-base-ink padding-y-2 padding-x-0 border-base-darker">New pixels</th>
+                <td className="font-body font-weight-regular font-sans-3xs text-base-ink text-right padding-y-2 padding-x-0 border-base-darker">{newPixels}</td>
               </tr>
-              <tr>
-                <th scope="row" className="text-base-dark font-sans-sm padding-y-2 padding-x-0">Total pixels</th>
-                <td className="text-base-dark font-sans-sm text-right padding-y-2 padding-x-0">{totalPixels}</td>
+              <tr className="border-base-darker">
+                <th scope="row" className="font-body font-weight-regular font-sans-3xs text-base-ink padding-y-2 padding-x-0 border-base-darker">Total pixels</th>
+                <td className="font-body font-weight-regular font-sans-3xs text-base-ink text-right padding-y-2 padding-x-0 border-base-darker">{totalPixels}</td>
               </tr>
             </tbody>
           </table>
         </div>
 
         <div className="margin-top-4 margin-bottom-3 border-top-1px border-bottom-1px border-base-lighter padding-y-2">
-          <h3 className="margin-top-0 margin-bottom-2 font-sans-md text-base-dark">Fire spread</h3>
+          <h3 className="margin-top-0 margin-bottom-2 font-weight-700 font-sans-2xs text-base-dark">Fire spread</h3>
 
           <div className="display-flex flex-wrap">
             <div className="display-flex flex-align-center margin-right-4 margin-bottom-1">
               <div className="width-3 height-3 bg-base-dark margin-right-1"></div>
-              <span className="text-base-dark font-sans-sm">Previous</span>
+              <span className="font-body font-weight-regular font-sans-3xs text-base-dark">Previous</span>
             </div>
 
             <div className="display-flex flex-align-center margin-right-4 margin-bottom-1">
               <div className="width-3 height-3 bg-error margin-right-1"></div>
-              <span className="text-base-dark font-sans-sm">Current</span>
+              <span className="font-body font-weight-regular font-sans-3xs text-base-dark">Current</span>
             </div>
 
             <div className="display-flex flex-align-center margin-bottom-1">
               <div className="width-3 height-3 bg-warning margin-right-1"></div>
-              <span className="text-base-dark font-sans-sm">Perimeter</span>
+              <span className="font-body font-weight-regular font-sans-3xs text-base-dark">Perimeter</span>
             </div>
           </div>
 
           <div className="margin-top-3">
-            <div className="margin-bottom-1">
-              <label className="text-base-dark font-sans-sm">Opacity</label>
-            </div>
-            <div className="display-flex flex-align-center">
-              <input
-                type="range"
-                className="usa-range flex-fill"
-                min="0"
-                max="100"
-                defaultValue="100"
-              />
-              <span className="margin-left-2 text-base-dark font-sans-sm border-1px border-base-lighter padding-x-2 padding-y-1">
-                100%
-              </span>
+            <div className="display-flex flex-align-center margin-bottom-1">
+              <label className="font-body font-weight-bold font-sans-3xs text-base-ink margin-right-2">Opacity</label>
+              <div className="display-flex flex-align-center flex-fill">
+                <ReactSlider
+                  className="opacity-slider flex-fill"
+                  thumbClassName="thumb"
+                  trackClassName="track"
+                  min={0}
+                  max={100}
+                  value={layerOpacity}
+                  onChange={setLayerOpacity}
+                />
+                <span className="slider-value margin-left-2 text-base-dark border-1px border-base-lighter padding-x-2 padding-y-1">
+                  {layerOpacity}%
+                </span>
+              </div>
             </div>
           </div>
         </div>
 
         <div className="margin-top-1 padding-top-1">
-          <div className="display-flex flex-align-center">
-            <label className="usa-checkbox margin-right-4">
+          <div className="display-flex flex-column">
+            <label className="usa-checkbox margin-bottom-2">
               <input
                 className="usa-checkbox__input"
                 type="checkbox"
@@ -202,7 +247,7 @@ const EventDetails: React.FC<EventDetailsProps> = ({ onBack }) => {
                 checked={showWindLayer}
                 onChange={toggleWindLayer}
               />
-              <span className="usa-checkbox__label font-sans-sm">Wind direction</span>
+              <span className="usa-checkbox__label font-ui font-weight-regular font-sans-2xs text-base-ink">Wind direction</span>
             </label>
 
             <label className="usa-checkbox">
@@ -213,7 +258,7 @@ const EventDetails: React.FC<EventDetailsProps> = ({ onBack }) => {
                 checked={show3DMap}
                 onChange={toggle3DMap}
               />
-              <span className="usa-checkbox__label font-sans-sm">3D map</span>
+              <span className="usa-checkbox__label font-ui font-weight-regular font-sans-2xs text-base-ink">3D map</span>
             </label>
           </div>
         </div>

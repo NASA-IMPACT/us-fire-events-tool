@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useFilters } from '../../contexts/FiltersContext';
 import ReactSlider from 'react-slider';
-import { Label } from '@trussworks/react-uswds';
 
 const sliderStyles = `
   .horizontal-slider {
@@ -40,6 +39,11 @@ const sliderStyles = `
   .horizontal-slider .thumb:active {
     box-shadow: 0 0 0 2px rgba(26, 107, 170, 0.5);
   }
+
+  .slider-value {
+    font-weight: 400;
+    font-size: 12px;
+  }
 `;
 
 const AdvancedFilters: React.FC = () => {
@@ -50,7 +54,6 @@ const AdvancedFilters: React.FC = () => {
     setFireAreaRange,
     setDurationRange,
     setMeanFrpRange,
-    resetFilters
   } = useFilters();
 
   const [localFireArea, setLocalFireArea] = useState([
@@ -92,16 +95,17 @@ const AdvancedFilters: React.FC = () => {
       <style>{sliderStyles}</style>
       <div className="bg-white padding-2">
         <div className="margin-bottom-3">
-          <Label className="font-sans-sm text-bold margin-bottom-1" htmlFor="fire-area-slider">
+          <label className="font-body font-sans-3xs margin-bottom-1 display-block" htmlFor="fire-area-slider">
             Fire area (km<sup>2</sup>)
-          </Label>
+          </label>
           <div className="display-flex flex-align-center">
-            <div className="border-1px padding-x-1 padding-y-05 width-6 height-4 display-flex flex-align-center flex-justify-center text-bold font-sans-sm">
+            <div className="border-1px padding-x-1 padding-y-05 width-6 height-4 display-flex flex-align-center flex-justify-center slider-value">
               {localFireArea[0]}
             </div>
 
             <div className="flex-fill padding-x-2">
               <ReactSlider
+                id="fire-area-slider"
                 className="horizontal-slider"
                 thumbClassName="thumb"
                 trackClassName="track"
@@ -116,23 +120,24 @@ const AdvancedFilters: React.FC = () => {
               />
             </div>
 
-            <div className="border-1px padding-x-1 padding-y-05 width-6 height-4 display-flex flex-align-center flex-justify-center text-bold font-sans-sm">
+            <div className="border-1px padding-x-1 padding-y-05 width-6 height-4 display-flex flex-align-center flex-justify-center slider-value">
               {localFireArea[1]}
             </div>
           </div>
         </div>
 
         <div className="margin-bottom-3">
-          <Label className="font-sans-sm text-bold margin-bottom-1" htmlFor="duration-slider">
+          <label className="font-body font-sans-3xs margin-bottom-1 display-block" htmlFor="duration-slider">
             Duration (days)
-          </Label>
+          </label>
           <div className="display-flex flex-align-center">
-            <div className="border-1px padding-x-1 padding-y-05 width-6 height-4 display-flex flex-align-center flex-justify-center text-bold font-sans-sm">
+            <div className="border-1px padding-x-1 padding-y-05 width-6 height-4 display-flex flex-align-center flex-justify-center slider-value">
               {localDuration[0]}
             </div>
 
             <div className="flex-fill padding-x-2">
               <ReactSlider
+                id="duration-slider"
                 className="horizontal-slider"
                 thumbClassName="thumb"
                 trackClassName="track"
@@ -147,23 +152,24 @@ const AdvancedFilters: React.FC = () => {
               />
             </div>
 
-            <div className="border-1px padding-x-1 padding-y-05 width-6 height-4 display-flex flex-align-center flex-justify-center text-bold font-sans-sm">
+            <div className="border-1px padding-x-1 padding-y-05 width-6 height-4 display-flex flex-align-center flex-justify-center slider-value">
               {localDuration[1]}
             </div>
           </div>
         </div>
 
         <div className="margin-bottom-3">
-          <Label className="font-sans-sm text-bold margin-bottom-1" htmlFor="mean-frp-slider">
+          <label className="font-body font-sans-3xs margin-bottom-1 display-block" htmlFor="mean-frp-slider">
             Mean RFP (MW)
-          </Label>
+          </label>
           <div className="display-flex flex-align-center">
-            <div className="border-1px padding-x-1 padding-y-05 width-6 height-4 display-flex flex-align-center flex-justify-center text-bold font-sans-sm">
-              XX
+            <div className="border-1px padding-x-1 padding-y-05 width-6 height-4 display-flex flex-align-center flex-justify-center slider-value">
+              {localMeanFrp[0]}
             </div>
 
             <div className="flex-fill padding-x-2">
               <ReactSlider
+                id="mean-frp-slider"
                 className="horizontal-slider"
                 thumbClassName="thumb"
                 trackClassName="track"
@@ -178,8 +184,8 @@ const AdvancedFilters: React.FC = () => {
               />
             </div>
 
-            <div className="border-1px padding-x-1 padding-y-05 width-6 height-4 display-flex flex-align-center flex-justify-center text-bold font-sans-sm">
-              XX
+            <div className="border-1px padding-x-1 padding-y-05 width-6 height-4 display-flex flex-align-center flex-justify-center slider-value">
+              {localMeanFrp[1]}
             </div>
           </div>
         </div>
@@ -188,4 +194,4 @@ const AdvancedFilters: React.FC = () => {
   );
 };
 
-export default AdvancedFilters
+export default AdvancedFilters;

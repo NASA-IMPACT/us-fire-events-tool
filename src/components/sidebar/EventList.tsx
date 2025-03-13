@@ -45,24 +45,24 @@ const EventItem = memo(({ event, onClick, formatEventDates, getEventEndDate, fea
   return (
     <div
       onClick={handleEventClick}
-      className={`bg-white radius-md cursor-pointer hover:shadow-2`}
+      className="bg-white cursor-pointer hover:shadow-2"
     >
-      <div className="padding-3">
+      <div className="padding-2">
         <div className="display-flex flex-align-center margin-bottom-1">
-          <span className={`font-sans-md font-semibold flex-fill ${isActive ? 'text-error' : 'text-base-dark'}`}>
+          <span className={`font-body font-weight-700 font-style-italic font-sans-2xs flex-fill ${isActive ? 'text-error' : 'text-base-ink'}`}>
             {eventName}
           </span>
         </div>
 
-        <div className="font-sans-3xs text-base-dark margin-bottom-2">
+        <div className="font-body font-weight-regular font-sans-3xs text-base margin-bottom-1">
           {formatEventDates(startDate, endDate)}
         </div>
 
-        <div className="display-flex flex-row margin-top-2 gap-1">
-          <div className="bg-base-dark text-white font-sans-3xs padding-y-05 padding-x-1 radius-sm">
+        <div className="display-flex flex-row margin-top-1 gap-05">
+          <div className="bg-base text-white font-sans-3xs padding-y-05 padding-x-1 radius-sm">
             {area} km²
           </div>
-          <div className="bg-base-dark text-white font-sans-3xs padding-y-05 padding-x-1 radius-sm margin-left-1">
+          <div className="bg-base text-white font-sans-3xs padding-y-05 padding-x-1 radius-sm margin-left-05">
             {frp} MW
           </div>
         </div>
@@ -183,15 +183,15 @@ const EventList: React.FC<EventListProps> = memo(({ features }) => {
 
     return (
       <div style={style}>
-      <div className='padding-1'>
-        <EventItem
-          event={event}
-          formatEventDates={formatEventDates}
-          getEventEndDate={getEventEndDate}
-          features={features}
-        />
+        <div className="padding-1">
+          <EventItem
+            event={event}
+            formatEventDates={formatEventDates}
+            getEventEndDate={getEventEndDate}
+            features={features}
+          />
+        </div>
       </div>
-    </div>
     );
   };
 
@@ -199,38 +199,42 @@ const EventList: React.FC<EventListProps> = memo(({ features }) => {
     <div className="display-flex flex-column height-full">
       <div className="width-full bg-white radius-md border-0 overflow-hidden">
         <div className="display-flex flex-row height-full">
-          <div className="flex-fill display-flex flex-column flex-align-center flex-justify-center padding-y-2 border-right border-base-lighter">
-            <div className="text-base-dark font-sans-sm margin-bottom-05">Total</div>
-            <div className="font-sans-xl text-bold text-base-dark">{totalEvents}</div>
+          <div className="flex-fill display-flex flex-column padding-y-2 padding-x-2 border-right border-base-lighter">
+            <div className="font-body font-weight-regular font-sans-3xs line-height-body-1 text-base-ink margin-bottom-05">Total</div>
+            <div className="font-body font-weight-bold font-sans-lg text-base-ink">{totalEvents}</div>
           </div>
-          <div className="flex-fill display-flex flex-column flex-align-center flex-justify-center padding-y-2 border-right border-base-lighter">
-            <div className="text-error font-sans-sm margin-bottom-05">Active</div>
-            <div className="font-sans-xl text-bold text-error">{activeEvents}</div>
+          <div className="flex-fill display-flex flex-column padding-y-2 padding-x-2 border-right border-base-lighter">
+            <div className="font-body font-weight-regular font-sans-3xs line-height-body-1 text-error margin-bottom-05">
+              Active
+            </div>
+            <div className="font-body font-weight-bold font-sans-lg text-error">{activeEvents}</div>
           </div>
-          <div className="flex-fill display-flex flex-column flex-align-center flex-justify-center padding-y-2">
-            <div className="text-base-dark font-sans-sm margin-bottom-05">Inactive</div>
-            <div className="font-sans-xl text-bold text-base-dark">{inactiveEvents}</div>
+          <div className="flex-fill display-flex flex-column padding-y-2 padding-x-2">
+            <div className="font-body font-weight-regular font-sans-3xs line-height-body-1 text-base margin-bottom-05">
+              Inactive
+            </div>
+            <div className="font-body font-weight-bold font-sans-lg text-base">{inactiveEvents}</div>
           </div>
         </div>
       </div>
 
-      <div className="bg-base-lighter radius-md flex-fill">
-          <div className="height-full">
-            <AutoSizer>
-              {({ height, width }) =>
+      <div className="bg-base-lighter flex-fill">
+        <div className="height-full">
+          <AutoSizer>
+            {({ height, width }) =>
               <FixedSizeList
                 ref={listRef}
                 height={height}
                 width={width}
                 itemCount={sortedGroupedEvents.length}
-                itemSize={140}
+                itemSize={115}
                 overscanCount={5}
               >
                 {renderRow}
               </FixedSizeList>
-              }
-            </AutoSizer>
-          </div>
+            }
+          </AutoSizer>
+        </div>
       </div>
     </div>
   );
