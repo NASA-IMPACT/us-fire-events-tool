@@ -1,11 +1,11 @@
-import { createContext, useContext, useState, useEffect, ReactNode, useMemo, useCallback, useRef } from 'react';
+import { createContext, useContext, useReducer, useEffect, ReactNode, useMemo, useCallback, useRef } from 'react';
 import { EventFilterParams } from '../api/events';
 import { useAppState } from './AppStateContext';
 
 export interface MVTFeature {
   geometry: {
     type: string;
-    coordinates?: any;
+    coordinates?: unknown;
   };
   properties: {
     fireid?: number;
@@ -24,11 +24,11 @@ export interface MVTFeature {
     primarykey?: string;
     region?: string;
     t?: string;
-    [key: string]: any;
+    [key: string]: unknown;
   };
   object?: {
-    properties?: any;
-    geometry?: any;
+    properties?: unknown;
+    geometry?: unknown;
   };
   type?: string;
 }
@@ -42,10 +42,21 @@ export interface GroupedEvents {
   };
 }
 
-interface EventsContextValue {
+interface EventsState {
   events: MVTFeature[];
-  updateEvents: (mvtFeatures: any[]) => void;
-  eventTimeSeries: MVTFeature[];
+  filters: EventFilterParams;
+  selectedEventId: string | null;
+  firePerimeters: GeoJSON.FeatureCollection | null;
+}
+
+type EventsAction =
+  | { type: 'SET_EVENTS'; payload: MVTFeature[] }
+  | { type: 'APPLY_FILTERS'; payload: EventFilterParams }
+  | { type: 'SELECT_EVENT'; payload: string | null }
+  | { type: 'SET_FIRE_PERIMETERS'; payload: GeoJSON.FeatureCollection | null };
+
+interface EventsContextValue extends Omit<EventsState, 'filters'> {
+  updateEvents: (mvtFeatures: MVTFeature[]) => void;
   groupedEvents: GroupedEvents;
   totalEvents: number;
   activeEvents: number;
@@ -53,13 +64,9 @@ interface EventsContextValue {
   totalArea: number;
   applyFilters: (filters: EventFilterParams) => void;
   currentFilters: EventFilterParams;
-  selectedEventId: string | null;
   selectEvent: (eventId: string | null) => void;
   getFilteredEvents: (start: Date, end: Date) => MVTFeature[];
-  firePerimeters: GeoJSON.FeatureCollection | null;
 }
-
-const EventsContext = createContext<EventsContextValue | undefined>(undefined);
 
 export const getFeatureProperties = (feature: MVTFeature | null) => {
   if (!feature) return {};
@@ -87,7 +94,6 @@ export const getFeatureArea = (feature: MVTFeature) => {
 
 const areFeatureArraysEqual = (prevFeatures: MVTFeature[], nextFeatures: MVTFeature[]) => {
   if (prevFeatures.length !== nextFeatures.length) return false;
-
   return true;
 };
 
@@ -121,24 +127,62 @@ export const fetchAlternativeFirePerimeters = async (fireId: string) => {
   }
 };
 
+const EventsContext = createContext<EventsContextValue | undefined>(undefined);
+
+const eventsReducer = (state: EventsState, action: EventsAction): EventsState => {
+  switch (action.type) {
+    case 'SET_EVENTS':
+      return {
+        ...state,
+        events: action.payload
+      };
+    case 'APPLY_FILTERS':
+      return {
+        ...state,
+        filters: {
+          ...state.filters,
+          ...action.payload
+        }
+      };
+    case 'SELECT_EVENT':
+      return {
+        ...state,
+        selectedEventId: action.payload
+      };
+    case 'SET_FIRE_PERIMETERS':
+      return {
+        ...state,
+        firePerimeters: action.payload
+      };
+    default:
+      return state;
+  }
+};
+
 export const EventsProvider = ({ children }: { children: ReactNode }) => {
   const { timeRange } = useAppState();
-  const [filters, setFilters] = useState<EventFilterParams>({
-    dateRange: [timeRange.start, timeRange.end]
-  });
 
-  const [events, setEvents] = useState<MVTFeature[]>([]);
-  const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
+  const initialState: EventsState = {
+    events: [],
+    filters: {
+      dateRange: [timeRange.start, timeRange.end]
+    },
+    selectedEventId: null,
+    firePerimeters: null
+  };
+
+  const [state, dispatch] = useReducer(eventsReducer, initialState);
   const prevFeaturesRef = useRef<MVTFeature[]>([]);
   const pendingFeaturesRef = useRef<MVTFeature[] | null>(null);
   const updateTimeoutRef = useRef<number | null>(null);
-  const [firePerimeters, setFirePerimeters] = useState<GeoJSON.FeatureCollection | null>(null);
 
   useEffect(() => {
-    setFilters(prev => ({
-      ...prev,
-      dateRange: [timeRange.start, timeRange.end]
-    }));
+    dispatch({
+      type: 'APPLY_FILTERS',
+      payload: {
+        dateRange: [timeRange.start, timeRange.end]
+      }
+    });
   }, [timeRange]);
 
   const updateEvents = useCallback((mvtFeatures: MVTFeature[]) => {
@@ -157,7 +201,7 @@ export const EventsProvider = ({ children }: { children: ReactNode }) => {
       const newFeatures = pendingFeaturesRef.current;
 
       if (newFeatures && !areFeatureArraysEqual(prevFeaturesRef.current, newFeatures)) {
-        setEvents(newFeatures);
+        dispatch({ type: 'SET_EVENTS', payload: newFeatures });
         prevFeaturesRef.current = newFeatures;
       }
 
@@ -175,14 +219,11 @@ export const EventsProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const applyFilters = useCallback((newFilters: EventFilterParams) => {
-    setFilters(prev => ({
-      ...prev,
-      ...newFilters
-    }));
+    dispatch({ type: 'APPLY_FILTERS', payload: newFilters });
   }, []);
 
   const selectEvent = useCallback(async (eventId: string | null) => {
-    setSelectedEventId(eventId);
+    dispatch({ type: 'SELECT_EVENT', payload: eventId });
 
     if (eventId) {
       let perimeters = await fetchFirePerimeters(eventId);
@@ -191,28 +232,22 @@ export const EventsProvider = ({ children }: { children: ReactNode }) => {
         perimeters = await fetchAlternativeFirePerimeters(eventId);
       }
 
-      setFirePerimeters(perimeters);
+      dispatch({ type: 'SET_FIRE_PERIMETERS', payload: perimeters });
     } else {
-      setFirePerimeters(null);
+      dispatch({ type: 'SET_FIRE_PERIMETERS', payload: null });
     }
   }, []);
 
-
   const getFilteredEvents = useCallback((start: Date, end: Date) => {
-    return events.filter(event => {
+    return state.events.filter(event => {
       const props = getFeatureProperties(event);
       const eventTime = new Date(props.t).getTime();
       return eventTime >= start.getTime() && eventTime <= end.getTime();
     });
-  }, [events]);
-
-
-  const eventTimeSeries = useMemo(() => {
-    return events;
-  }, [events]);
+  }, [state.events]);
 
   const groupedEvents = useMemo<GroupedEvents>(() => {
-    return events.reduce((groups, event) => {
+    return state.events.reduce((groups, event) => {
       const props = getFeatureProperties(event);
       const fireId = props.fireid?.toString() || '';
 
@@ -234,32 +269,31 @@ export const EventsProvider = ({ children }: { children: ReactNode }) => {
 
       return groups;
     }, {} as GroupedEvents);
-  }, [events]);
+  }, [state.events]);
 
   const metrics = useMemo(() => {
-    const totalEvents = events.length;
-    const activeEvents = events.filter(event => Number(getFeatureProperties(event).isactive) === 1).length;
+    const totalEvents = state.events.length;
+    const activeEvents = state.events.filter(event => Number(getFeatureProperties(event).isactive) === 1).length;
     const inactiveEvents = totalEvents - activeEvents;
-    const totalArea = events.reduce((sum, event) => sum + (getFeatureProperties(event).farea || 0), 0);
+    const totalArea = state.events.reduce((sum, event) => sum + (getFeatureProperties(event).farea || 0), 0);
 
     return { totalEvents, activeEvents, inactiveEvents, totalArea };
-  }, [events]);
+  }, [state.events]);
 
   const value: EventsContextValue = {
-    events,
+    events: state.events,
     updateEvents,
-    eventTimeSeries,
     groupedEvents,
     totalEvents: metrics.totalEvents,
     activeEvents: metrics.activeEvents,
     inactiveEvents: metrics.inactiveEvents,
     totalArea: metrics.totalArea,
     applyFilters,
-    currentFilters: filters,
-    selectedEventId,
+    currentFilters: state.filters,
+    selectedEventId: state.selectedEventId,
     selectEvent,
     getFilteredEvents,
-    firePerimeters
+    firePerimeters: state.firePerimeters
   };
 
   return (

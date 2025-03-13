@@ -1,7 +1,6 @@
-import { createContext, useContext, useState, useCallback, ReactNode } from 'react';
+import { createContext, useContext, useReducer, useCallback, ReactNode } from 'react';
 
 export type ViewMode = 'explorer' | 'detail';
-export type TimeMode = 'recent' | 'yearToDate' | 'historical';
 
 interface AppState {
   viewMode: ViewMode;
@@ -10,7 +9,6 @@ interface AppState {
     start: Date;
     end: Date;
   };
-  timeMode: TimeMode;
   isPlaying: boolean;
   playbackSpeed: number;
   showWindLayer: boolean;
@@ -19,18 +17,17 @@ interface AppState {
   mapBounds: [number, number, number, number] | null;
 }
 
-interface AppContextValue extends AppState {
-  setViewMode: (mode: ViewMode) => void;
-  selectEvent: (eventId: string | null) => void;
-  setTimeRange: (range: { start: Date; end: Date }) => void;
-  togglePlay: () => void;
-  setPlaybackSpeed: (speed: number) => void;
-  toggleWindLayer: () => void;
-  toggle3DMap: () => void;
-  toggleSatelliteImagery: () => void;
-  resetView: () => void;
-  setMapBounds: (bounds: [number, number, number, number]) => void;
-}
+type AppAction =
+  | { type: 'SET_VIEW_MODE'; payload: ViewMode }
+  | { type: 'SELECT_EVENT'; payload: string | null }
+  | { type: 'SET_TIME_RANGE'; payload: { start: Date; end: Date } }
+  | { type: 'TOGGLE_PLAY' }
+  | { type: 'SET_PLAYBACK_SPEED'; payload: number }
+  | { type: 'TOGGLE_WIND_LAYER' }
+  | { type: 'TOGGLE_3D_MAP' }
+  | { type: 'TOGGLE_SATELLITE_IMAGERY' }
+  | { type: 'RESET_VIEW' }
+  | { type: 'SET_MAP_BOUNDS'; payload: [number, number, number, number] };
 
 const createStableDate = (date: Date | string): Date => {
   const stableDate = new Date(date);
@@ -49,14 +46,13 @@ const areTimeRangesEqual = (range1: AppState['timeRange'], range2: AppState['tim
   );
 };
 
-const defaultState: AppState = {
+const initialState: AppState = {
   viewMode: 'explorer',
   selectedEventId: null,
   timeRange: {
     start: createStableDate(new Date(new Date().setDate(new Date().getDate() - 10))),
     end: createStableDate(new Date()),
   },
-  timeMode: 'historical',
   isPlaying: false,
   playbackSpeed: 1,
   showWindLayer: false,
@@ -65,73 +61,110 @@ const defaultState: AppState = {
   mapBounds: null
 };
 
+const appReducer = (state: AppState, action: AppAction): AppState => {
+  switch (action.type) {
+    case 'SET_VIEW_MODE':
+      if (state.viewMode === action.payload) return state;
+      return { ...state, viewMode: action.payload };
+
+    case 'SELECT_EVENT':
+      if (state.selectedEventId === action.payload) return state;
+      return {
+        ...state,
+        selectedEventId: action.payload,
+        viewMode: action.payload ? 'detail' : 'explorer'
+      };
+
+    case 'SET_TIME_RANGE':
+      if (areTimeRangesEqual(state.timeRange, action.payload)) return state;
+      return { ...state, timeRange: action.payload };
+
+    case 'TOGGLE_PLAY':
+      return { ...state, isPlaying: !state.isPlaying };
+
+    case 'SET_PLAYBACK_SPEED':
+      return { ...state, playbackSpeed: action.payload };
+
+    case 'TOGGLE_WIND_LAYER':
+      return { ...state, showWindLayer: !state.showWindLayer };
+
+    case 'TOGGLE_3D_MAP':
+      return { ...state, show3DMap: !state.show3DMap };
+
+    case 'TOGGLE_SATELLITE_IMAGERY':
+      return { ...state, showSatelliteImagery: !state.showSatelliteImagery };
+
+    case 'RESET_VIEW':
+      return {
+        ...state,
+        timeRange: initialState.timeRange,
+        isPlaying: false
+      };
+
+    case 'SET_MAP_BOUNDS':
+      return { ...state, mapBounds: action.payload };
+
+    default:
+      return state;
+  }
+};
+
+interface AppContextValue extends AppState {
+  setViewMode: (mode: ViewMode) => void;
+  selectEvent: (eventId: string | null) => void;
+  setTimeRange: (range: { start: Date; end: Date }) => void;
+  togglePlay: () => void;
+  setPlaybackSpeed: (speed: number) => void;
+  toggleWindLayer: () => void;
+  toggle3DMap: () => void;
+  toggleSatelliteImagery: () => void;
+  resetView: () => void;
+  setMapBounds: (bounds: [number, number, number, number]) => void;
+}
+
 const AppStateContext = createContext<AppContextValue | undefined>(undefined);
 
 export const AppStateProvider = ({ children }: { children: ReactNode }) => {
-  const [state, setState] = useState<AppState>(defaultState);
-
-
-  const selectEvent = useCallback((eventId: string | null) => {
-    setState(prev => {
-      if (prev.selectedEventId === eventId) {
-        return prev;
-      }
-
-      const newState = {
-        ...prev,
-        selectedEventId: eventId,
-        viewMode: eventId ? 'detail' : 'explorer'
-      };
-
-      return newState;
-    });
-  }, []);
+  const [state, dispatch] = useReducer(appReducer, initialState);
 
   const setViewMode = useCallback((mode: ViewMode) => {
-    setState(prev => {
-      if (prev.viewMode === mode) return prev;
-      return { ...prev, viewMode: mode };
-    });
+    dispatch({ type: 'SET_VIEW_MODE', payload: mode });
+  }, []);
+
+  const selectEvent = useCallback((eventId: string | null) => {
+    dispatch({ type: 'SELECT_EVENT', payload: eventId });
   }, []);
 
   const setTimeRange = useCallback((range: { start: Date; end: Date }) => {
-    setState(prev => {
-      if (areTimeRangesEqual(prev.timeRange, range)) return prev;
-      return { ...prev, timeRange: range };
-    });
+    dispatch({ type: 'SET_TIME_RANGE', payload: range });
   }, []);
 
   const togglePlay = useCallback(() => {
-    setState(prev => ({ ...prev, isPlaying: !prev.isPlaying }));
+    dispatch({ type: 'TOGGLE_PLAY' });
   }, []);
 
   const setPlaybackSpeed = useCallback((speed: number) => {
-    setState(prev => ({ ...prev, playbackSpeed: speed }));
+    dispatch({ type: 'SET_PLAYBACK_SPEED', payload: speed });
   }, []);
 
   const toggleWindLayer = useCallback(() => {
-    setState(prev => ({ ...prev, showWindLayer: !prev.showWindLayer }));
+    dispatch({ type: 'TOGGLE_WIND_LAYER' });
   }, []);
 
   const toggle3DMap = useCallback(() => {
-    setState(prev => ({ ...prev, show3DMap: !prev.show3DMap }));
+    dispatch({ type: 'TOGGLE_3D_MAP' });
   }, []);
 
   const toggleSatelliteImagery = useCallback(() => {
-    setState(prev => ({ ...prev, showSatelliteImagery: !prev.showSatelliteImagery }));
+    dispatch({ type: 'TOGGLE_SATELLITE_IMAGERY' });
   }, []);
 
   const resetView = useCallback(() => {
-    setState(prev => ({
-      ...prev,
-      timeRange: defaultState.timeRange,
-      timeMode: defaultState.timeMode,
-      isPlaying: false
-    }));
+    dispatch({ type: 'RESET_VIEW' });
   }, []);
 
   const setMapBounds = useCallback((bounds: [number, number, number, number]) => {
-    setState(prev => ({ ...prev, mapBounds: bounds }));
+    dispatch({ type: 'SET_MAP_BOUNDS', payload: bounds });
   }, []);
 
   const value: AppContextValue = {

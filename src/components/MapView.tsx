@@ -1,6 +1,5 @@
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { ClipExtension } from '@deck.gl/extensions';
-import * as WeatherLayersClient from 'weatherlayers-gl/client';
 import * as WeatherLayers from 'weatherlayers-gl';
 import DeckGL from '@deck.gl/react';
 import { Map } from 'react-map-gl/mapbox';
@@ -13,6 +12,7 @@ import { useFilters } from '../contexts/FiltersContext';
 import _ from 'lodash';
 import { GeoJsonLayer } from '@deck.gl/layers';
 import { useMap } from '../contexts/MapContext';
+import { getClosestWeatherData, WeatherDataset } from '../api/weather';
 
 const INITIAL_VIEW_STATE = {
     longitude: -95.7129,
@@ -27,6 +27,7 @@ const INITIAL_VIEW_STATE = {
 const USA_BBOX = [-125.0, 24.5, -66.0, 49.5];
 const INTERACTION_TIMEOUT = 500;
 const FEATURES_COLLECTION_DEBOUNCE = 1500;
+const WIND_DATA_FETCH_DEBOUNCE = 500;
 const TILE_URL = 'https://firenrt.delta-backend.com/collections/public.eis_fire_snapshot_perimeter_nrt/tiles/{z}/{x}/{y}';
 const MAP_STYLE = 'mapbox://styles/devseed/cm7ueetbz00cc01qsdityey6n';
 
@@ -56,6 +57,8 @@ const MapView = () => {
     const loadedTilesRef = useRef(new Set());
     const allFeaturesRef = useRef([]);
     const collectVisibleFeaturesRef = useRef(null);
+    const fetchWindDataTimeoutRef = useRef(null);
+    const lastTimeRangeEndRef = useRef(null);
 
     const filterDependencies = [
         timeRange,
@@ -116,27 +119,13 @@ const MapView = () => {
         }
     }, []);
 
-    useEffect(() => {
-        if (showWindLayer && !windLayer) {
-            initializeWindLayer();
-        } else if (!showWindLayer) {
-            setWindLayer(null);
-        }
-
-        async function initializeWindLayer() {
-            setIsLayersLoading(true);
+    const debouncedInitializeWindLayer = useCallback(
+        _.debounce(async (timeRangeEnd) => {
             try {
-                const client = new WeatherLayersClient.Client({
-                    accessToken: import.meta.env.VITE_WEATHER_LAYERS_TOKEN,
-                    datetimeInterpolate: true,
-                });
-
-                const dataset = 'gfs/wind_10m_above_ground';
-                const currentDate = new Date().toISOString();
-
-                const datetimeRange = WeatherLayersClient.offsetDatetimeRange(currentDate, 0, 24);
-                const { datetimes } = await client.loadDatasetSlice(dataset, datetimeRange);
-                const data = await client.loadDatasetData(dataset, datetimes[0]);
+                const { data } = await getClosestWeatherData(
+                    WeatherDataset.WIND_10M,
+                    timeRangeEnd
+                );
 
                 const particleLayer = new WeatherLayers.ParticleLayer({
                     id: 'wind-particles',
@@ -175,8 +164,25 @@ const MapView = () => {
             } finally {
                 setIsLayersLoading(false);
             }
+        }, WIND_DATA_FETCH_DEBOUNCE),
+        []
+    );
+
+    useEffect(() => {
+        if (showWindLayer && (!lastTimeRangeEndRef.current ||
+            timeRange.end.getTime() !== lastTimeRangeEndRef.current.getTime())) {
+
+            lastTimeRangeEndRef.current = timeRange.end;
+            debouncedInitializeWindLayer(timeRange.end);
         }
-    }, [windLayer, showWindLayer]);
+        else if (!showWindLayer) {
+            setWindLayer(null);
+        }
+
+        return () => {
+            debouncedInitializeWindLayer.cancel();
+        };
+    }, [showWindLayer, timeRange.end, debouncedInitializeWindLayer]);
 
     const handleTileLoad = useCallback((tile) => {
         if (!tile?.data?.length) return;
