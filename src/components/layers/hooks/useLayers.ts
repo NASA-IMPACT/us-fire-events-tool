@@ -1,10 +1,11 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useMap } from '../../../contexts/MapContext';
 import { getFireId, useEvents } from '../../../contexts/EventsContext';
 import { useAppState } from '../../../contexts/AppStateContext';
 import { useFilters } from '../../../contexts/FiltersContext';
 import { LAYER_TYPES } from '../config/constants';
 import { createLayers } from '../LayerFactory';
+import _ from 'lodash';
 
 /**
  * Hook for managing deck.gl layers based on application state
@@ -24,6 +25,7 @@ export const useLayers = ({
 }) => {
   const [layers, setLayers] = useState([]);
   const [lastTimeRangeEnd, setLastTimeRangeEnd] = useState(null);
+  const debouncedTimeUpdate = useRef(null);
 
   const { showWindLayer, show3DMap, timeRange } = useAppState();
   const { firePerimeters, selectEvent } = useEvents();
@@ -161,6 +163,24 @@ export const useLayers = ({
   }, [collectVisibleFeatures, isInteracting]);
 
   useEffect(() => {
+    debouncedTimeUpdate.current = _.debounce((newTimeEnd) => {
+      setLastTimeRangeEnd(newTimeEnd);
+    }, 500);
+
+    return () => {
+      if (debouncedTimeUpdate.current) {
+        debouncedTimeUpdate.current.cancel();
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    if (showWindLayer && debouncedTimeUpdate.current) {
+      debouncedTimeUpdate.current(timeRange.end);
+    }
+  }, [timeRange.end, showWindLayer]);
+
+  useEffect(() => {
     const initializeLayers = async () => {
       const layerConfigs = [
         {
@@ -190,16 +210,10 @@ export const useLayers = ({
         });
       }
 
-      if (showWindLayer) {
-        const timeChanged = !lastTimeRangeEnd || timeRange.end.getTime() !== lastTimeRangeEnd.getTime();
-
-        if (timeChanged) {
-          setLastTimeRangeEnd(timeRange.end);
-        }
-
+      if (showWindLayer && lastTimeRangeEnd) {
         layerConfigs.push({
           type: LAYER_TYPES.WIND,
-          timeRangeEnd: timeRange.end,
+          timeRangeEnd: lastTimeRangeEnd,
           opacity: layerOpacity
         });
       }
@@ -217,7 +231,6 @@ export const useLayers = ({
     handleClick,
     layerOpacity,
     show3DMap,
-    timeRange.end,
     lastTimeRangeEnd,
     collectVisibleFeatures,
     isInteracting,
