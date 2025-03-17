@@ -1,29 +1,53 @@
 import { useState, useRef, useEffect } from 'react';
 import { Search } from 'lucide-react';
 import AdvancedFilters from './AdvancedFilters';
+import { useMap } from '../../contexts/MapContext';
+import { useEvents } from '../../contexts/EventsContext';
+import { useFilters } from '../../contexts/FiltersContext';
 
-interface SearchBoxProps {
-  searchTerm: string;
-  setSearchTerm: (term: string) => void;
-  toggleAdvancedFilters: () => void;
-  showAdvancedFilters: boolean;
-}
-
-const SearchBox: React.FC<SearchBoxProps> = ({
-  searchTerm,
-  setSearchTerm,
-  toggleAdvancedFilters,
-  showAdvancedFilters
-}) => {
-  const [isFocused, setIsFocused] = useState(false);
+const SearchBox: React.FC = () => {
+  const { searchTerm, setSearchTerm, showAdvancedFilters, toggleAdvancedFilters } = useFilters();
+  const [searchError, setSearchError] = useState<string | null>(null);
+  const [isSearching, setIsSearching] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  const { flyToBounds } = useMap();
+  const { selectEvent, searchFireById } = useEvents();
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(e.target.value);
+    if (searchError) {
+      setSearchError(null);
+    }
+  };
+
+  const handleSearchFire = async (fireId: string) => {
+    setIsSearching(true);
+    setSearchError(null);
+
+    try {
+      const result = await searchFireById(fireId);
+
+      if (result.error) {
+        setSearchError(result.error);
+        return;
+      }
+
+      if (result.bounds) {
+        flyToBounds(result.bounds);
+      }
+
+      selectEvent(fireId);
+    } finally {
+      setIsSearching(false);
+    }
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (searchTerm.trim()) {
+      handleSearchFire(searchTerm.trim());
+    }
     inputRef.current?.blur();
   };
 
@@ -47,14 +71,13 @@ const SearchBox: React.FC<SearchBoxProps> = ({
               name="search"
               value={searchTerm}
               onChange={handleSearchChange}
-              onFocus={() => setIsFocused(true)}
-              onBlur={() => setIsFocused(false)}
-              placeholder="Search by event name or region"
+              placeholder="Search by fire ID"
               className="font-body font-weight-regular font-sans-2xs border-1px border-right-0 radius-left-md padding-x-2 height-5 width-full"
               style={{
                 borderTopRightRadius: 0,
                 borderBottomRightRadius: 0
               }}
+              disabled={isSearching}
             />
           </div>
           <button
@@ -64,11 +87,18 @@ const SearchBox: React.FC<SearchBoxProps> = ({
               borderTopLeftRadius: 0,
               borderBottomLeftRadius: 0
             }}
+            disabled={isSearching}
           >
             <Search size={18} color="white" />
             <span className="usa-sr-only">Search</span>
           </button>
         </form>
+
+        {searchError && (
+          <div className="margin-top-1 text-error font-sans-3xs">
+            {searchError}
+          </div>
+        )}
       </div>
 
       <div className="padding-x-2 padding-bottom-2">

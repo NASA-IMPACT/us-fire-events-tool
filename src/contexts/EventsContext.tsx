@@ -66,7 +66,85 @@ interface EventsContextValue extends Omit<EventsState, 'filters'> {
   currentFilters: EventFilterParams;
   selectEvent: (eventId: string | null) => void;
   getFilteredEvents: (start: Date, end: Date) => MVTFeature[];
+  searchFireById: (fireId: string) => Promise<{
+    data: GeoJSON.FeatureCollection | null;
+    bounds: [number, number, number, number] | null;
+    error: string | null;
+  }>;
 }
+
+export const searchFireById = async (fireId: string): Promise<{
+  data: GeoJSON.FeatureCollection | null;
+  bounds: [number, number, number, number] | null;
+  error: string | null;
+}> => {
+  try {
+    // Strangely, the specific collection appends '.0' to the fireId
+    // while the alternative collection does not. So we need to check
+    // if the fireId already has '.0' appended to it or not.
+    const formattedFireId = fireId.includes('.') ? fireId : `${fireId}.0`;
+
+    let data = await fetchFirePerimeters(formattedFireId);
+
+    if (!data || !data.features || data.features.length === 0) {
+      data = await fetchAlternativeFirePerimeters(formattedFireId);
+    }
+
+    if (!data || !data.features || data.features.length === 0) {
+      return {
+        data: null,
+        bounds: null,
+        error: "No fire found with that ID"
+      };
+    }
+
+    let minLng = Infinity;
+    let minLat = Infinity;
+    let maxLng = -Infinity;
+    let maxLat = -Infinity;
+
+    data.features.forEach(feature => {
+      if (feature.geometry && feature.geometry.coordinates) {
+        let coordinates = feature.geometry.coordinates;
+
+        if (feature.geometry.type === 'Polygon') {
+          coordinates = coordinates[0];
+        } else if (feature.geometry.type === 'MultiPolygon') {
+          coordinates = coordinates.flat(1);
+        }
+
+        coordinates.forEach(coord => {
+          const [lng, lat] = coord;
+          minLng = Math.min(minLng, lng);
+          minLat = Math.min(minLat, lat);
+          maxLng = Math.max(maxLng, lng);
+          maxLat = Math.max(maxLat, lat);
+        });
+      }
+    });
+
+    const padding = 0.1;
+    const bounds: [number, number, number, number] = [
+      minLng - padding,
+      minLat - padding,
+      maxLng + padding,
+      maxLat + padding
+    ];
+
+    return {
+      data,
+      bounds,
+      error: null
+    };
+  } catch (error) {
+    console.error("Error searching for fire:", error);
+    return {
+      data: null,
+      bounds: null,
+      error: "Error searching for fire. Please try again."
+    };
+  }
+};
 
 export const getFeatureProperties = (feature: MVTFeature | null) => {
   if (!feature) return {};
@@ -293,7 +371,8 @@ export const EventsProvider = ({ children }: { children: ReactNode }) => {
     selectedEventId: state.selectedEventId,
     selectEvent,
     getFilteredEvents,
-    firePerimeters: state.firePerimeters
+    firePerimeters: state.firePerimeters,
+    searchFireById
   };
 
   return (
