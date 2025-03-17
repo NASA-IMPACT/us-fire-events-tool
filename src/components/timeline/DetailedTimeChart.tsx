@@ -1,10 +1,11 @@
-import { useState, useEffect, useMemo, useRef } from 'react';
+import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { format } from 'date-fns';
 import ReactSlider from 'react-slider';
 import { Play, RotateCw, Video } from 'lucide-react';
 import { useEvents } from '../../contexts/EventsContext';
 import { useAppState } from '../../contexts/AppStateContext';
 import { YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts';
+import _ from 'lodash';
 
 const DetailedTimeChart = () => {
   const { selectedEventId, firePerimeters } = useEvents();
@@ -21,6 +22,13 @@ const DetailedTimeChart = () => {
 
   const yAxisOptions = ['Fire area (km²)', 'Mean FRP', 'Duration (days)'];
   const [selectedYAxis, setSelectedYAxis] = useState(yAxisOptions[0]);
+
+  const debouncedSetTimeRange = useCallback(
+    _.debounce((timeRangeValue) => {
+      setTimeRange(timeRangeValue);
+    }, 500),
+    [setTimeRange]
+  );
 
   const {
     minDate,
@@ -132,17 +140,16 @@ const DetailedTimeChart = () => {
     if (closestPointIndex >= 0 && closestPointIndex < perimeterData.length) {
       setCurrentPerimeter(perimeterData[closestPointIndex]);
 
-      setTimeRange({
+      debouncedSetTimeRange({
         start: minDate,
         end: perimeterData[closestPointIndex].time
       });
-
     }
 
     if (Math.abs(sliderValue - timePointIndexes[closestPointIndex]) > 0.1) {
       setSliderValue(timePointIndexes[closestPointIndex]);
     }
-  }, [sliderValue, minDate, perimeterData, setTimeRange, timePoints, timePointIndexes, totalRange]);
+  }, [sliderValue, minDate, perimeterData, debouncedSetTimeRange, timePoints, timePointIndexes, totalRange]);
 
   useEffect(() => {
     if (isPlaying) {

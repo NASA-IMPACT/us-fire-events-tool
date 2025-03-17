@@ -1,10 +1,9 @@
 import { useState, useEffect, useCallback } from 'react';
-import _ from 'lodash';
 import { useMap } from '../../../contexts/MapContext';
 import { getFireId, useEvents } from '../../../contexts/EventsContext';
 import { useAppState } from '../../../contexts/AppStateContext';
 import { useFilters } from '../../../contexts/FiltersContext';
-import { LAYER_TYPES, WIND_DATA_FETCH_DEBOUNCE } from '../config/constants';
+import { LAYER_TYPES } from '../config/constants';
 import { createLayers } from '../LayerFactory';
 
 /**
@@ -192,23 +191,17 @@ export const useLayers = ({
       }
 
       if (showWindLayer) {
-        if (!lastTimeRangeEnd || timeRange.end.getTime() !== lastTimeRangeEnd.getTime()) {
+        const timeChanged = !lastTimeRangeEnd || timeRange.end.getTime() !== lastTimeRangeEnd.getTime();
+
+        if (timeChanged) {
           setLastTimeRangeEnd(timeRange.end);
-
-          const debouncedAddWindLayer = _.debounce(async () => {
-            layerConfigs.push({
-              type: LAYER_TYPES.WIND,
-              timeRangeEnd: timeRange.end,
-              opacity: layerOpacity
-            });
-
-            const newLayers = await createLayers(layerConfigs);
-            setLayers(newLayers);
-          }, WIND_DATA_FETCH_DEBOUNCE);
-
-          debouncedAddWindLayer();
-          return;
         }
+
+        layerConfigs.push({
+          type: LAYER_TYPES.WIND,
+          timeRangeEnd: timeRange.end,
+          opacity: layerOpacity
+        });
       }
 
       const newLayers = await createLayers(layerConfigs);

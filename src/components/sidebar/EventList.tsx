@@ -36,10 +36,33 @@ const EventItem = memo(({ event, onClick, formatEventDates, getEventEndDate, fea
   const frp = props.meanfrp?.toFixed(2) || '0.00';
   const startDate = props.t;
   const endDate = getEventEndDate(fireId, features);
+  const geometry = getFeatureGeometry(event);
 
   const handleEventClick = () => {
     selectEvent(fireId);
     setViewMode('detail');
+
+    if (geometry && geometry.coordinates) {
+      let minLng = Infinity, minLat = Infinity, maxLng = -Infinity, maxLat = -Infinity;
+
+      if (geometry.type === 'Polygon' && geometry.coordinates.length > 0) {
+        const coordinates = geometry.coordinates[0];
+
+        coordinates.forEach(([lng, lat]) => {
+          minLng = Math.min(minLng, lng);
+          minLat = Math.min(minLat, lat);
+          maxLng = Math.max(maxLng, lng);
+          maxLat = Math.max(maxLat, lat);
+        });
+
+        window.dispatchEvent(new CustomEvent('fitbounds', {
+          detail: {
+            bounds: [[minLng, minLat], [maxLng, maxLat]],
+            padding: 80
+          }
+        }));
+      }
+    }
   };
 
   return (
