@@ -1,4 +1,5 @@
 import { GeoJsonLayer } from '@deck.gl/layers';
+import { _TerrainExtension as TerrainExtension } from '@deck.gl/extensions';
 
 /**
  * Creates a GeoJson layer for fire perimeters visualization
@@ -14,8 +15,8 @@ import { GeoJsonLayer } from '@deck.gl/layers';
  * @param {boolean} options.show3DMap - Whether to show 3D terrain
  * @return {GeoJsonLayer} Configured GeoJSON layer
  */
-export const createGeoJsonLayer2D = ({
-  id = 'fire-perimeters-2d',
+export const createGeoJsonLayer3D = ({
+  id = 'fire-perimeters-3d',
   data,
   filterFunction,
   opacity = 100,
@@ -54,6 +55,7 @@ export const createGeoJsonLayer2D = ({
       getFillColor: [filterFunction, ...(updateTriggers.getFillColor || [])],
       getLineColor: [filterFunction, ...(updateTriggers.getLineColor || [])]
     },
-    onClick
+    onClick,
+    extensions: [new TerrainExtension()]
   });
 };

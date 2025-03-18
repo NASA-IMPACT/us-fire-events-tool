@@ -1,7 +1,9 @@
 export const LAYER_TYPES = {
     MVT: 'mvt',
-    GEOJSON: 'geojson',
-    WIND: 'wind'
+    GEOJSON_2D: 'geojson-2d',
+    GEOJSON_3D: 'geojson-3d',
+    WIND: 'wind',
+    TERRAIN: 'terrain',
 };
 
 export const INTERACTION_TIMEOUT = 500;

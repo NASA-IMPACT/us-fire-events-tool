@@ -182,31 +182,41 @@ export const useLayers = ({
 
   useEffect(() => {
     const initializeLayers = async () => {
-      const layerConfigs = [
-        {
-          type: LAYER_TYPES.MVT,
-          url: 'https://firenrt.delta-backend.com/collections/public.eis_fire_snapshot_perimeter_nrt/tiles/{z}/{x}/{y}',
-          filterFunction: featurePassesFilters,
+      const layerConfigs = [];
+
+      if (show3DMap) {
+        layerConfigs.push({
+          type: LAYER_TYPES.TERRAIN,
           opacity: layerOpacity,
-          onTileLoad: handleTileLoad,
-          onClick: handleClick,
-          updateTriggers: {
-            getFillColor: [timeRange, showAdvancedFilters, fireArea, duration, meanFrp, region, isActive, searchTerm],
-            getLineColor: [timeRange, showAdvancedFilters, fireArea, duration, meanFrp, region, isActive, searchTerm]
-          }
-        }
-      ];
+          viewState
+        });
+      }
+
+      layerConfigs.push({
+        type: LAYER_TYPES.MVT,
+        url: 'https://firenrt.delta-backend.com/collections/public.eis_fire_snapshot_perimeter_nrt/tiles/{z}/{x}/{y}',
+        filterFunction: featurePassesFilters,
+        opacity: layerOpacity,
+        onTileLoad: handleTileLoad,
+        onClick: handleClick,
+        updateTriggers: {
+          getFillColor: [timeRange, showAdvancedFilters, fireArea, duration, meanFrp, region, isActive, searchTerm],
+          getLineColor: [timeRange, showAdvancedFilters, fireArea, duration, meanFrp, region, isActive, searchTerm]
+        },
+        show3DMap
+      });
 
       if (firePerimeters) {
         layerConfigs.push({
-          type: LAYER_TYPES.GEOJSON,
+          type: show3DMap ? LAYER_TYPES.GEOJSON_3D : LAYER_TYPES.GEOJSON_2D,
           data: firePerimeters,
           filterFunction: featurePassesFilters,
           opacity: layerOpacity,
           updateTriggers: {
             getFillColor: [timeRange, showAdvancedFilters, fireArea, duration, meanFrp, region, isActive, searchTerm],
             getLineColor: [timeRange, showAdvancedFilters, fireArea, duration, meanFrp, region, isActive, searchTerm]
-          }
+          },
+          onClick: handleClick
         });
       }
 
@@ -219,6 +229,7 @@ export const useLayers = ({
       }
 
       const newLayers = await createLayers(layerConfigs);
+
       setLayers(newLayers);
     };
 
@@ -241,7 +252,8 @@ export const useLayers = ({
     meanFrp,
     region,
     isActive,
-    searchTerm
+    searchTerm,
+    viewState
   ]);
 
   return layers;

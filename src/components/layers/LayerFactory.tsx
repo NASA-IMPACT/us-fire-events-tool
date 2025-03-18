@@ -45,6 +45,7 @@ export const createLayer = async (config) => {
 export const createLayers = async (configs) => {
   const layerPromises = configs.map(config => createLayer(config));
   const layers = await Promise.all(layerPromises);
+
   return layers.filter(Boolean);
 };
 

@@ -1,12 +1,42 @@
 import { LAYER_TYPES } from './constants';
 import { createMVTLayer } from '../MVTLayer';
-import { createGeoJsonLayer } from '../GeoJsonLayer';
+import { createGeoJsonLayer2D } from '../GeoJsonLayer';
+import { createGeoJsonLayer3D } from '../GeoJsonLayer3D';
 import { createWindLayer } from '../WindLayer';
+import { createTerrainLayer } from '../TerrainLayer';
 
 /**
  * Registry of all available layers and their configurations
  */
 export const layerRegistry = {
+  [LAYER_TYPES.TERRAIN]: {
+    id: LAYER_TYPES.TERRAIN,
+    name: 'Terrain Elevation',
+    render: createTerrainLayer,
+    defaultProps: {
+      id: 'terrain-layer'
+    },
+    visConfigSettings: {
+      opacity: {
+        type: 'number',
+        defaultValue: 100,
+        label: 'Opacity',
+        range: [0, 100]
+      },
+      wireframe: {
+        type: 'boolean',
+        defaultValue: false,
+        label: 'Show Wireframe'
+      },
+      elevationScale: {
+        type: 'number',
+        defaultValue: 1,
+        label: 'Elevation Scale',
+        range: [0.1, 10]
+      }
+    },
+    requiresData: false
+  },
   [LAYER_TYPES.MVT]: {
     id: LAYER_TYPES.MVT,
     name: 'Map Vector Tile',
@@ -41,12 +71,46 @@ export const layerRegistry = {
     requiresData: true
   },
 
-  [LAYER_TYPES.GEOJSON]: {
-    id: LAYER_TYPES.GEOJSON,
-    name: 'GeoJSON',
-    render: createGeoJsonLayer,
+  [LAYER_TYPES.GEOJSON_2D]: {
+    id: LAYER_TYPES.GEOJSON_2D,
+    name: 'GeoJSON 2D',
+    render: createGeoJsonLayer2D,
     defaultProps: {
       id: 'fire-perimeters'
+    },
+    visConfigSettings: {
+      opacity: {
+        type: 'number',
+        defaultValue: 100,
+        label: 'Opacity',
+        range: [0, 100]
+      },
+      fillColor: {
+        type: 'color',
+        defaultValue: [136, 140, 160, 255],
+        label: 'Fill Color'
+      },
+      lineColor: {
+        type: 'color',
+        defaultValue: [115, 120, 124, 255],
+        label: 'Line Color'
+      },
+      lineWidth: {
+        type: 'number',
+        defaultValue: 2,
+        label: 'Line Width',
+        range: [0, 10]
+      }
+    },
+    requiresData: true
+  },
+
+  [LAYER_TYPES.GEOJSON_3D]: {
+    id: LAYER_TYPES.GEOJSON_3D,
+    name: 'GeoJSON 3D',
+    render: createGeoJsonLayer3D,
+    defaultProps: {
+      id: 'fire-perimeters-3d'
     },
     visConfigSettings: {
       opacity: {
@@ -103,7 +167,7 @@ export const layerRegistry = {
       }
     },
     requiresData: false
-  }
+  },
 };
 
 /**

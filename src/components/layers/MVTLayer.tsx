@@ -42,6 +42,6 @@ export const createMVTLayer = ({
       getFillColor: [filterFunction, ...(updateTriggers.getFillColor || [])],
       getLineColor: [filterFunction, ...(updateTriggers.getLineColor || [])]
     },
-    onTileLoad
+    onTileLoad,
   });
 };
