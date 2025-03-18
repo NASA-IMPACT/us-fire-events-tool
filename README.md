@@ -1,6 +1,6 @@
 # U.S. Fire events visualization tool
 
-Web application that visualize fire data from VIIRS satellite observations and aims to showcase active fires and fire perimeters to understand fire progression.
+Web application that visualizes fire data from VIIRS satellite observations and aims to showcase active fires and fire perimeters to understand fire progression.
 
 ## Data sources
 
