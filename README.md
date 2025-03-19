@@ -15,6 +15,8 @@ VIIRS sensors provide updates approximately every 12 hours. For more detailed in
 
 - React, TypeScript
 - Deck.gl + Vector tiles for rendering the fire data
+- ParticleLayer for visualizing wind information
+- Simple video (webm) export functionality for recording animations
 - Recharts for charting of the fire stats
 - U.S. Web Design System for theming a gov-style UI
 
