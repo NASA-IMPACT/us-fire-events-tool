@@ -64,6 +64,9 @@ const MapView = () => {
             layers={layers}
             controller={{ doubleClickZoom: false }}
             getCursor={({isDragging}) => isDragging ? 'grabbing' : 'grab'}
+            onLoad={() => {
+                setTimeout(collectVisibleFeatures, 500);
+            }}
         >
             <Map
                 mapboxAccessToken={import.meta.env.VITE_MAPBOX_TOKEN}

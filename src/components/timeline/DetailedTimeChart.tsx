@@ -1,14 +1,15 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { format } from 'date-fns';
 import ReactSlider from 'react-slider';
-import { Play, RotateCw, Video } from 'lucide-react';
+import { Play, RotateCw, Video, X } from 'lucide-react';
 import { useEvents } from '../../contexts/EventsContext';
 import { useAppState } from '../../contexts/AppStateContext';
 import { YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts';
+import WebMWriter from 'webm-writer';
 
 const DetailedTimeChart = () => {
   const { selectedEventId, firePerimeters } = useEvents();
-  const { setTimeRange } = useAppState();
+  const { setTimeRange, show3DMap, toggle3DMap } = useAppState();
 
   const [sliderValue, setSliderValue] = useState(100);
   const [currentPerimeter, setCurrentPerimeter] = useState(null);
@@ -18,6 +19,17 @@ const DetailedTimeChart = () => {
   const sliderContainerRef = useRef(null);
   const animationRef = useRef(null);
   const [timePointIndexes, setTimePointIndexes] = useState([]);
+
+  const [isRecording, setIsRecording] = useState(false);
+  const [isPreparingToRecord, setIsPreparingToRecord] = useState(false);
+  const webmWriterRef = useRef(null);
+  const recordingIntervalRef = useRef(null);
+  const frameCountRef = useRef(0);
+  const totalFramesRef = useRef(0);
+  const isRecordingRef = useRef(false);
+  const animationCompleteRef = useRef(false);
+  const [videoFps] = useState(15);
+  const recordingEndTimeoutRef = useRef(null);
 
   const yAxisOptions = ['Fire area (km²)', 'Mean FRP', 'Duration (days)'];
   const [selectedYAxis, setSelectedYAxis] = useState(yAxisOptions[0]);
@@ -147,6 +159,17 @@ const DetailedTimeChart = () => {
     if (isPlaying) {
       if (sliderValue >= 100) {
         setIsPlaying(false);
+        animationCompleteRef.current = true;
+
+        if (isRecordingRef.current) {
+          if (recordingEndTimeoutRef.current) {
+            clearTimeout(recordingEndTimeoutRef.current);
+          }
+
+          recordingEndTimeoutRef.current = setTimeout(() => {
+            stopRecording();
+          }, 2000);
+        }
         return;
       }
 
@@ -167,7 +190,6 @@ const DetailedTimeChart = () => {
       if (nextIndex === timePointIndexes.length - 1) {
         animationRef.current = setTimeout(() => {
           setSliderValue(100);
-          setIsPlaying(false);
         }, animationSpeed);
       } else {
         animationRef.current = setTimeout(() => {
@@ -185,6 +207,7 @@ const DetailedTimeChart = () => {
 
   const togglePlayback = () => {
     if (sliderValue >= 100) {
+      animationCompleteRef.current = false;
       setSliderValue(timePointIndexes[0] || 0);
       setIsPlaying(true);
     } else {
@@ -193,6 +216,7 @@ const DetailedTimeChart = () => {
   };
 
   const resetAnimation = () => {
+    animationCompleteRef.current = false;
     setIsPlaying(false);
     setSliderValue(timePointIndexes[0] || 0);
   };
@@ -253,6 +277,164 @@ const DetailedTimeChart = () => {
       isHighlighted: dataPoint.timestamp <= currentPerimeter.timestamp
     }));
   }, [chartData, currentPerimeter]);
+
+  const handleExportVideo = () => {
+    if (isRecordingRef.current) {
+      stopRecording();
+    } else if (isPreparingToRecord) {
+      startRecording();
+    } else {
+      prepareToRecord();
+    }
+  };
+
+  const prepareToRecord = () => {
+    if (!show3DMap) {
+      toggle3DMap();
+    }
+
+    animationCompleteRef.current = false;
+    setIsPreparingToRecord(true);
+    resetAnimation();
+  };
+
+  const captureFrame = () => {
+    if (!isRecordingRef.current || !webmWriterRef.current) {
+      return;
+    }
+
+    try {
+      const deckGLCanvas = document.getElementById('deckgl-overlay');
+      const mapboxCanvas = document.querySelector('.mapboxgl-canvas');
+
+      if (!deckGLCanvas || !mapboxCanvas) {
+        console.error("Could not find required canvases");
+        return;
+      }
+
+      const compositeCanvas = document.createElement('canvas');
+      compositeCanvas.width = mapboxCanvas.width;
+      compositeCanvas.height = mapboxCanvas.height;
+
+      const ctx = compositeCanvas.getContext('2d', { alpha: false });
+
+      ctx.fillRect(0, 0, compositeCanvas.width, compositeCanvas.height);
+      ctx.drawImage(mapboxCanvas, 0, 0);
+      ctx.drawImage(deckGLCanvas, 0, 0);
+
+      webmWriterRef.current.addFrame(compositeCanvas);
+
+      frameCountRef.current++;
+    } catch (error) {
+      console.error("Error capturing frame:", error);
+    }
+  };
+
+  const startRecording = () => {
+    try {
+      if (recordingEndTimeoutRef.current) {
+        clearTimeout(recordingEndTimeoutRef.current);
+        recordingEndTimeoutRef.current = null;
+      }
+
+      setIsPreparingToRecord(false);
+
+      isRecordingRef.current = true;
+      setIsRecording(true);
+
+      animationCompleteRef.current = false;
+
+      const mapboxCanvas = document.querySelector('.mapboxgl-canvas');
+      if (!mapboxCanvas) {
+        throw new Error("Cannot find mapbox canvas for recording");
+      }
+
+      webmWriterRef.current = new WebMWriter({
+        quality: 0.95,
+        frameRate: videoFps,
+        transparent: false,
+        debug: true
+      });
+
+      resetAnimation();
+
+      frameCountRef.current = 0;
+
+      setTimeout(() => {
+        setIsPlaying(true);
+      }, 500);
+
+      const animationDuration = timePoints.length * animationSpeed;
+      totalFramesRef.current = Math.ceil(videoFps * (animationDuration / 1000));
+      totalFramesRef.current = Math.ceil(totalFramesRef.current * 1.2);
+
+      recordingIntervalRef.current = setInterval(captureFrame, 1000 / videoFps);
+
+    } catch (error) {
+      console.error("Error starting recording:", error);
+      isRecordingRef.current = false;
+      setIsRecording(false);
+      setIsPreparingToRecord(false);
+    }
+  };
+
+  const stopRecording = () => {
+    if (!isRecordingRef.current || !webmWriterRef.current) {
+      setIsRecording(false);
+      isRecordingRef.current = false;
+      setIsPreparingToRecord(false);
+      return;
+    }
+
+    if (recordingIntervalRef.current) {
+      clearInterval(recordingIntervalRef.current);
+      recordingIntervalRef.current = null;
+    }
+
+    if (recordingEndTimeoutRef.current) {
+      clearTimeout(recordingEndTimeoutRef.current);
+      recordingEndTimeoutRef.current = null;
+    }
+
+    setIsPlaying(false);
+    isRecordingRef.current = false;
+
+    webmWriterRef.current.complete()
+      .then(webMBlob => {
+        const url = URL.createObjectURL(webMBlob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `fire-animation-${timePoints.length}frames-${videoFps}fps.webm`;
+        document.body.appendChild(a);
+        a.click();
+
+        setTimeout(() => {
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+        }, 100);
+
+        setIsRecording(false);
+        setIsPreparingToRecord(false);
+        setIsPlaying(false);
+      })
+      .catch(error => {
+        console.error("Error completing recording:", error);
+        setIsRecording(false);
+        setIsPreparingToRecord(false);
+        setIsPlaying(false);
+      });
+  };
+
+  useEffect(() => {
+    return () => {
+      if (recordingIntervalRef.current) {
+        clearInterval(recordingIntervalRef.current);
+      }
+      if (recordingEndTimeoutRef.current) {
+        clearTimeout(recordingEndTimeoutRef.current);
+      }
+    };
+  }, []);
 
   if (!selectedEventId) return null;
 
@@ -359,6 +541,29 @@ const DetailedTimeChart = () => {
             background-color: #135a93;
           }
 
+          .export-button.preparing {
+            background-color: #f68b1f;
+          }
+
+          .export-button.recording {
+            background-color: #e63946;
+          }
+
+          .recording-progress {
+            font-size: 14px;
+            margin-right: 5px;
+          }
+
+          .fps-select {
+            background-color: #f0f0f0;
+            border: 1px solid #c9c9c9;
+            border-radius: 4px;
+            padding: 6px 8px;
+            font-size: 12px;
+            margin-left: 10px;
+            width: 80px;
+          }
+
           .recharts-cartesian-grid-horizontal line,
           .recharts-cartesian-grid-vertical line {
             stroke: #e6e6e6;
@@ -419,6 +624,7 @@ const DetailedTimeChart = () => {
             className="control-button"
             onClick={togglePlayback}
             aria-label={isPlaying ? "Pause" : "Play"}
+            disabled={isRecording || isPreparingToRecord}
           >
             <Play size={24} />
           </button>
@@ -427,13 +633,23 @@ const DetailedTimeChart = () => {
             className="control-button"
             onClick={resetAnimation}
             aria-label="Reset"
+            disabled={isRecording || isPreparingToRecord}
           >
             <RotateCw size={24} />
           </button>
         </div>
 
-        <button className="export-button border-radius-md padding-1 padding-x-105">
-          Export video <Video size={18} className="margin-left-1" />
+        <button
+          className={`export-button border-radius-md padding-1 padding-x-105 ${isPreparingToRecord ? 'preparing' : isRecording ? 'recording' : ''}`}
+          onClick={handleExportVideo}
+        >
+          {isRecording ? (
+            <>Stop Recording <X size={18} className="margin-left-1" /></>
+          ) : isPreparingToRecord ? (
+            <>Start Recording <Video size={18} className="margin-left-1" /></>
+          ) : (
+            <>Prepare Video <Video size={18} className="margin-left-1" /></>
+          )}
         </button>
       </div>
 
@@ -489,6 +705,7 @@ const DetailedTimeChart = () => {
           marks={timePointIndexes.length > 0}
           markClassName="slider-mark"
           ariaLabel="Fire perimeter time"
+          disabled={isRecording || isPreparingToRecord}
         />
       </div>
 
