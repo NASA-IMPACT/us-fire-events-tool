@@ -40,7 +40,7 @@ const Header: React.FC = () => {
           Earthdata VEDA Dashboard
         </span>
         <span className="font-public-sans font-sans-xs font-weight-bold text-ink margin-0 margin-right-1">
-          U.S. Fire Events Explorer
+          Fire Events Explorer
         </span>
       </div>
 
@@ -59,6 +59,17 @@ const Header: React.FC = () => {
         aria-labelledby="fire-modal-heading"
       >
         <div className="usa-modal__content">
+          <button
+            className="usa-button usa-button--unstyled position-absolute"
+            style={{ top: '20px', right: '20px' }}
+            onClick={handleCloseModal}
+            aria-label="Close modal"
+            type="button"
+          >
+            <svg width="36" height="36" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M19 6.41L17.59 5L12 10.59L6.41 5L5 6.41L10.59 12L5 17.59L6.41 19L12 13.41L17.59 19L19 17.59L13.41 12L19 6.41Z" fill="#71767A"/>
+            </svg>
+          </button>
           <div className="usa-modal__main">
             <div className="display-flex flex-align-center margin-bottom-3">
               <img
@@ -76,7 +87,7 @@ const Header: React.FC = () => {
               className="font-heading-xl text-ink margin-0 margin-bottom-2"
               id="fire-modal-heading"
             >
-              U.S. Fire Events Explorer
+              Fire Events Explorer
             </h1>
 
             <Tag className="border-radius-sm" background="#71767A">Last updated: {today}</Tag>

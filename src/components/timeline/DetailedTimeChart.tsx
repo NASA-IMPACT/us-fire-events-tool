@@ -62,7 +62,7 @@ const DetailedTimeChart = () => {
 
     const data = sortedFeatures.map(feature => {
       const time = new Date(feature.properties.primarykey.split('|')[2]);
-      const areaKm2 = (feature.properties.farea || 0) / 1000000;
+      const areaKm2 = (feature.properties.farea || 0);
       const meanFrp = feature.properties.meanfrp || 0;
       const duration = feature.properties.duration || 0;
 
