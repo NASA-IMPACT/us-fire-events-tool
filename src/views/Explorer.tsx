@@ -56,7 +56,8 @@ const Explorer: React.FC = () => {
         <div className="position-relative flex-fill">
           <MapView />
 
-          <div className="position-absolute top-5 left-2 z-top width-mobile-lg" style={{ top: '60px' }}>
+          {viewMode === 'explorer' &&
+            <div className="position-absolute top-5 left-2 z-top width-mobile-lg" style={{ top: '60px' }}>
             <SearchBox
               searchTerm={searchTerm}
               setSearchTerm={setSearchTerm}
@@ -64,6 +65,7 @@ const Explorer: React.FC = () => {
               showAdvancedFilters={showAdvancedFilters}
             />
           </div>
+          }
 
           {viewMode === 'detail' && selectedEventId ? (
             <DetailedTimeChart />
