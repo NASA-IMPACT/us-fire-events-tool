@@ -3,13 +3,14 @@ import { useAppState } from '../contexts/AppStateContext';
 import { useEvents } from '../contexts/EventsContext';
 import { useFilters } from '../contexts/FiltersContext';
 import EventList from '../components/sidebar/EventList';
-import SearchBox from '../components/filters/SearchBox';
 import MapView from '../components/MapView';
 import EventDetails from '../components/sidebar/EventDetailView';
 import TimeRangeSlider from '../components/timeline/RangeSlider';
 
 import 'mapbox-gl/dist/mapbox-gl.css';
 import DetailedTimeChart from '../components/timeline/DetailedTimeChart';
+import Header from '../components/Header';
+import SearchBox from '../components/filters/SearchBox';
 
 const Explorer: React.FC = () => {
   const {
@@ -47,36 +48,41 @@ const Explorer: React.FC = () => {
   };
 
   return (
-    <div className="display-flex height-viewport">
-      <div className="position-relative flex-fill">
-        <MapView />
+    <>
+      <Header />
 
-        <div className="position-absolute top-3 left-3 z-top width-mobile-lg">
-          <SearchBox
-            searchTerm={searchTerm}
-            setSearchTerm={setSearchTerm}
-            toggleAdvancedFilters={toggleAdvancedFilters}
-            showAdvancedFilters={showAdvancedFilters}
-          />
+      <div className="display-flex height-viewport">
+
+        <div className="position-relative flex-fill">
+          <MapView />
+
+          <div className="position-absolute top-5 left-2 z-top width-mobile-lg" style={{ top: '60px' }}>
+            <SearchBox
+              searchTerm={searchTerm}
+              setSearchTerm={setSearchTerm}
+              toggleAdvancedFilters={toggleAdvancedFilters}
+              showAdvancedFilters={showAdvancedFilters}
+            />
+          </div>
+
+          {viewMode === 'detail' && selectedEventId ? (
+            <DetailedTimeChart />
+          ) : (
+            <TimeRangeSlider />
+          )}
         </div>
 
-        {viewMode === 'detail' && selectedEventId ? (
-          <DetailedTimeChart />
-        ) : (
-          <TimeRangeSlider />
-        )}
+        <div className="overflow-hidden display-flex flex-column position-absolute bg-white" style={{ position: 'absolute', width: '360px', top: '50px', right: '10px', height: 'calc(100% - 70px)' }}>
+          {viewMode === 'detail' ? (
+            <EventDetails onBack={handleBackToList} />
+          ) : (
+            <EventList
+                features={filteredEvents}
+            />
+          )}
+        </div>
       </div>
-
-      <div className="overflow-hidden display-flex flex-column" style={{ width: '360px' }}>
-        {viewMode === 'detail' ? (
-          <EventDetails onBack={handleBackToList} />
-        ) : (
-          <EventList
-              features={filteredEvents}
-          />
-        )}
-      </div>
-    </div>
+    </>
   );
 };
 

@@ -13,12 +13,6 @@ export default defineConfig({
     preprocessorOptions: {
       scss: {
         api: 'legacy',
-        // additionalData: `
-        //   @forward './uswds-theme.scss';
-        //   @forward '~uswds/packages/uswds';
-
-        //   @use '~uswds/packages/uswds-core' as *;
-        // `,
         includePaths: ['node_modules/@uswds/uswds/packages'],
       },
     },

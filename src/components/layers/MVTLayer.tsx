@@ -14,7 +14,6 @@ import { MVTLayer } from '@deck.gl/geo-layers';
  */
 export const createMVTLayer = ({
   id = 'fire-perimeters-mvt',
-  url,
   filterFunction,
   opacity = 100,
   onTileLoad,
@@ -23,7 +22,7 @@ export const createMVTLayer = ({
 }) => {
   return new MVTLayer({
     id,
-    data: url,
+    data: `https://firenrt.delta-backend.com/collections/public.eis_fire_snapshot_perimeter_nrt/tiles/{z}/{x}/{y}`,
     getFillColor: (feature) => {
       const passes = filterFunction ? filterFunction(feature) : true;
       return passes ? [255, 140, 0, 180] : [255, 140, 0, 0];

@@ -1,9 +1,10 @@
-import { useMemo, useEffect, useRef, memo } from 'react';
+import { useMemo, useEffect, useRef, memo, useState } from 'react';
 import { format } from 'date-fns';
 import { useAppState } from '../../contexts/AppStateContext';
 import { MVTFeature, getFeatureProperties, getFeatureGeometry, isFeatureActive, getFireId, useEvents } from '../../contexts/EventsContext';
 import { FixedSizeList } from 'react-window';
 import AutoSizer from 'react-virtualized-auto-sizer';
+import _ from 'lodash';
 
 const calculateCentroid = (coordinates: number[][]) => {
   let sumLng = 0;
@@ -24,7 +25,7 @@ interface EventListProps {
   features: MVTFeature[];
 }
 
-const EventItem = memo(({ event, onClick, formatEventDates, getEventEndDate, features }) => {
+const EventItem = memo(({ event, formatEventDates, getEventEndDate, features }) => {
   const { selectEvent } = useEvents();
   const { setViewMode } = useAppState();
 
@@ -123,10 +124,49 @@ const formatEventDates = (startDate: string, endDate?: string) => {
   );
 };
 
+const fetchFireCounts = async (mapBounds) => {
+  if (!mapBounds) return { activeCount: 0, inactiveCount: 0 };
+
+  const [minLng, minLat, maxLng, maxLat] = mapBounds;
+  const bbox = `${minLng},${minLat},${maxLng},${maxLat}`;
+
+  await new Promise(resolve => setTimeout(resolve, 50));
+
+  try {
+    const [activeResponse, inactiveResponse] = await Promise.all([
+      fetch(`https://firenrt.delta-backend.com/collections/public.eis_fire_snapshot_perimeter_nrt/items?filter=isactive%3D1&bbox=${bbox}&limit=1`),
+      fetch(`https://firenrt.delta-backend.com/collections/public.eis_fire_snapshot_perimeter_nrt/items?filter=isactive%3D0&bbox=${bbox}&limit=1`)
+    ]);
+
+    const activeData = await activeResponse.json();
+    const inactiveData = await inactiveResponse.json();
+
+
+    const activeCount = activeData.numberMatched || 0;
+    const inactiveCount = inactiveData.numberMatched || 0;
+
+    return {
+      activeCount,
+      inactiveCount
+    };
+  } catch (error) {
+    console.error('Error fetching fire counts:', error);
+    return { activeCount: 0, inactiveCount: 0 };
+  }
+};
+
 const EventList: React.FC<EventListProps> = memo(({ features }) => {
   const listRef = useRef<FixedSizeList>(null);
   const { mapBounds } = useAppState();
   const prevFeaturesLengthRef = useRef(features.length);
+
+  const [isLoadingCounts, setIsLoadingCounts] = useState(false);
+  const [fireCounts, setFireCounts] = useState({
+    activeCount: 0,
+    inactiveCount: 0,
+    totalCount: 0,
+    lastUpdated: null
+  });
 
   useEffect(() => {
     if (prevFeaturesLengthRef.current !== features.length) {
@@ -134,7 +174,7 @@ const EventList: React.FC<EventListProps> = memo(({ features }) => {
     }
   }, [features.length]);
 
-  const { totalEvents, activeEvents, inactiveEvents } = useMemo(() => {
+  const localCounts = useMemo(() => {
     const active = features.filter(f => isFeatureActive(f));
     return {
       totalEvents: features.length,
@@ -142,6 +182,66 @@ const EventList: React.FC<EventListProps> = memo(({ features }) => {
       inactiveEvents: features.length - active.length
     };
   }, [features]);
+
+  const debouncedFetchRef = useRef(null);
+  const lastRequestedBoundsRef = useRef(null);
+  const pendingFetchRef = useRef(null);
+
+  useEffect(() => {
+    debouncedFetchRef.current = _.debounce(async (bounds) => {
+      if (lastRequestedBoundsRef.current &&
+          _.isEqual(lastRequestedBoundsRef.current, bounds)) {
+        return;
+      }
+
+      lastRequestedBoundsRef.current = bounds;
+
+      if (bounds) {
+        const loadingTimer = setTimeout(() => {
+          setIsLoadingCounts(true);
+        }, 1000);
+
+        const fetchOperation = fetchFireCounts(bounds).then(result => {
+
+          if (pendingFetchRef.current === fetchOperation) {
+            const { activeCount, inactiveCount } = result;
+            const totalCount = activeCount + inactiveCount;
+
+            setFireCounts({
+              activeCount,
+              inactiveCount,
+              totalCount,
+              lastUpdated: new Date()
+            });
+            setIsLoadingCounts(false);
+
+            pendingFetchRef.current = null;
+          }
+
+          clearTimeout(loadingTimer);
+        }).catch(error => {
+          console.error('Error fetching fire counts:', error);
+          setIsLoadingCounts(false);
+          clearTimeout(loadingTimer);
+          pendingFetchRef.current = null;
+        });
+
+        pendingFetchRef.current = fetchOperation;
+      }
+    }, 800);
+
+    return () => {
+      if (debouncedFetchRef.current) {
+        debouncedFetchRef.current.cancel();
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    if (debouncedFetchRef.current && mapBounds) {
+      debouncedFetchRef.current(mapBounds);
+    }
+  }, [mapBounds]);
 
   const filteredFeatures = useMemo(() => {
     if (!mapBounds) return features;
@@ -193,7 +293,6 @@ const EventList: React.FC<EventListProps> = memo(({ features }) => {
     return (
       <div className="display-flex flex-align-center flex-justify-center height-full padding-4 text-center text-base-light">
         <div>
-          <div className="margin-bottom-2 font-sans-lg opacity-50">⚠️</div>
           <p>No fire events found in the selected time range.</p>
           <p className="font-sans-3xs margin-top-2">Try adjusting the time range or filters.</p>
         </div>
@@ -218,25 +317,41 @@ const EventList: React.FC<EventListProps> = memo(({ features }) => {
     );
   };
 
+  const displayStats = isLoadingCounts || !fireCounts.lastUpdated ? {
+    totalEvents: localCounts.totalEvents,
+    activeEvents: localCounts.activeEvents,
+    inactiveEvents: localCounts.inactiveEvents
+  } : {
+    totalEvents: fireCounts.totalCount,
+    activeEvents: fireCounts.activeCount,
+    inactiveEvents: fireCounts.inactiveCount
+  };
+
   return (
     <div className="display-flex flex-column height-full">
       <div className="width-full bg-white radius-md border-0 overflow-hidden">
         <div className="display-flex flex-row height-full">
           <div className="flex-fill display-flex flex-column padding-y-2 padding-x-2 border-right border-base-lighter">
             <div className="font-body font-weight-regular font-sans-3xs line-height-body-1 text-base-ink margin-bottom-05">Total</div>
-            <div className="font-body font-weight-bold font-sans-lg text-base-ink">{totalEvents}</div>
+            <div className="font-body font-weight-bold font-sans-lg text-base-ink">
+              {displayStats.totalEvents}
+            </div>
           </div>
           <div className="flex-fill display-flex flex-column padding-y-2 padding-x-2 border-right border-base-lighter">
             <div className="font-body font-weight-regular font-sans-3xs line-height-body-1 text-error margin-bottom-05">
               Active
             </div>
-            <div className="font-body font-weight-bold font-sans-lg text-error">{activeEvents}</div>
+            <div className="font-body font-weight-bold font-sans-lg text-error">
+              {displayStats.activeEvents}
+            </div>
           </div>
           <div className="flex-fill display-flex flex-column padding-y-2 padding-x-2">
             <div className="font-body font-weight-regular font-sans-3xs line-height-body-1 text-base margin-bottom-05">
               Inactive
             </div>
-            <div className="font-body font-weight-bold font-sans-lg text-base">{inactiveEvents}</div>
+            <div className="font-body font-weight-bold font-sans-lg text-base">
+              {displayStats.inactiveEvents}
+            </div>
           </div>
         </div>
       </div>

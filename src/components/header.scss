@@ -1,0 +1,15 @@
+.usa-modal__content {
+    padding-top: 0;
+
+    .usa-modal__main {
+        padding: 0;
+        margin: 0;
+        max-width: max-content;
+    }
+
+    .usa-modal__close {
+        position: absolute;
+        top: 50px;
+        right: 20px;
+    }
+}

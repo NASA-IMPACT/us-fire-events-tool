@@ -196,7 +196,7 @@ const EventDetails: React.FC<EventDetailsProps> = ({ onBack }) => {
           </table>
         </div>
 
-        <div className="margin-top-4 margin-bottom-3 border-top-1px border-bottom-1px border-base-lighter padding-y-2">
+        <div className="margin-top-3 margin-bottom-3 border-bottom-1px border-base-lighter padding-y-2">
           <h3 className="margin-top-0 margin-bottom-2 font-weight-700 font-sans-2xs text-base-dark">Fire spread</h3>
 
           <div className="display-flex flex-wrap">

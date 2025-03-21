@@ -1,23 +1,33 @@
 import { useState, useRef, useEffect } from 'react';
-import { Search } from 'lucide-react';
 import AdvancedFilters from './AdvancedFilters';
-import { useMap } from '../../contexts/MapContext';
 import { useEvents } from '../../contexts/EventsContext';
 import { useFilters } from '../../contexts/FiltersContext';
+import { useAppState } from '../../contexts/AppStateContext';
 
 const SearchBox: React.FC = () => {
   const { searchTerm, setSearchTerm, showAdvancedFilters, toggleAdvancedFilters } = useFilters();
   const [searchError, setSearchError] = useState<string | null>(null);
   const [isSearching, setIsSearching] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  const { flyToBounds } = useMap();
-  const { selectEvent, searchFireById } = useEvents();
+  const { selectEvent } = useEvents();
+  const { setViewMode } = useAppState();
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(e.target.value);
     if (searchError) {
       setSearchError(null);
+    }
+
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current);
+    }
+
+    if (e.target.value.trim()) {
+      searchTimeoutRef.current = setTimeout(() => {
+        handleSearchFire(e.target.value.trim());
+      }, 1000);
     }
   };
 
@@ -26,18 +36,51 @@ const SearchBox: React.FC = () => {
     setSearchError(null);
 
     try {
-      const result = await searchFireById(fireId);
+      const url = `https://firenrt.delta-backend.com/collections/public.eis_fire_snapshot_perimeter_nrt/items?filter=fireid%3D${fireId}&limit=1&f=geojson`;
+      const response = await fetch(url);
 
-      if (result.error) {
-        setSearchError(result.error);
+      if (!response.ok) {
+        throw new Error(`Failed to fetch: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+
+      if (!data || !data.features || data.features.length === 0) {
+        setSearchError("No fire IDs found");
         return;
       }
 
-      if (result.bounds) {
-        flyToBounds(result.bounds);
+      selectEvent(fireId);
+
+      setViewMode('detail');
+
+      const geometry = data.features[0].geometry;
+
+      if (geometry && geometry.coordinates) {
+        let minLng = Infinity, minLat = Infinity, maxLng = -Infinity, maxLat = -Infinity;
+
+        if (geometry.type === 'Polygon' && geometry.coordinates.length > 0) {
+          const coordinates = geometry.coordinates[0];
+
+          coordinates.forEach(([lng, lat]) => {
+            minLng = Math.min(minLng, lng);
+            minLat = Math.min(minLat, lat);
+            maxLng = Math.max(maxLng, lng);
+            maxLat = Math.max(maxLat, lat);
+          });
+
+          window.dispatchEvent(new CustomEvent('fitbounds', {
+            detail: {
+              bounds: [[minLng, minLat], [maxLng, maxLat]],
+              padding: 80
+            }
+          }));
+        }
       }
 
-      selectEvent(fireId);
+    } catch (error) {
+      console.error("Error searching for fire:", error);
+      setSearchError("Error searching for fire. Please try again.");
     } finally {
       setIsSearching(false);
     }
@@ -46,6 +89,10 @@ const SearchBox: React.FC = () => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchTerm.trim()) {
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current);
+      }
+
       handleSearchFire(searchTerm.trim());
     }
     inputRef.current?.blur();
@@ -57,6 +104,12 @@ const SearchBox: React.FC = () => {
         inputRef.current.focus();
       }
     }
+
+    return () => {
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current);
+      }
+    };
   }, []);
 
   return (
@@ -72,7 +125,7 @@ const SearchBox: React.FC = () => {
               value={searchTerm}
               onChange={handleSearchChange}
               placeholder="Search by fire ID"
-              className="font-body font-weight-regular font-sans-2xs border-1px border-right-0 radius-left-md padding-x-2 height-5 width-full"
+              className="font-body font-weight-regular font-sans-2xs border-1px radius-left-md padding-x-2 height-5 width-full"
               style={{
                 borderTopRightRadius: 0,
                 borderBottomRightRadius: 0
@@ -80,18 +133,6 @@ const SearchBox: React.FC = () => {
               disabled={isSearching}
             />
           </div>
-          <button
-            type="submit"
-            className="bg-primary border-0 display-flex flex-justify-center flex-align-center cursor-pointer height-5 width-5"
-            style={{
-              borderTopLeftRadius: 0,
-              borderBottomLeftRadius: 0
-            }}
-            disabled={isSearching}
-          >
-            <Search size={18} color="white" />
-            <span className="usa-sr-only">Search</span>
-          </button>
         </form>
 
         {searchError && (

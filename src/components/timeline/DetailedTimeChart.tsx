@@ -11,7 +11,7 @@ const DetailedTimeChart = () => {
   const { selectedEventId, firePerimeters } = useEvents();
   const { setTimeRange, show3DMap, toggle3DMap } = useAppState();
 
-  const [sliderValue, setSliderValue] = useState(100);
+  const [sliderValue, setSliderValue] = useState(0);
   const [currentPerimeter, setCurrentPerimeter] = useState(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [animationSpeed] = useState(500);
@@ -117,7 +117,7 @@ const DetailedTimeChart = () => {
 
   useEffect(() => {
     if (perimeterData.length > 0) {
-      setSliderValue(100);
+      setSliderValue(0);
       setCurrentPerimeter(perimeterData[perimeterData.length - 1]);
 
       setTimeRange({
@@ -439,7 +439,7 @@ const DetailedTimeChart = () => {
   if (!selectedEventId) return null;
 
   return (
-    <div className="position-absolute bottom-3 left-3 bg-base-lightest radius-md padding-3 shadow-2 z-top" style={{ width: "800px", height: '215px' }}>
+    <div className="position-absolute bottom-2 left-2 bg-base-lightest radius-md padding-3 shadow-2 z-top" style={{ width: "800px", height: '215px' }}>
       <style>
         {`
           .chart-container {

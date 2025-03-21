@@ -201,8 +201,11 @@ export const useLayers = ({
         onClick: handleClick,
         updateTriggers: {
           getFillColor: [timeRange, showAdvancedFilters, fireArea, duration, meanFrp, region, isActive, searchTerm],
-          getLineColor: [timeRange, showAdvancedFilters, fireArea, duration, meanFrp, region, isActive, searchTerm]
+          getLineColor: [timeRange, showAdvancedFilters, fireArea, duration, meanFrp, region, isActive, searchTerm],
+          getLineWidth: [timeRange],
+          getDashArray: [timeRange]
         },
+        timeRange,
         show3DMap
       });
 
@@ -214,9 +217,12 @@ export const useLayers = ({
           opacity: layerOpacity,
           updateTriggers: {
             getFillColor: [timeRange, showAdvancedFilters, fireArea, duration, meanFrp, region, isActive, searchTerm],
-            getLineColor: [timeRange, showAdvancedFilters, fireArea, duration, meanFrp, region, isActive, searchTerm]
+            getLineColor: [timeRange, showAdvancedFilters, fireArea, duration, meanFrp, region, isActive, searchTerm],
+            getLineWidth: [timeRange],
+            getDashArray: [timeRange]
           },
-          onClick: handleClick
+          onClick: handleClick,
+          timeRange
         });
       }
 
@@ -253,7 +259,8 @@ export const useLayers = ({
     region,
     isActive,
     searchTerm,
-    viewState
+    viewState,
+    zoomToFeature
   ]);
 
   return layers;

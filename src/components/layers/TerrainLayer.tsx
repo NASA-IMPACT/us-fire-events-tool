@@ -11,8 +11,6 @@ import { TerrainLayer } from '@deck.gl/geo-layers';
  */
 export const createTerrainLayer = ({
   id = 'terrain',
-  opacity = 100,
-  viewState
 }) => {
   const mapboxToken = import.meta.env.VITE_MAPBOX_TOKEN;
 

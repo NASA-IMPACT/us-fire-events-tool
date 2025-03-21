@@ -1,4 +1,4 @@
-# U.S. Fire events visualization tool
+# CONUS Fire events visualization tool
 
 Web application that visualizes fire data from VIIRS satellite observations and aims to showcase active fires and fire perimeters to understand fire progression.
 

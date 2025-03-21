@@ -4,8 +4,6 @@ import { AppStateProvider } from './contexts/AppStateContext';
 import { FiltersProvider } from './contexts/FiltersContext';
 import { EventsProvider } from './contexts/EventsContext';
 import { MapProvider } from './contexts/MapContext';
-// import Explorer from './views/Explorer';
-// import EventDetail from './views/EventDetail';
 import './App.scss';
 import Explorer from './views/Explorer';
 
@@ -28,7 +26,6 @@ function App() {
               <MapProvider>
                 <Routes>
                   <Route path="/" element={<Explorer />} />
-                  {/* <Route path="/event/:eventId" element={<EventDetail />} /> */}
                 </Routes>
               </MapProvider>
             </EventsProvider>

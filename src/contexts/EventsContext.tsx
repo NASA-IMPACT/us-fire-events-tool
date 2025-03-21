@@ -1,5 +1,4 @@
 import { createContext, useContext, useReducer, useEffect, ReactNode, useMemo, useCallback, useRef } from 'react';
-import { EventFilterParams } from '../api/events';
 import { useAppState } from './AppStateContext';
 
 export interface MVTFeature {
@@ -41,7 +40,20 @@ export interface GroupedEvents {
     isActive: boolean;
   };
 }
-
+export interface EventFilterParams {
+  bbox?: [number, number, number, number];
+  dateRange?: [Date, Date];
+  fireAreaRange?: [number, number];
+  durationRange?: [number, number];
+  meanFrpRange?: [number, number];
+  isActive?: boolean;
+  region?: string;
+  searchTerm?: string;
+  limit?: number;
+  zoom?: number;
+  useHistorical?: boolean;
+  forceCollection?: string;
+}
 interface EventsState {
   events: MVTFeature[];
   filters: EventFilterParams;

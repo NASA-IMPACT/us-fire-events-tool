@@ -4,6 +4,7 @@ import { createGeoJsonLayer2D } from '../GeoJsonLayer';
 import { createGeoJsonLayer3D } from '../GeoJsonLayer3D';
 import { createWindLayer } from '../WindLayer';
 import { createTerrainLayer } from '../TerrainLayer';
+import { PathStyleExtension } from '@deck.gl/extensions';
 
 /**
  * Registry of all available layers and their configurations
@@ -16,25 +17,6 @@ export const layerRegistry = {
     defaultProps: {
       id: 'terrain-layer'
     },
-    visConfigSettings: {
-      opacity: {
-        type: 'number',
-        defaultValue: 100,
-        label: 'Opacity',
-        range: [0, 100]
-      },
-      wireframe: {
-        type: 'boolean',
-        defaultValue: false,
-        label: 'Show Wireframe'
-      },
-      elevationScale: {
-        type: 'number',
-        defaultValue: 1,
-        label: 'Elevation Scale',
-        range: [0.1, 10]
-      }
-    },
     requiresData: false
   },
   [LAYER_TYPES.MVT]: {
@@ -43,30 +25,6 @@ export const layerRegistry = {
     render: createMVTLayer,
     defaultProps: {
       id: 'fire-perimeters-mvt',
-      url: 'https://firenrt.delta-backend.com/collections/public.eis_fire_snapshot_perimeter_nrt/tiles/{z}/{x}/{y}'
-    },
-    visConfigSettings: {
-      opacity: {
-        type: 'number',
-        defaultValue: 100,
-        label: 'Opacity',
-        range: [0, 100]
-      },
-      outline: {
-        type: 'boolean',
-        defaultValue: true,
-        label: 'Show Outline'
-      },
-      fillColor: {
-        type: 'color',
-        defaultValue: [255, 140, 0, 180],
-        label: 'Fill Color'
-      },
-      lineColor: {
-        type: 'color',
-        defaultValue: [255, 69, 0, 255],
-        label: 'Line Color'
-      }
     },
     requiresData: true
   },
@@ -76,31 +34,8 @@ export const layerRegistry = {
     name: 'GeoJSON 2D',
     render: createGeoJsonLayer2D,
     defaultProps: {
-      id: 'fire-perimeters'
-    },
-    visConfigSettings: {
-      opacity: {
-        type: 'number',
-        defaultValue: 100,
-        label: 'Opacity',
-        range: [0, 100]
-      },
-      fillColor: {
-        type: 'color',
-        defaultValue: [136, 140, 160, 255],
-        label: 'Fill Color'
-      },
-      lineColor: {
-        type: 'color',
-        defaultValue: [115, 120, 124, 255],
-        label: 'Line Color'
-      },
-      lineWidth: {
-        type: 'number',
-        defaultValue: 2,
-        label: 'Line Width',
-        range: [0, 10]
-      }
+      id: 'fire-perimeters',
+      extensions: [new PathStyleExtension({ dash: true })]
     },
     requiresData: true
   },
@@ -110,31 +45,9 @@ export const layerRegistry = {
     name: 'GeoJSON 3D',
     render: createGeoJsonLayer3D,
     defaultProps: {
-      id: 'fire-perimeters-3d'
-    },
-    visConfigSettings: {
-      opacity: {
-        type: 'number',
-        defaultValue: 100,
-        label: 'Opacity',
-        range: [0, 100]
-      },
-      fillColor: {
-        type: 'color',
-        defaultValue: [136, 140, 160, 255],
-        label: 'Fill Color'
-      },
-      lineColor: {
-        type: 'color',
-        defaultValue: [115, 120, 124, 255],
-        label: 'Line Color'
-      },
-      lineWidth: {
-        type: 'number',
-        defaultValue: 2,
-        label: 'Line Width',
-        range: [0, 10]
-      }
+      id: 'fire-perimeters-3d',
+      opacity: 100,
+      extensions: [new PathStyleExtension({ dash: true })]
     },
     requiresData: true
   },
@@ -145,26 +58,6 @@ export const layerRegistry = {
     render: createWindLayer,
     defaultProps: {
       id: 'wind-particles'
-    },
-    visConfigSettings: {
-      opacity: {
-        type: 'number',
-        defaultValue: 92,
-        label: 'Opacity',
-        range: [0, 100]
-      },
-      particleSpeed: {
-        type: 'number',
-        defaultValue: 20,
-        label: 'Particle Speed',
-        range: [1, 50]
-      },
-      particleCount: {
-        type: 'number',
-        defaultValue: 4000,
-        label: 'Particle Count',
-        range: [500, 10000]
-      }
     },
     requiresData: false
   },
