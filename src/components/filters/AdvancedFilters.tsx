@@ -160,7 +160,7 @@ const AdvancedFilters: React.FC = () => {
 
         <div className="margin-bottom-3">
           <label className="font-body font-sans-3xs margin-bottom-1 display-block" htmlFor="mean-frp-slider">
-            Mean RFP (MW)
+            Mean FRP (MW)
           </label>
           <div className="display-flex flex-align-center">
             <div className="border-1px padding-x-1 padding-y-05 width-6 height-4 display-flex flex-align-center flex-justify-center slider-value">

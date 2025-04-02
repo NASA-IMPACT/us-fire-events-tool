@@ -1,7 +1,6 @@
 import * as WeatherLayers from 'weatherlayers-gl';
 import { ClipExtension } from '@deck.gl/extensions';
 import { USA_BBOX } from './config/constants';
-import { getClosestWeatherData, WeatherDataset } from '../../api/weather';
 
 /**
  * Creates a wind particle layer
@@ -15,26 +14,48 @@ import { getClosestWeatherData, WeatherDataset } from '../../api/weather';
  */
 export const createWindLayer = async ({
   timeRangeEnd,
-  particleCount = 4000,
-  speedFactor = 20,
+  particleCount = 2000,
+  speedFactor = 10,
   opacity = 92
 }) => {
   try {
-    const { data } = await getClosestWeatherData(
-      WeatherDataset.WIND_10M,
-      timeRangeEnd
-    );
+    const hr = timeRangeEnd.getUTCHours();
+    const cycleHour = Math.floor(hr / 6) * 6;
+    const runHourStr = cycleHour.toString().padStart(2, '0');
+
+    const runDate = new Date(Date.UTC(
+      timeRangeEnd.getUTCFullYear(),
+      timeRangeEnd.getUTCMonth(),
+      timeRangeEnd.getUTCDate(),
+      cycleHour
+    ));
+
+    const runDateStr = runDate.toISOString().split('T')[0].replace(/-/g, '');
+
+    const forecastHour = Math.round((timeRangeEnd - runDate) / 3600000)
+      .toString()
+      .padStart(2, '0');
+
+    const imageUrl = `https://titiler.xyz/cog/preview.png?rescale=-127,128&url=vrt:///vsicurl/https://noaa-hrrr-bdp-pds.s3.amazonaws.com/hrrr.${runDateStr}/conus/hrrr.t${runHourStr}z.wrfsfcf${forecastHour}.grib2?bands=10,11&format=png`;
+
+    let image;
+
+    try {
+      image = await WeatherLayers.loadTextureData(imageUrl);
+    } catch (err) {
+      console.error('loadTextureData failed:', err);
+    }
 
     return new WeatherLayers.ParticleLayer({
       id: 'wind-particles',
-      image: data.image,
+      image: image,
       imageType: 'VECTOR',
-      imageUnscale: data.imageUnscale,
-      bounds: data.bounds,
+      imageUnscale: [-127, 128],
+      bounds: [-130, 20, -60, 55],
       extensions: [new ClipExtension()],
       clipBounds: USA_BBOX,
       numParticles: particleCount,
-      color: [70, 70, 70, 255],
+      color: [97, 173, 234, 255],
       fadeOpacity: opacity / 100,
       dropRate: 0.003,
       dropRateBump: 0.01,

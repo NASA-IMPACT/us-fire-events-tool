@@ -51,7 +51,7 @@ const EventDetails: React.FC<EventDetailsProps> = ({ onBack }) => {
 
   const area = eventProperties.farea ? Number(eventProperties.farea).toFixed(2) : '0.00';
   const durationDays = eventProperties.duration ? Math.round(eventProperties.duration) : 0;
-  const meanRFP = eventProperties.meanfrp ? Number(eventProperties.meanfrp).toFixed(2) : '0.00';
+  const meanFRP = eventProperties.meanfrp ? Number(eventProperties.meanfrp).toFixed(2) : '0.00';
   const perimeter = eventProperties.fperim ? Number(eventProperties.fperim).toFixed(2) : '0.00';
   const pixelDensity = eventProperties.pixden ? Number(eventProperties.pixden).toFixed(2) : '0.00';
   const newPixels = eventProperties.n_newpixels || 0;
@@ -148,7 +148,7 @@ const EventDetails: React.FC<EventDetailsProps> = ({ onBack }) => {
         <div className="display-flex flex-row margin-bottom-2 grid-gap-3">
           <div className="border-1px border-base-lighter radius-md padding-y-1 padding-x-2 flex-fill margin-right-2">
             <h3 className="margin-0 margin-bottom-1 font-body font-weight-bold font-sans-3xs text-base display-flex flex-align-center">
-              Mean RFP
+              Mean FRP
               <span className="margin-left-1 text-base">
                 <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
                   <path d="M8 0C3.6 0 0 3.6 0 8s3.6 8 8 8 8-3.6 8-8-3.6-8-8-8zm0 14c-3.3 0-6-2.7-6-6s2.7-6 6-6 6 2.7 6 6-2.7 6-6 6z"/>
@@ -157,7 +157,7 @@ const EventDetails: React.FC<EventDetailsProps> = ({ onBack }) => {
               </span>
             </h3>
             <div className="margin-0 font-body font-weight-bold font-sans-lg text-base-ink">
-              <span>{meanRFP}</span> <span className="font-sans-xs">MW</span>
+              <span>{meanFRP}</span> <span className="font-sans-xs">MW</span>
             </div>
           </div>
 

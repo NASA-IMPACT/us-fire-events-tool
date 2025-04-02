@@ -8,6 +8,9 @@ import { useAppState } from '../contexts/AppStateContext';
 import { INITIAL_VIEW_STATE, MAP_STYLE } from './layers';
 import { useLayers } from './layers/hooks/useLayers';
 import { useMapInteraction } from './layers/hooks/useMapInteraction';
+import { CompassWidget, FullscreenWidget, ZoomWidget } from '@deck.gl/widgets';
+import '@deck.gl/widgets/stylesheet.css';
+import 'deck.gl/stylesheet.css';
 
 /**
  * Map visualization component
@@ -67,6 +70,22 @@ const MapView = () => {
             onLoad={() => {
                 setTimeout(collectVisibleFeatures, 500);
             }}
+            widgets={[
+                new ZoomWidget({
+                    placement: 'top-left',
+                    style: {
+                        marginTop: '55px'
+                    }
+                }),
+                new CompassWidget({
+                    id: 'compass',
+                    placement: 'top-left',
+                }),
+                new FullscreenWidget({
+                    id: 'fullscreen',
+                    placement: 'top-left',
+                })
+            ]}
         >
             <Map
                 mapboxAccessToken={import.meta.env.VITE_MAPBOX_TOKEN}

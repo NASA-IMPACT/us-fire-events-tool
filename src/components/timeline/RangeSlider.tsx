@@ -110,7 +110,7 @@ const TimeRangeSlider = () => {
   }, [eventsByTime, timeRange]);
 
   return (
-    <div className="position-absolute bottom-2 left-2 bg-base-lightest radius-md padding-3 shadow-2 z-top" style={{ width: "800px", height: '215px' }}>
+    <div className="bg-base-lightest radius-md padding-3 shadow-2 z-top" style={{ width: "800px", height: '215px' }}>
       <style>
         {`
           .range-slider {

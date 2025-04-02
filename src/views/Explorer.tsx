@@ -2,7 +2,6 @@ import React, { useMemo } from 'react';
 import { useAppState } from '../contexts/AppStateContext';
 import { useEvents } from '../contexts/EventsContext';
 import { useFilters } from '../contexts/FiltersContext';
-import EventList from '../components/sidebar/EventList';
 import MapView from '../components/MapView';
 import EventDetails from '../components/sidebar/EventDetailView';
 import TimeRangeSlider from '../components/timeline/RangeSlider';
@@ -10,7 +9,6 @@ import TimeRangeSlider from '../components/timeline/RangeSlider';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import DetailedTimeChart from '../components/timeline/DetailedTimeChart';
 import Header from '../components/Header';
-import SearchBox from '../components/filters/SearchBox';
 
 const Explorer: React.FC = () => {
   const {
@@ -56,7 +54,7 @@ const Explorer: React.FC = () => {
         <div className="position-relative flex-fill">
           <MapView />
 
-          {viewMode === 'explorer' &&
+          {/* {viewMode === 'explorer' &&
             <div className="position-absolute top-5 left-2 z-top width-mobile-lg" style={{ top: '60px' }}>
             <SearchBox
               searchTerm={searchTerm}
@@ -65,24 +63,34 @@ const Explorer: React.FC = () => {
               showAdvancedFilters={showAdvancedFilters}
             />
           </div>
-          }
+          } */}
 
           {viewMode === 'detail' && selectedEventId ? (
-            <DetailedTimeChart />
+            <div
+              className="position-absolute bottom-0 z-top margin-bottom-2"
+              style={{
+                left: 'calc(50% - 185px)',
+                transform: 'translateX(-50%)',
+              }}
+            >
+              <DetailedTimeChart />
+            </div>
+
           ) : (
-            <TimeRangeSlider />
+            <div
+              className="position-absolute bottom-0 z-top margin-bottom-2"
+              style={{ left: '50%', transform: 'translateX(-50%)' }}>
+              <TimeRangeSlider />
+            </div>
           )}
+
         </div>
 
-        <div className="overflow-hidden display-flex flex-column position-absolute bg-white" style={{ position: 'absolute', width: '360px', top: '50px', right: '10px', height: 'calc(100% - 70px)' }}>
-          {viewMode === 'detail' ? (
+        {viewMode === 'detail' && (
+          <div className="overflow-hidden display-flex flex-column position-absolute bg-white" style={{ position: 'absolute', width: '360px', top: '50px', right: '10px', height: 'calc(100% - 70px)' }}>
             <EventDetails onBack={handleBackToList} />
-          ) : (
-            <EventList
-                features={filteredEvents}
-            />
-          )}
-        </div>
+          </div>
+        )}
       </div>
     </>
   );
