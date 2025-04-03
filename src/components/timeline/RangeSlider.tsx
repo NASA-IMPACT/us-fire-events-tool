@@ -5,11 +5,15 @@ import ReactSlider from 'react-slider';
 import { useEvents } from '../../contexts/EventsContext';
 import { useAppState } from '../../contexts/AppStateContext';
 import { BarChart, Bar, ResponsiveContainer, XAxis } from 'recharts';
+import AdvancedFilters from '../filters/AdvancedFilters';
+import { useFilters } from '../../contexts/FiltersContext';
 
 const TimeRangeSlider = () => {
   const { timeRange, setTimeRange } = useAppState();
+  const { toggleAdvancedFilters} = useFilters();
   const { events } = useEvents();
 
+  const [showSearchFilters, setShowSearchFilters] = useState(false);
   const [highlightedArea, setHighlightedArea] = useState({ left: 0, width: 0 });
   const chartRef = useRef(null);
 
@@ -110,7 +114,7 @@ const TimeRangeSlider = () => {
   }, [eventsByTime, timeRange]);
 
   return (
-    <div className="bg-base-lightest radius-md padding-3 shadow-2 z-top" style={{ width: "800px", height: '215px' }}>
+    <div className="bg-base-lightest radius-md padding-3 shadow-2 z-top" style={{ width: "800px", height: 'auto' }}>
       <style>
         {`
           .range-slider {
@@ -183,6 +187,19 @@ const TimeRangeSlider = () => {
             </button>
           </div>
         </div>
+        <button
+          type="button"
+          onClick={() => {
+            setShowSearchFilters((prev) => !prev)
+            toggleAdvancedFilters();
+          }}
+          className="usa-button usa-button--unstyled text-underline margin-left-auto font-sans-3xs"
+        >
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path fill-rule="evenodd" clip-rule="evenodd" d="M3.54157 5.08465C5.2249 7.07696 8.33324 10.7693 8.33324 10.7693V15.3847C8.33324 15.8077 8.70824 16.1539 9.16657 16.1539H10.8332C11.2916 16.1539 11.6666 15.8077 11.6666 15.3847V10.7693C11.6666 10.7693 14.7666 7.07696 16.4499 5.08465C16.8749 4.57696 16.4832 3.84619 15.7916 3.84619H4.1999C3.50824 3.84619 3.11657 4.57696 3.54157 5.08465Z" fill="#005EA2"/>
+          </svg>
+          {showSearchFilters ? 'Hide advanced filters' : 'Show advanced filters'}
+        </button>
       </div>
 
       <div style={{ height: '120px', position: 'relative' }} ref={chartRef}>
@@ -243,6 +260,13 @@ const TimeRangeSlider = () => {
         pearling
         minDistance={5}
       />
+
+      {showSearchFilters && (
+        <div className="margin-top-2">
+          <AdvancedFilters />
+        </div>
+      )}
+
     </div>
   );
 };

@@ -3,6 +3,7 @@ export const LAYER_TYPES = {
     GEOJSON_2D: 'geojson-2d',
     GEOJSON_3D: 'geojson-3d',
     WIND: 'wind',
+    GRID: 'grid',
     TERRAIN: 'terrain',
 };
 

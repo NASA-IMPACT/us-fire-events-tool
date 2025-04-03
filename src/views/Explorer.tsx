@@ -1,7 +1,6 @@
-import React, { useMemo } from 'react';
+import React from 'react';
 import { useAppState } from '../contexts/AppStateContext';
 import { useEvents } from '../contexts/EventsContext';
-import { useFilters } from '../contexts/FiltersContext';
 import MapView from '../components/MapView';
 import EventDetails from '../components/sidebar/EventDetailView';
 import TimeRangeSlider from '../components/timeline/RangeSlider';
@@ -12,27 +11,15 @@ import Header from '../components/Header';
 
 const Explorer: React.FC = () => {
   const {
-    timeRange,
     viewMode,
     setViewMode,
     toggle3DMap,
     show3DMap,
-    showWindLayer,
-    toggleWindLayer,
+    windLayerType,
+    setWindLayerType,
   } = useAppState();
 
-  const { getFilteredEvents, selectEvent, selectedEventId } = useEvents();
-
-  const filteredEvents = useMemo(() => {
-    return getFilteredEvents(timeRange.start, timeRange.end);
-  }, [getFilteredEvents, timeRange])
-
-  const {
-    searchTerm,
-    showAdvancedFilters,
-    setSearchTerm,
-    toggleAdvancedFilters,
-  } = useFilters();
+  const { selectEvent, selectedEventId } = useEvents();
 
   const handleBackToList = () => {
     selectEvent(null);
@@ -40,8 +27,8 @@ const Explorer: React.FC = () => {
     if (show3DMap) {
       toggle3DMap();
     }
-    if (showWindLayer) {
-      toggleWindLayer();
+    if (windLayerType !== null) {
+      setWindLayerType(null);
     }
   };
 
@@ -50,20 +37,8 @@ const Explorer: React.FC = () => {
       <Header />
 
       <div className="display-flex height-viewport">
-
         <div className="position-relative flex-fill">
           <MapView />
-
-          {/* {viewMode === 'explorer' &&
-            <div className="position-absolute top-5 left-2 z-top width-mobile-lg" style={{ top: '60px' }}>
-            <SearchBox
-              searchTerm={searchTerm}
-              setSearchTerm={setSearchTerm}
-              toggleAdvancedFilters={toggleAdvancedFilters}
-              showAdvancedFilters={showAdvancedFilters}
-            />
-          </div>
-          } */}
 
           {viewMode === 'detail' && selectedEventId ? (
             <div
@@ -83,7 +58,6 @@ const Explorer: React.FC = () => {
               <TimeRangeSlider />
             </div>
           )}
-
         </div>
 
         {viewMode === 'detail' && (

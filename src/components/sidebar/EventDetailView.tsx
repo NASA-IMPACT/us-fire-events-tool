@@ -4,6 +4,7 @@ import { useAppState } from '../../contexts/AppStateContext';
 import { useEvents, getFeatureProperties, getFireId } from '../../contexts/EventsContext';
 import ReactSlider from 'react-slider';
 import { useMap } from '../../contexts/MapContext';
+import { ToggleSlider } from "react-toggle-slider";
 
 interface EventDetailsProps {
   onBack: () => void;
@@ -11,7 +12,7 @@ interface EventDetailsProps {
 
 const EventDetails: React.FC<EventDetailsProps> = ({ onBack }) => {
   const { selectedEventId, events } = useEvents();
-  const { showWindLayer, show3DMap, toggleWindLayer, toggle3DMap } = useAppState();
+  const { windLayerType, setWindLayerType, show3DMap, toggle3DMap } = useAppState();
   const { layerOpacity, setLayerOpacity } = useMap();
 
   const selectedEvent = useMemo(() => {
@@ -239,16 +240,47 @@ const EventDetails: React.FC<EventDetailsProps> = ({ onBack }) => {
 
         <div className="margin-top-1 padding-top-1">
           <div className="display-flex flex-column">
-            <label className="usa-checkbox margin-bottom-2">
-              <input
-                className="usa-checkbox__input"
-                type="checkbox"
-                name="wind-direction"
-                checked={showWindLayer}
-                onChange={toggleWindLayer}
-              />
-              <span className="usa-checkbox__label font-ui font-weight-regular font-sans-2xs text-base-ink">Wind direction</span>
-            </label>
+            <div className="margin-bottom-2">
+              <div className="display-flex flex-align-center flex-justify">
+                <label className="usa-checkbox margin-0">
+                  <input
+                    className="usa-checkbox__input"
+                    type="checkbox"
+                    checked={windLayerType !== null}
+                    onChange={(e) => setWindLayerType(e.target.checked ? 'wind' : null)}
+                  />
+                  <span className="usa-checkbox__label font-ui font-sans-2xs text-base-ink margin-top-0">
+                    Wind direction
+                  </span>
+                </label>
+
+                <div
+                  className="display-flex flex-align-center"
+                  style={{
+                    opacity: windLayerType === null ? 0.5 : 1,
+                    pointerEvents: windLayerType === null ? 'none' : 'auto',
+                  }}
+                >
+                  <ToggleSlider
+                    key={windLayerType === null ? 'off' : windLayerType}
+                    active={windLayerType === 'wind'}
+                    onToggle={(state) => setWindLayerType(state ? 'wind' : 'grid')}
+                    barHeight={20}
+                    barWidth={40}
+                    handleSize={16}
+                    barBackgroundColor="#e0e0e0"
+                    barBackgroundColorActive="#1a6baa"
+                    handleBackgroundColor="#ffffff"
+                    handleBorderRadius={10}
+                    barBorderRadius={10}
+                  />
+
+                  <span className="font-sans-3xs text-base margin-left-1 text-base-dark">
+                    Animate
+                  </span>
+                </div>
+              </div>
+            </div>
 
             <label className="usa-checkbox">
               <input

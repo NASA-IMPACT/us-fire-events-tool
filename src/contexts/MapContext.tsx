@@ -114,7 +114,6 @@ interface MapContextValue {
   flyToEvent: (eventId: string) => void;
   flyToCoordinates: (longitude: number, latitude: number, zoom?: number) => void;
   flyToBounds: (bounds: [number, number, number, number]) => void;
-  exportMapImage: () => Promise<string | null>;
   resetView: () => void;
   layerOpacity: number;
   setLayerOpacity: (opacity: number) => void;
@@ -204,21 +203,6 @@ export const MapProvider = ({ children }: { children: ReactNode }) => {
     dispatch({ type: 'SET_LAYER_OPACITY', payload: opacity });
   }, []);
 
-  const exportMapImage = async (): Promise<string | null> => {
-    if (!deckRef.current) {
-      return null;
-    }
-
-    try {
-      // TODO: Placeholder for the actual implementation
-      // of the export functionality for gifs / videos
-      return null;
-    } catch (error) {
-      console.error('Error exporting map image:', error);
-      return null;
-    }
-  };
-
   const value: MapContextValue = {
     viewState,
     setViewState,
@@ -229,7 +213,6 @@ export const MapProvider = ({ children }: { children: ReactNode }) => {
     flyToEvent,
     flyToCoordinates,
     flyToBounds,
-    exportMapImage,
     resetView,
     layerOpacity,
     setLayerOpacity

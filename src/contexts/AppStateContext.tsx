@@ -11,7 +11,7 @@ interface AppState {
   };
   isPlaying: boolean;
   playbackSpeed: number;
-  showWindLayer: boolean;
+  windLayerType: 'grid' | 'wind' | null;
   show3DMap: boolean;
   showSatelliteImagery: boolean;
   mapBounds: [number, number, number, number] | null;
@@ -27,7 +27,8 @@ type AppAction =
   | { type: 'TOGGLE_3D_MAP' }
   | { type: 'TOGGLE_SATELLITE_IMAGERY' }
   | { type: 'RESET_VIEW' }
-  | { type: 'SET_MAP_BOUNDS'; payload: [number, number, number, number] };
+  | { type: 'SET_MAP_BOUNDS'; payload: [number, number, number, number] }
+  | { type: 'SET_WIND_LAYER_TYPE'; payload: 'grid' | 'wind' | null };
 
 const createStableDate = (date: Date | string): Date => {
   const stableDate = new Date(date);
@@ -55,7 +56,7 @@ const initialState: AppState = {
   },
   isPlaying: false,
   playbackSpeed: 1,
-  showWindLayer: false,
+  windLayerType: null,
   show3DMap: false,
   showSatelliteImagery: false,
   mapBounds: null
@@ -85,9 +86,6 @@ const appReducer = (state: AppState, action: AppAction): AppState => {
     case 'SET_PLAYBACK_SPEED':
       return { ...state, playbackSpeed: action.payload };
 
-    case 'TOGGLE_WIND_LAYER':
-      return { ...state, showWindLayer: !state.showWindLayer };
-
     case 'TOGGLE_3D_MAP':
       return { ...state, show3DMap: !state.show3DMap };
 
@@ -104,6 +102,9 @@ const appReducer = (state: AppState, action: AppAction): AppState => {
     case 'SET_MAP_BOUNDS':
       return { ...state, mapBounds: action.payload };
 
+    case 'SET_WIND_LAYER_TYPE':
+      return { ...state, windLayerType: action.payload };
+
     default:
       return state;
   }
@@ -115,11 +116,12 @@ interface AppContextValue extends AppState {
   setTimeRange: (range: { start: Date; end: Date }) => void;
   togglePlay: () => void;
   setPlaybackSpeed: (speed: number) => void;
-  toggleWindLayer: () => void;
   toggle3DMap: () => void;
   toggleSatelliteImagery: () => void;
   resetView: () => void;
   setMapBounds: (bounds: [number, number, number, number]) => void;
+  windLayerType: 'grid' | 'wind' | null;
+  setWindLayerType: (type: 'grid' | 'wind' | null) => void;
 }
 
 const AppStateContext = createContext<AppContextValue | undefined>(undefined);
@@ -147,10 +149,6 @@ export const AppStateProvider = ({ children }: { children: ReactNode }) => {
     dispatch({ type: 'SET_PLAYBACK_SPEED', payload: speed });
   }, []);
 
-  const toggleWindLayer = useCallback(() => {
-    dispatch({ type: 'TOGGLE_WIND_LAYER' });
-  }, []);
-
   const toggle3DMap = useCallback(() => {
     dispatch({ type: 'TOGGLE_3D_MAP' });
   }, []);
@@ -167,6 +165,10 @@ export const AppStateProvider = ({ children }: { children: ReactNode }) => {
     dispatch({ type: 'SET_MAP_BOUNDS', payload: bounds });
   }, []);
 
+  const setWindLayerType = useCallback((type) => {
+    dispatch({ type: 'SET_WIND_LAYER_TYPE', payload: type });
+  }, []);
+
   const value: AppContextValue = {
     ...state,
     setViewMode,
@@ -174,11 +176,12 @@ export const AppStateProvider = ({ children }: { children: ReactNode }) => {
     setTimeRange,
     togglePlay,
     setPlaybackSpeed,
-    toggleWindLayer,
     toggle3DMap,
     toggleSatelliteImagery,
     resetView,
-    setMapBounds
+    setMapBounds,
+    setWindLayerType,
+    windLayerType: state.windLayerType
   };
 
   return (

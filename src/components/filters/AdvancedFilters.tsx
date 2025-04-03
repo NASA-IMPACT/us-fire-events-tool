@@ -93,13 +93,13 @@ const AdvancedFilters: React.FC = () => {
   return (
     <>
       <style>{sliderStyles}</style>
-      <div className="bg-white padding-2">
-        <div className="margin-bottom-3">
-          <label className="font-body font-sans-3xs margin-bottom-1 display-block" htmlFor="fire-area-slider">
+      <div className="padding-y-2  grid-row grid-gap">
+      <div className="grid-col-4">
+      <label className="font-body text-bold font-sans-3xs margin-bottom-1 display-block" htmlFor="fire-area-slider">
             Fire area (km<sup>2</sup>)
           </label>
           <div className="display-flex flex-align-center">
-            <div className="border-1px padding-x-1 padding-y-05 width-6 height-4 display-flex flex-align-center flex-justify-center slider-value">
+            <div className="border-1px padding-x-1 padding-y-05 width-6 height-4 display-flex flex-align-center flex-justify-center slider-value bg-white">
               {localFireArea[0]}
             </div>
 
@@ -120,18 +120,18 @@ const AdvancedFilters: React.FC = () => {
               />
             </div>
 
-            <div className="border-1px padding-x-1 padding-y-05 width-6 height-4 display-flex flex-align-center flex-justify-center slider-value">
+            <div className="border-1px padding-x-1 padding-y-05 width-6 height-4 display-flex flex-align-center flex-justify-center slider-value bg-white">
               {localFireArea[1]}
             </div>
           </div>
         </div>
 
-        <div className="margin-bottom-3">
-          <label className="font-body font-sans-3xs margin-bottom-1 display-block" htmlFor="duration-slider">
+        <div className="grid-col-4">
+        <label className="font-body text-bold font-sans-3xs margin-bottom-1 display-block" htmlFor="duration-slider">
             Duration (days)
           </label>
           <div className="display-flex flex-align-center">
-            <div className="border-1px padding-x-1 padding-y-05 width-6 height-4 display-flex flex-align-center flex-justify-center slider-value">
+            <div className="border-1px padding-x-1 padding-y-05 width-6 height-4 display-flex flex-align-center flex-justify-center slider-value bg-white">
               {localDuration[0]}
             </div>
 
@@ -152,18 +152,18 @@ const AdvancedFilters: React.FC = () => {
               />
             </div>
 
-            <div className="border-1px padding-x-1 padding-y-05 width-6 height-4 display-flex flex-align-center flex-justify-center slider-value">
+            <div className="border-1px padding-x-1 padding-y-05 width-6 height-4 display-flex flex-align-center flex-justify-center slider-value bg-white">
               {localDuration[1]}
             </div>
           </div>
         </div>
 
-        <div className="margin-bottom-3">
-          <label className="font-body font-sans-3xs margin-bottom-1 display-block" htmlFor="mean-frp-slider">
+        <div className="grid-col-4">
+        <label className="font-body text-bold font-sans-3xs margin-bottom-1 display-block" htmlFor="mean-frp-slider">
             Mean FRP (MW)
           </label>
           <div className="display-flex flex-align-center">
-            <div className="border-1px padding-x-1 padding-y-05 width-6 height-4 display-flex flex-align-center flex-justify-center slider-value">
+            <div className="border-1px padding-x-1 padding-y-05 width-6 height-4 display-flex flex-align-center flex-justify-center slider-value bg-white">
               {localMeanFrp[0]}
             </div>
 
@@ -184,7 +184,7 @@ const AdvancedFilters: React.FC = () => {
               />
             </div>
 
-            <div className="border-1px padding-x-1 padding-y-05 width-6 height-4 display-flex flex-align-center flex-justify-center slider-value">
+            <div className="border-1px padding-x-1 padding-y-05 width-6 height-4 display-flex flex-align-center flex-justify-center slider-value bg-white">
               {localMeanFrp[1]}
             </div>
           </div>

@@ -3,6 +3,7 @@ import { createMVTLayer } from '../MVTLayer';
 import { createGeoJsonLayer2D } from '../GeoJsonLayer';
 import { createGeoJsonLayer3D } from '../GeoJsonLayer3D';
 import { createWindLayer } from '../WindLayer';
+import { createGridLayer } from '../GridLayer';
 import { createTerrainLayer } from '../TerrainLayer';
 import { PathStyleExtension } from '@deck.gl/extensions';
 
@@ -61,6 +62,15 @@ export const layerRegistry = {
     },
     requiresData: false
   },
+  [LAYER_TYPES.GRID]: {
+    id: LAYER_TYPES.GRID,
+    name: 'Wind Grid',
+    render: createGridLayer,
+    defaultProps: {
+      id: 'grid-particles'
+    },
+    requiresData: false
+  }
 };
 
 /**

@@ -27,7 +27,7 @@ export const useLayers = ({
   const [lastTimeRangeEnd, setLastTimeRangeEnd] = useState(null);
   const debouncedTimeUpdate = useRef(null);
 
-  const { showWindLayer, show3DMap, timeRange } = useAppState();
+  const { windLayerType, show3DMap, timeRange } = useAppState();
   const { firePerimeters, selectEvent } = useEvents();
   const { layerOpacity } = useMap();
   const {
@@ -175,10 +175,10 @@ export const useLayers = ({
   }, []);
 
   useEffect(() => {
-    if (showWindLayer && debouncedTimeUpdate.current) {
+    if (windLayerType && debouncedTimeUpdate.current) {
       debouncedTimeUpdate.current(timeRange.end);
     }
-  }, [timeRange.end, showWindLayer]);
+  }, [timeRange.end, windLayerType]);
 
   useEffect(() => {
     const initializeLayers = async () => {
@@ -226,9 +226,17 @@ export const useLayers = ({
         });
       }
 
-      if (showWindLayer && lastTimeRangeEnd) {
+      if (windLayerType === 'wind' && lastTimeRangeEnd) {
         layerConfigs.push({
           type: LAYER_TYPES.WIND,
+          timeRangeEnd: lastTimeRangeEnd,
+          opacity: layerOpacity
+        });
+      }
+
+      if (windLayerType === 'grid' && lastTimeRangeEnd) {
+        layerConfigs.push({
+          type: LAYER_TYPES.GRID,
           timeRangeEnd: lastTimeRangeEnd,
           opacity: layerOpacity
         });
@@ -241,7 +249,7 @@ export const useLayers = ({
 
     initializeLayers();
   }, [
-    showWindLayer,
+    windLayerType,
     firePerimeters,
     handleTileLoad,
     featurePassesFilters,

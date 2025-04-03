@@ -9,12 +9,12 @@ import WebMWriter from 'webm-writer';
 
 const DetailedTimeChart = () => {
   const { selectedEventId, firePerimeters } = useEvents();
-  const { setTimeRange, show3DMap, toggle3DMap } = useAppState();
+  const { windLayerType, setWindLayerType, setTimeRange, show3DMap, toggle3DMap } = useAppState();
 
   const [sliderValue, setSliderValue] = useState(0);
   const [currentPerimeter, setCurrentPerimeter] = useState(null);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [animationSpeed] = useState(500);
+  const [animationSpeed, setAnimationSpeed] = useState(2000);
   const chartRef = useRef(null);
   const sliderContainerRef = useRef(null);
   const animationRef = useRef(null);
@@ -28,7 +28,7 @@ const DetailedTimeChart = () => {
   const totalFramesRef = useRef(0);
   const isRecordingRef = useRef(false);
   const animationCompleteRef = useRef(false);
-  const [videoFps] = useState(15);
+  const [videoFps, setVideoFps] = useState(1);
   const recordingEndTimeoutRef = useRef(null);
 
   const yAxisOptions = ['Fire area (km²)', 'Mean FRP', 'Duration (days)'];
@@ -187,14 +187,18 @@ const DetailedTimeChart = () => {
       const nextIndex = Math.min(currentIndex + 1, timePointIndexes.length - 1);
       const nextPosition = timePointIndexes[nextIndex];
 
+      animationRef.current = setTimeout(() => {
+        setSliderValue(nextPosition);
+
+        if (isRecordingRef.current) {
+          captureFrame();
+        }
+      }, animationSpeed);
+
       if (nextIndex === timePointIndexes.length - 1) {
-        animationRef.current = setTimeout(() => {
-          setSliderValue(100);
-        }, animationSpeed);
-      } else {
-        animationRef.current = setTimeout(() => {
-          setSliderValue(nextPosition);
-        }, animationSpeed);
+        animationCompleteRef.current = true;
+        setIsPlaying(false);
+        if (isRecordingRef.current) stopRecording();
       }
     }
 
@@ -293,6 +297,10 @@ const DetailedTimeChart = () => {
       toggle3DMap();
     }
 
+    if (windLayerType === 'wind') {
+      setWindLayerType('grid');
+    }
+
     animationCompleteRef.current = false;
     setIsPreparingToRecord(true);
     resetAnimation();
@@ -305,22 +313,40 @@ const DetailedTimeChart = () => {
 
     try {
       const deckGLCanvas = document.getElementById('deckgl-overlay');
-      const mapboxCanvas = document.querySelector('.mapboxgl-canvas');
 
-      if (!deckGLCanvas || !mapboxCanvas) {
+      if (!deckGLCanvas) {
         console.error("Could not find required canvases");
         return;
       }
 
       const compositeCanvas = document.createElement('canvas');
-      compositeCanvas.width = mapboxCanvas.width;
-      compositeCanvas.height = mapboxCanvas.height;
+      compositeCanvas.width = deckGLCanvas.width;
+      compositeCanvas.height = deckGLCanvas.height;
 
       const ctx = compositeCanvas.getContext('2d', { alpha: false });
 
       ctx.fillRect(0, 0, compositeCanvas.width, compositeCanvas.height);
-      ctx.drawImage(mapboxCanvas, 0, 0);
       ctx.drawImage(deckGLCanvas, 0, 0);
+
+      if (!currentPerimeter?.time) return;
+
+      const timestampText = format(new Date(currentPerimeter.time), 'yyyy-MM-dd HH:mm');
+
+      ctx.font = '64px sans-serif';
+      ctx.fillStyle = 'white';
+      ctx.strokeStyle = 'black';
+      ctx.lineWidth = 3;
+      ctx.textBaseline = 'top';
+      ctx.textAlign = 'right';
+
+      const paddingX = 32;
+      const paddingY = 32;
+      const x = compositeCanvas.width - paddingX;
+      const y = paddingY;
+
+      ctx.strokeText(timestampText, x, y);
+      ctx.fillText(timestampText, x, y);
+
 
       webmWriterRef.current.addFrame(compositeCanvas);
 
@@ -344,11 +370,6 @@ const DetailedTimeChart = () => {
 
       animationCompleteRef.current = false;
 
-      const mapboxCanvas = document.querySelector('.mapboxgl-canvas');
-      if (!mapboxCanvas) {
-        throw new Error("Cannot find mapbox canvas for recording");
-      }
-
       webmWriterRef.current = new WebMWriter({
         quality: 0.95,
         frameRate: videoFps,
@@ -368,7 +389,7 @@ const DetailedTimeChart = () => {
       totalFramesRef.current = Math.ceil(videoFps * (animationDuration / 1000));
       totalFramesRef.current = Math.ceil(totalFramesRef.current * 1.2);
 
-      recordingIntervalRef.current = setInterval(captureFrame, 1000 / videoFps);
+      setIsPlaying(true);
 
     } catch (error) {
       console.error("Error starting recording:", error);
@@ -404,7 +425,7 @@ const DetailedTimeChart = () => {
         const url = URL.createObjectURL(webMBlob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `fire-animation-${timePoints.length}frames-${videoFps}fps.webm`;
+        a.download = `fire-animation-${format(new Date(), 'yyyy-MM-dd_HH-mm-ss')}-${timePoints.length}frames-${videoFps}fps.webm`;
         document.body.appendChild(a);
         a.click();
 
@@ -637,6 +658,7 @@ const DetailedTimeChart = () => {
           >
             <RotateCw size={24} />
           </button>
+
         </div>
 
         <button
