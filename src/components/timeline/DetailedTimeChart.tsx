@@ -141,12 +141,16 @@ const DetailedTimeChart = () => {
       }
     });
 
-    if (closestPointIndex >= 0 && closestPointIndex < perimeterData.length) {
-      setCurrentPerimeter(perimeterData[closestPointIndex]);
+    const nextPerimeter = perimeterData[closestPointIndex];
 
+    if (!currentPerimeter || nextPerimeter.timestamp !== currentPerimeter.timestamp) {
+      setCurrentPerimeter(nextPerimeter);
+    }
+
+    if (!currentPerimeter || nextPerimeter.time !== currentPerimeter.time) {
       setTimeRange({
         start: minDate,
-        end: perimeterData[closestPointIndex].time
+        end: nextPerimeter.time
       });
     }
 
