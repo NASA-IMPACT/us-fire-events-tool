@@ -34,7 +34,7 @@
     "react-window": "^1.8.11",
     "recharts": "^2.15.1",
     "sass": "^1.85.1",
-    "weatherlayers-gl": "^2025.1.0",
+    "weatherlayers-gl": "^2025.3.0",
     "webm-writer": "^1.0.0"
   },
   "devDependencies": {
@@ -49,6 +49,7 @@
     "eslint-plugin-react-hooks": "^5.1.0",
     "eslint-plugin-react-refresh": "^0.4.19",
     "globals": "^15.15.0",
+    "rollup-plugin-worker-factory": "^0.5.7",
     "typescript": "~5.7.2",
     "typescript-eslint": "^8.24.1",
     "vite": "^6.2.0"
