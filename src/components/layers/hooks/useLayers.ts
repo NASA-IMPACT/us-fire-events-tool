@@ -7,34 +7,64 @@ import { LAYER_TYPES } from '../config/constants';
 import { createLayers } from '../LayerFactory';
 import _ from 'lodash';
 
+export const MVT_URLS: Record<MVTLayerId, string> = {
+  perimeterNrt: 'https://firenrt.delta-backend.com/collections/public.eis_fire_lf_perimeter_nrt/tiles/{z}/{x}/{y}',
+  fireline: 'https://firenrt.delta-backend.com/collections/public.eis_fire_lf_fireline_nrt/tiles/{z}/{x}/{y}',
+  newfirepix: 'https://firenrt.delta-backend.com/collections/public.eis_fire_lf_newfirepix_nrt/tiles/{z}/{x}/{y}',
+  archivePerimeters: 'https://firenrt.delta-backend.com/collections/public.eis_fire_lf_perimeter_archive/tiles/{z}/{x}/{y}',
+  archiveFirepix: 'https://firenrt.delta-backend.com/collections/public.eis_fire_lf_newfirepix_archive/tiles/{z}/{x}/{y}',
+};
+
+export type MVTLayerId =
+  | 'perimeterNrt'
+  | 'fireline'
+  | 'newfirepix'
+  | 'archivePerimeters'
+  | 'archiveFirepix';
+
+type UseLayersProps = {
+  collectVisibleFeatures: () => void;
+  isInteracting: boolean;
+  viewState: Record<string, any>;
+  setViewMode: (mode: 'detail' | 'default' | string) => void;
+};
+
 /**
- * Hook for managing deck.gl layers based on application state
+ * Custom hook that returns an array of deck.gl layers based on application state.
+ * It dynamically configures and filters MVT, GeoJSON, Terrain and wind/grid layers based on user-selected options,
+ * time range, and filter settings from multiple contexts (AppState, Events, Filters, and Map).
  *
- * @param {Object} params - Parameters
- * @param {Function} params.collectVisibleFeatures - Function to collect visible features
- * @param {boolean} params.isInteracting - Whether the user is interacting with the map
- * @param {Object} params.viewState - Current view state
- * @param {Function} params.setViewMode - Function to set the view mode
- * @return {Array<Object>} Array of configured deck.gl layers
+ * Layer visibility is controlled by boolean flags such as `showPerimeterNrt`, `showFireline`, `showArchivePerimeters`, etc.
+ * Fire features are filtered based on advanced filter options like area, duration, FRP, region, and activity status.
+ *
+ * Also manages side effects such as selecting events and fitting bounds on map click,
+ * and collects visible features for analysis after tile loading.
+ *
+ * @param {Object} params
+ * @param {Function} params.collectVisibleFeatures - Called after tile load to collect visible features (used for analytics/context updates)
+ * @param {boolean} params.isInteracting - Indicates if the user is currently interacting with the map (used to delay certain updates)
+ * @param {Object} params.viewState - Current map view state (used for terrain layer configuration)
+ * @param {Function} params.setViewMode - Callback to change the view mode (e.g., to "detail" when a feature is selected)
+ *
+ * @returns {Array<Object>} - Array of configured and filtered deck.gl layers
  */
 export const useLayers = ({
   collectVisibleFeatures,
   isInteracting,
   viewState,
   setViewMode
-}) => {
+}: UseLayersProps) => {
   const [layers, setLayers] = useState([]);
   const [lastTimeRangeEnd, setLastTimeRangeEnd] = useState(null);
   const debouncedTimeUpdate = useRef(null);
 
-  const { windLayerType, show3DMap, timeRange } = useAppState();
+  const { windLayerType, show3DMap, timeRange, showPerimeterNrt, showFireline, showNewFirepix, showArchiveFirepix, showArchivePerimeters  } = useAppState();
   const { firePerimeters, selectEvent } = useEvents();
   const { layerOpacity } = useMap();
   const {
     fireArea,
     duration,
     meanFrp,
-    searchTerm,
     region,
     isActive,
     showAdvancedFilters
@@ -63,18 +93,6 @@ export const useLayers = ({
       if (region && feature.properties.region !== region) return false;
 
       if (isActive !== null && feature.properties.isactive !== isActive) return false;
-
-      if (searchTerm) {
-        const searchLower = searchTerm.toLowerCase();
-        const nameMatch =
-          feature.properties.primarykey &&
-          feature.properties.primarykey.toLowerCase().includes(searchLower);
-        const idMatch =
-          feature.properties.fireid &&
-          feature.properties.fireid.toLowerCase().includes(searchLower);
-
-        if (!nameMatch && !idMatch) return false;
-      }
     }
 
     return true;
@@ -86,14 +104,13 @@ export const useLayers = ({
     meanFrp,
     region,
     isActive,
-    searchTerm
   ]);
 
   const zoomToFeature = useCallback((feature) => {
     if (!feature?.geometry) return null;
 
     try {
-      let coordinates = [];
+      let coordinates: number[][] = [];
 
       if (feature.geometry.type === 'Polygon') {
         coordinates = feature.geometry.coordinates[0];
@@ -192,22 +209,90 @@ export const useLayers = ({
         });
       }
 
-      layerConfigs.push({
-        type: LAYER_TYPES.MVT,
-        url: 'https://firenrt.delta-backend.com/collections/public.eis_fire_snapshot_perimeter_nrt/tiles/{z}/{x}/{y}',
-        filterFunction: featurePassesFilters,
-        opacity: layerOpacity,
-        onTileLoad: handleTileLoad,
-        onClick: handleClick,
-        updateTriggers: {
-          getFillColor: [timeRange, showAdvancedFilters, fireArea, duration, meanFrp, region, isActive, searchTerm],
-          getLineColor: [timeRange, showAdvancedFilters, fireArea, duration, meanFrp, region, isActive, searchTerm],
-          getLineWidth: [timeRange],
-          getDashArray: [timeRange]
-        },
-        timeRange,
-        show3DMap
-      });
+      const archiveMode = showArchivePerimeters || showArchiveFirepix;
+
+      if (!archiveMode) {
+
+        if (showPerimeterNrt) {
+          layerConfigs.push({
+            type: LAYER_TYPES.MVT,
+            id: 'perimeter-nrt',
+            data: MVT_URLS.perimeterNrt,
+            filterFunction: featurePassesFilters,
+            opacity: layerOpacity,
+            onTileLoad: handleTileLoad,
+            onClick: handleClick,
+            updateTriggers: {
+              getFillColor: [timeRange, showAdvancedFilters, fireArea, duration, meanFrp, region, isActive],
+              getLineColor: [timeRange, showAdvancedFilters, fireArea, duration, meanFrp, region, isActive],
+            }
+          });
+        }
+
+        if (showFireline) {
+          layerConfigs.push({
+            type: LAYER_TYPES.MVT,
+            id: 'fireline',
+            data: MVT_URLS.fireline,
+            filterFunction: featurePassesFilters,
+            opacity: layerOpacity,
+            onTileLoad: handleTileLoad,
+            onClick: handleClick,
+            updateTriggers: {
+              getFillColor: [timeRange, showAdvancedFilters, fireArea, duration, meanFrp, region, isActive],
+              getLineColor: [timeRange, showAdvancedFilters, fireArea, duration, meanFrp, region, isActive],
+            }
+          });
+        }
+
+        if (showNewFirepix) {
+          layerConfigs.push({
+            type: LAYER_TYPES.MVT,
+            id: 'newfirepix',
+            data: MVT_URLS.newfirepix,
+            filterFunction: featurePassesFilters,
+            opacity: layerOpacity,
+            onTileLoad: handleTileLoad,
+            onClick: handleClick,
+            updateTriggers: {
+              getFillColor: [timeRange, showAdvancedFilters, fireArea, duration, meanFrp, region, isActive],
+              getLineColor: [timeRange, showAdvancedFilters, fireArea, duration, meanFrp, region, isActive],
+            }
+          });
+        }
+      }
+
+      if (showArchivePerimeters) {
+        layerConfigs.push({
+          type: LAYER_TYPES.MVT,
+          id: 'archive-perimeters',
+          data: MVT_URLS.archivePerimeters,
+          filterFunction: featurePassesFilters,
+          opacity: layerOpacity,
+          onTileLoad: handleTileLoad,
+          onClick: handleClick,
+          updateTriggers: {
+            getFillColor: [timeRange, showAdvancedFilters, fireArea, duration, meanFrp, region, isActive],
+            getLineColor: [timeRange, showAdvancedFilters, fireArea, duration, meanFrp, region, isActive],
+          }
+        });
+      }
+
+      if (showArchiveFirepix) {
+        layerConfigs.push({
+          type: LAYER_TYPES.MVT,
+          id: 'archive-firepix',
+          data: MVT_URLS.archiveFirepix,
+          filterFunction: featurePassesFilters,
+          opacity: layerOpacity,
+          onTileLoad: handleTileLoad,
+          onClick: handleClick,
+          updateTriggers: {
+            getFillColor: [timeRange, showAdvancedFilters, fireArea, duration, meanFrp, region, isActive],
+            getLineColor: [timeRange, showAdvancedFilters, fireArea, duration, meanFrp, region, isActive],
+          }
+        });
+      }
 
       if (firePerimeters) {
         layerConfigs.push({
@@ -216,8 +301,8 @@ export const useLayers = ({
           filterFunction: featurePassesFilters,
           opacity: layerOpacity,
           updateTriggers: {
-            getFillColor: [timeRange, showAdvancedFilters, fireArea, duration, meanFrp, region, isActive, searchTerm],
-            getLineColor: [timeRange, showAdvancedFilters, fireArea, duration, meanFrp, region, isActive, searchTerm],
+            getFillColor: [timeRange, showAdvancedFilters, fireArea, duration, meanFrp, region, isActive],
+            getLineColor: [timeRange, showAdvancedFilters, fireArea, duration, meanFrp, region, isActive],
             getLineWidth: [timeRange],
             getDashArray: [timeRange]
           },
@@ -248,28 +333,7 @@ export const useLayers = ({
     };
 
     initializeLayers();
-  }, [
-    windLayerType,
-    firePerimeters,
-    handleTileLoad,
-    featurePassesFilters,
-    handleClick,
-    layerOpacity,
-    show3DMap,
-    lastTimeRangeEnd,
-    collectVisibleFeatures,
-    isInteracting,
-    timeRange,
-    showAdvancedFilters,
-    fireArea,
-    duration,
-    meanFrp,
-    region,
-    isActive,
-    searchTerm,
-    viewState,
-    zoomToFeature
-  ]);
+  }, [windLayerType, firePerimeters, handleTileLoad, featurePassesFilters, handleClick, layerOpacity, show3DMap, lastTimeRangeEnd, collectVisibleFeatures, isInteracting, timeRange, showAdvancedFilters, fireArea, duration, meanFrp, region, isActive, viewState, zoomToFeature, showArchivePerimeters, showArchiveFirepix, showFireline, showNewFirepix, showPerimeterNrt]);
 
   return layers;
 };

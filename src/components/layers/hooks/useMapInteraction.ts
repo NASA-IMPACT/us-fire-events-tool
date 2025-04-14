@@ -1,7 +1,8 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { WebMercatorViewport } from '@deck.gl/core';
-import _ from 'lodash';
 import { FEATURES_COLLECTION_DEBOUNCE, INTERACTION_TIMEOUT } from '../config/constants';
+
+import _ from 'lodash';
 
 /**
  * Hook for handling map interactions and view state
@@ -42,13 +43,19 @@ export const useMapInteraction = ({
 
     setMapBounds(lastBoundsRef.current);
 
-    const { width, height } = deckRef.current.deck;
+    const { width, height, layerManager } = deckRef.current.deck;
+    const availableLayerIds = layerManager.layers.map(l => l.id);
+
+    const priorityLayers = ['perimeterNrt', 'fireline', 'newfirepix', 'archivePerimeters', 'archiveFirepix'];
+    const targetLayerId = priorityLayers.find(id => availableLayerIds.includes(id));
+    if (!targetLayerId) return;
+
     const features = deckRef.current.pickObjects({
       x: 0,
       y: 0,
       width,
       height,
-      layerIds: ['fire-perimeters-mvt'],
+      layerIds: [targetLayerId],
       ignoreVisibility: true
     });
 

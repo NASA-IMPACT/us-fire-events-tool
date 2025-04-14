@@ -1,7 +1,6 @@
 import { useEffect } from 'react';
 import DeckGL from '@deck.gl/react';
 import { Map } from 'react-map-gl/mapbox';
-import 'mapbox-gl/dist/mapbox-gl.css';
 
 import { useEvents } from '../contexts/EventsContext';
 import { useAppState } from '../contexts/AppStateContext';
@@ -9,6 +8,8 @@ import { INITIAL_VIEW_STATE, MAP_STYLE } from './layers';
 import { useLayers } from './layers/hooks/useLayers';
 import { useMapInteraction } from './layers/hooks/useMapInteraction';
 import { CompassWidget, FullscreenWidget, ZoomWidget } from '@deck.gl/widgets';
+
+import 'mapbox-gl/dist/mapbox-gl.css';
 import '@deck.gl/widgets/stylesheet.css';
 import 'deck.gl/stylesheet.css';
 
@@ -69,6 +70,29 @@ const MapView = () => {
             getCursor={({isDragging}) => isDragging ? 'grabbing' : 'grab'}
             onLoad={() => {
                 setTimeout(collectVisibleFeatures, 500);
+            }}
+            useDevicePixels={false}
+            getTooltip={({ object }) => {
+                if (!object || !object.properties) return null;
+                const { fireid, primarykey, region, t } = object.properties;
+
+                return {
+                    html: `
+                        <table style="font-size: 12px; border-collapse: collapse;">
+                            <tr><td style="padding: 2px 4px;"><strong>ID</strong></td><td style="padding: 2px 4px;">${fireid}</td></tr>
+                            <tr><td style="padding: 2px 4px;"><strong>Primary key</strong></td><td style="padding: 2px 4px;">${primarykey}</td></tr>
+                            <tr><td style="padding: 2px 4px;"><strong>Region</strong></td><td style="padding: 2px 4px;">${region}</td></tr>
+                            <tr><td style="padding: 2px 4px;"><strong>Timestamp</strong></td><td style="padding: 2px 4px;">${t}</td></tr>
+                        </table>
+                        `,
+                        style: {
+                        backgroundColor: '#fff',
+                        color: '#000',
+                        padding: '6px',
+                        border: '1px solid #ccc',
+                        borderRadius: '4px'
+                        }
+                };
             }}
             widgets={[
                 new ZoomWidget({

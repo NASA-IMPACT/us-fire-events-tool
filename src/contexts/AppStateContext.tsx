@@ -13,6 +13,11 @@ interface AppState {
   playbackSpeed: number;
   windLayerType: 'grid' | 'wind' | null;
   show3DMap: boolean;
+  showPerimeterNrt: boolean;
+  showFireline: boolean;
+  showNewFirepix: boolean;
+  showArchivePerimeters: boolean;
+  showArchiveFirepix: boolean;
   showSatelliteImagery: boolean;
   mapBounds: [number, number, number, number] | null;
 }
@@ -28,7 +33,12 @@ type AppAction =
   | { type: 'TOGGLE_SATELLITE_IMAGERY' }
   | { type: 'RESET_VIEW' }
   | { type: 'SET_MAP_BOUNDS'; payload: [number, number, number, number] }
-  | { type: 'SET_WIND_LAYER_TYPE'; payload: 'grid' | 'wind' | null };
+  | { type: 'SET_SHOW_PERIMETER_NRT'; payload: boolean }
+  | { type: 'SET_WIND_LAYER_TYPE'; payload: 'grid' | 'wind' | null }
+  | { type: 'SET_SHOW_FIRELINE'; payload: boolean }
+  | { type: 'SET_SHOW_NEWFIREPIX'; payload: boolean }
+  | { type: 'SET_SHOW_ARCHIVE_PERIMETERS'; payload: boolean }
+  | { type: 'SET_SHOW_ARCHIVE_FIREPIX'; payload: boolean };
 
 const createStableDate = (date: Date | string): Date => {
   const stableDate = new Date(date);
@@ -51,13 +61,18 @@ const initialState: AppState = {
   viewMode: 'explorer',
   selectedEventId: null,
   timeRange: {
-    start: createStableDate(new Date(new Date().setDate(new Date().getDate() - 10))),
-    end: createStableDate(new Date()),
+    start: createStableDate(new Date(2025, 0, 1)),
+    end: createStableDate(new Date(2025, 3, 10)),
   },
   isPlaying: false,
   playbackSpeed: 1,
   windLayerType: null,
   show3DMap: false,
+  showPerimeterNrt: false,
+  showFireline: true,
+  showNewFirepix: false,
+  showArchivePerimeters: false,
+  showArchiveFirepix: false,
   showSatelliteImagery: false,
   mapBounds: null
 };
@@ -105,6 +120,29 @@ const appReducer = (state: AppState, action: AppAction): AppState => {
     case 'SET_WIND_LAYER_TYPE':
       return { ...state, windLayerType: action.payload };
 
+    case 'SET_SHOW_PERIMETER_NRT':
+      return { ...state, showPerimeterNrt: action.payload };
+
+    case 'SET_SHOW_FIRELINE':
+      return { ...state, showFireline: action.payload };
+
+    case 'SET_SHOW_NEWFIREPIX':
+      return { ...state, showNewFirepix: action.payload };
+
+    case 'SET_SHOW_ARCHIVE_PERIMETERS':
+      return {
+        ...state,
+        showArchivePerimeters: action.payload,
+        ...(action.payload ? { showFireline: false, showNewFirepix: false } : {})
+      };
+
+    case 'SET_SHOW_ARCHIVE_FIREPIX':
+      return {
+        ...state,
+        showArchiveFirepix: action.payload,
+        ...(action.payload ? { showFireline: false, showNewFirepix: false } : {})
+      };
+
     default:
       return state;
   }
@@ -121,6 +159,11 @@ interface AppContextValue extends AppState {
   resetView: () => void;
   setMapBounds: (bounds: [number, number, number, number]) => void;
   windLayerType: 'grid' | 'wind' | null;
+  setShowPerimeterNrt: (enabled: boolean) => void;
+  setShowFireline: (enabled: boolean) => void;
+  setShowNewFirepix: (enabled: boolean) => void;
+  setShowArchivePerimeters: (enabled: boolean) => void;
+  setShowArchiveFirepix: (enabled: boolean) => void;
   setWindLayerType: (type: 'grid' | 'wind' | null) => void;
 }
 
@@ -169,6 +212,26 @@ export const AppStateProvider = ({ children }: { children: ReactNode }) => {
     dispatch({ type: 'SET_WIND_LAYER_TYPE', payload: type });
   }, []);
 
+  const setShowPerimeterNrt = useCallback((val: boolean) => {
+    dispatch({ type: 'SET_SHOW_PERIMETER_NRT', payload: val });
+  }, []);
+
+  const setShowFireline = useCallback((val: boolean) => {
+    dispatch({ type: 'SET_SHOW_FIRELINE', payload: val });
+  }, []);
+
+  const setShowNewFirepix = useCallback((val: boolean) => {
+    dispatch({ type: 'SET_SHOW_NEWFIREPIX', payload: val });
+  }, []);
+
+  const setShowArchivePerimeters = useCallback((val: boolean) => {
+    dispatch({ type: 'SET_SHOW_ARCHIVE_PERIMETERS', payload: val });
+  }, []);
+
+  const setShowArchiveFirepix = useCallback((val: boolean) => {
+    dispatch({ type: 'SET_SHOW_ARCHIVE_FIREPIX', payload: val });
+  }, []);
+
   const value: AppContextValue = {
     ...state,
     setViewMode,
@@ -181,6 +244,11 @@ export const AppStateProvider = ({ children }: { children: ReactNode }) => {
     resetView,
     setMapBounds,
     setWindLayerType,
+    setShowPerimeterNrt,
+    setShowFireline,
+    setShowNewFirepix,
+    setShowArchivePerimeters,
+    setShowArchiveFirepix,
     windLayerType: state.windLayerType
   };
 

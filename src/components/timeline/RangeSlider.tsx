@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { format } from 'date-fns';
-import { Calendar } from 'lucide-react';
+import { Calendar as CalendarIcon } from 'lucide-react';
+import Calendar from 'react-calendar';
 import ReactSlider from 'react-slider';
 import { useEvents } from '../../contexts/EventsContext';
 import { useAppState } from '../../contexts/AppStateContext';
@@ -8,21 +9,25 @@ import { BarChart, Bar, ResponsiveContainer, XAxis } from 'recharts';
 import AdvancedFilters from '../filters/AdvancedFilters';
 import { useFilters } from '../../contexts/FiltersContext';
 
+import 'react-calendar/dist/Calendar.css';
+import './rangeslider.scss';
+
 const TimeRangeSlider = () => {
   const { timeRange, setTimeRange } = useAppState();
   const { toggleAdvancedFilters} = useFilters();
   const { events } = useEvents();
 
+  const [showCalendar, setShowCalendar] = useState(false);
   const [showSearchFilters, setShowSearchFilters] = useState(false);
   const [highlightedArea, setHighlightedArea] = useState({ left: 0, width: 0 });
   const chartRef = useRef(null);
 
   const { minDate, maxDate, totalRange } = useMemo(() => {
     const now = new Date();
+    now.setDate(now.getDate());
     now.setHours(23, 59, 59, 999);
 
-    const fixedStartDate = new Date();
-    fixedStartDate.setDate(now.getDate() - 20);
+    const fixedStartDate = new Date(now.getFullYear(), 0, 1);
     fixedStartDate.setHours(0, 0, 0, 0);
 
     return {
@@ -33,7 +38,7 @@ const TimeRangeSlider = () => {
     };
   }, []);
 
-  const HOURS_PER_BIN = 12;
+  const HOURS_PER_BIN = 96;
   const totalHours = (maxDate.getTime() - minDate.getTime()) / (1000 * 60 * 60);
   const FIXED_BINS = Math.ceil(totalHours / HOURS_PER_BIN);
 
@@ -98,7 +103,12 @@ const TimeRangeSlider = () => {
       const left = (sliderValues[0] / 100) * chartWidth;
       const width = ((sliderValues[1] - sliderValues[0]) / 100) * chartWidth;
 
-      setHighlightedArea({ left, width });
+      if (
+        highlightedArea.left !== left ||
+        highlightedArea.width !== width
+      ) {
+        setHighlightedArea({ left, width });
+      }
     }
   }, [sliderValues, minDate, totalRange, setTimeRange, timeRange]);
 
@@ -115,65 +125,6 @@ const TimeRangeSlider = () => {
 
   return (
     <div className="bg-base-lightest radius-md padding-3 shadow-2 z-top" style={{ width: "800px", height: 'auto' }}>
-      <style>
-        {`
-          .range-slider {
-            width: 100%;
-            height: 24px;
-            position: relative;
-            margin-top: -33px;
-          }
-
-          .range-slider .track {
-            top: 8px;
-            height: 4px;
-            background: #d9d9d9;
-            border-radius: 2px;
-          }
-
-          .range-slider .track-1 {
-            background: #1a6baa;
-          }
-
-          .range-slider .thumb {
-            width: 16px;
-            height: 16px;
-            cursor: pointer;
-            background: #fff;
-            border-radius: 50%;
-            border: 2px solid #1a6baa;
-            top: 2px;
-            outline: none;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.2);
-          }
-
-          .range-slider .thumb:hover {
-            box-shadow: 0 0 0 2px rgba(26, 107, 170, 0.3);
-          }
-
-          .highlighted-area {
-            position: absolute;
-            background-color: rgba(26, 107, 170, 0.1);
-            height: 90px;
-            z-index: 1;
-          }
-
-          .custom-bar-shape {
-            rx: 2px;
-            ry: 2px;
-          }
-
-          .date-picker {
-            background-color: white;
-          }
-
-          .recharts-xAxis {
-              transform: translate(0, 9px);
-              font-size: 12px;
-            }
-        `}
-      </style>
-
       <div className="display-flex flex-align-center margin-bottom-1">
         <div className="font-body font-weight-regular font-sans-3xs text-base-dark">
           <span>y-axis: <span className="font-weight-bold">Number of fire events</span></span>
@@ -182,9 +133,31 @@ const TimeRangeSlider = () => {
           <span className="font-body font-weight-regular font-sans-3xs text-base margin-right-1">Time period:</span>
           <div className="display-flex flex-align-center border-1px border-base-light padding-y-05 padding-x-1 radius-sm font-ui font-weight-regular font-sans-3xs text-base bg-white date-picker">
             {format(timeRange.start, 'MMM d, yyyy')} - {format(timeRange.end, 'MMM d, yyyy')}
-            <button className="border-0 bg-transparent padding-1 margin-left-1">
-              <Calendar size={16} color="#71767a" />
+            <button
+              className="border-0 bg-transparent padding-1 margin-left-1"
+              onClick={() => setShowCalendar(prev => !prev)}
+            >
+              <CalendarIcon size={16} color="#71767a" />
             </button>
+
+            {showCalendar && (
+              <div style={{ position: 'absolute', zIndex: 10, top: '-240px' }}>
+                <Calendar
+                  selectRange
+                  onChange={(range) => {
+                    if (Array.isArray(range) && range[0] && range[1]) {
+                      const startPercent = ((range[0].getTime() - minDate.getTime()) / totalRange) * 100;
+                      const endPercent = ((range[1].getTime() - minDate.getTime()) / totalRange) * 100;
+                      setSliderValues([startPercent, endPercent]);
+                      setShowCalendar(false);
+                    }
+                  }}
+                  minDate={minDate}
+                  maxDate={maxDate}
+                  value={[timeRange.start, timeRange.end]}
+                />
+              </div>
+            )}
           </div>
         </div>
         <button

@@ -25,6 +25,7 @@
     "lucide-react": "^0.477.0",
     "mapbox-gl": "^3.10.0",
     "react": "^19.0.0",
+    "react-calendar": "^5.1.0",
     "react-dom": "^19.0.0",
     "react-map-gl": "^8.0.1",
     "react-router-dom": "^7.2.0",

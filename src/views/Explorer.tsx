@@ -1,15 +1,19 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useAppState } from '../contexts/AppStateContext';
 import { useEvents } from '../contexts/EventsContext';
 import MapView from '../components/MapView';
 import EventDetails from '../components/sidebar/EventDetailView';
 import TimeRangeSlider from '../components/timeline/RangeSlider';
-
-import 'mapbox-gl/dist/mapbox-gl.css';
 import DetailedTimeChart from '../components/timeline/DetailedTimeChart';
 import Header from '../components/Header';
+import LayerSwitcher from '../components/LayerSwitcher';
+import { Layers } from 'lucide-react';
+
+import 'mapbox-gl/dist/mapbox-gl.css';
 
 const Explorer: React.FC = () => {
+  const [showLayerPanel, setShowLayerPanel] = useState(true);
+
   const {
     viewMode,
     setViewMode,
@@ -38,6 +42,32 @@ const Explorer: React.FC = () => {
 
       <div className="display-flex height-viewport">
         <div className="position-relative flex-fill">
+          <div
+            className="display-flex position-absolute z-top bg-white border-0 shadow-2 radius-md padding-05 cursor-pointer"
+            style={{
+              top: '50px',
+              right: viewMode === 'detail' && selectedEventId ? '380px' : '10px',
+              transition: 'right 0.2s ease',
+            }}
+            onClick={() => setShowLayerPanel(!showLayerPanel)}
+            aria-label="Toggle layer switcher"
+          >
+            <Layers size={18} />
+          </div>
+
+          {showLayerPanel && (
+            <div
+              className="position-absolute z-top"
+              style={{
+                top: '50px',
+                right: viewMode === 'detail' && selectedEventId ? '380px' : '10px',
+                transition: 'right 0.2s ease',
+              }}
+            >
+              <LayerSwitcher onClose={() => setShowLayerPanel(false)} />
+            </div>
+          )}
+
           <MapView />
 
           {viewMode === 'detail' && selectedEventId ? (
