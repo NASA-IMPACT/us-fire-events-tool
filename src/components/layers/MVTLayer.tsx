@@ -21,6 +21,7 @@ export const createMVTLayer = ({
   opacity = 100,
   onTileLoad,
   onClick,
+  lineWidthMinPixels = 1,
   updateTriggers = {}
 }) => {
   return new MVTLayer({
@@ -35,7 +36,7 @@ export const createMVTLayer = ({
       const passes = filterFunction ? filterFunction(feature) : true;
       return passes ? [255, 69, 0, 255] : [255, 69, 0, 0];
     },
-    lineWidthMinPixels: 1,
+    lineWidthMinPixels,
     pickable: true,
     opacity: opacity / 100,
     autoHighlight: true,

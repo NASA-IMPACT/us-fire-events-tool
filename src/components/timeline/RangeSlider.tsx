@@ -73,11 +73,11 @@ const TimeRangeSlider = () => {
   const [sliderValues, setSliderValues] = useState([50, 100]);
 
   useEffect(() => {
-    const tenDaysAgo = new Date();
-    tenDaysAgo.setDate(maxDate.getDate() - 10);
-    tenDaysAgo.setHours(0, 0, 0, 0);
+    const twoMonthsAgo = new Date(maxDate);
+    twoMonthsAgo.setMonth(twoMonthsAgo.getMonth() - 2);
+    twoMonthsAgo.setHours(0, 0, 0, 0);
 
-    const startPercent = ((tenDaysAgo.getTime() - minDate.getTime()) / totalRange) * 100;
+    const startPercent = ((twoMonthsAgo.getTime() - minDate.getTime()) / totalRange) * 100;
     const endPercent = 100;
 
     setSliderValues([startPercent, endPercent]);

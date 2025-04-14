@@ -252,6 +252,7 @@ export const useLayers = ({
             data: MVT_URLS.newfirepix,
             filterFunction: featurePassesFilters,
             opacity: layerOpacity,
+            lineWidthMinPixels: 2,
             onTileLoad: handleTileLoad,
             onClick: handleClick,
             updateTriggers: {

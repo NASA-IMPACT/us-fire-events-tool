@@ -72,8 +72,6 @@ const LayerSwitcher: React.FC<LayerSwitcherProps> = ({ onClose }) => {
       {layerItem('Fireline (spread)', showFireline, () => setShowFireline(!showFireline), archiveActive)}
       {layerItem('New fire pixels (uncertainty)', showNewFirepix, () => setShowNewFirepix(!showNewFirepix), archiveActive)}
       {layerItem('All perimeters (NRT)', showPerimeterNrt, () => setShowPerimeterNrt(!showPerimeterNrt), archiveActive)}
-      {layerItem('Archive perimeters', showArchivePerimeters, () => setShowArchivePerimeters(!showArchivePerimeters))}
-      {layerItem('Archive fire pixels', showArchiveFirepix, () => setShowArchiveFirepix(!showArchiveFirepix), false, true)}
     </div>
   );
 };
