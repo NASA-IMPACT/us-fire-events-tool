@@ -32,7 +32,7 @@ VIIRS sensors provide updates approximately every 12 hours. For more detailed in
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/fireviz.git
+git clone https://github.com/NASA-IMPACT/us-fire-events-tool.git
 cd us-fire-events-tool
 
 # Install dependencies
