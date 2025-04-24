@@ -8,11 +8,11 @@ import { createLayers } from '../LayerFactory';
 import _ from 'lodash';
 
 export const MVT_URLS: Record<MVTLayerId, string> = {
-  perimeterNrt: 'https://firenrt.delta-backend.com/collections/public.eis_fire_lf_perimeter_nrt/tiles/{z}/{x}/{y}',
-  fireline: 'https://firenrt.delta-backend.com/collections/public.eis_fire_lf_fireline_nrt/tiles/{z}/{x}/{y}',
-  newfirepix: 'https://firenrt.delta-backend.com/collections/public.eis_fire_lf_newfirepix_nrt/tiles/{z}/{x}/{y}',
-  archivePerimeters: 'https://firenrt.delta-backend.com/collections/public.eis_fire_lf_perimeter_archive/tiles/{z}/{x}/{y}',
-  archiveFirepix: 'https://firenrt.delta-backend.com/collections/public.eis_fire_lf_newfirepix_archive/tiles/{z}/{x}/{y}',
+  perimeterNrt: 'https://openveda.cloud/api/features/collections/public.eis_fire_lf_perimeter_nrt/tiles/{z}/{x}/{y}',
+  fireline: 'https://openveda.cloud/api/features/collections/public.eis_fire_lf_fireline_nrt/tiles/{z}/{x}/{y}',
+  newfirepix: 'https://openveda.cloud/api/features/collections/public.eis_fire_lf_newfirepix_nrt/tiles/{z}/{x}/{y}',
+  archivePerimeters: 'https://openveda.cloud/api/features/collections/public.eis_fire_lf_perimeter_archive/tiles/{z}/{x}/{y}',
+  archiveFirepix: 'https://openveda.cloud/api/features/collections/public.eis_fire_lf_newfirepix_archive/tiles/{z}/{x}/{y}',
 };
 
 export type MVTLayerId =

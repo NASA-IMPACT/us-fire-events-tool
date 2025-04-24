@@ -40,6 +40,9 @@ npm install
 # or
 yarn
 
+# Create a .env file in the project root and set your Mapbox token
+VITE_MAPBOX_TOKEN=your-mapbox-access-token
+
 # Start the development server
 npm run dev
 # or

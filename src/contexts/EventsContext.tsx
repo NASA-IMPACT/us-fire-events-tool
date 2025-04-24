@@ -110,7 +110,7 @@ const areFeatureArraysEqual = (prevFeatures: MVTFeature[], nextFeatures: MVTFeat
 };
 
 export const fetchFirePerimeters = async (fireId: string) => {
-  const url = `https://firenrt.delta-backend.com/collections/public.eis_fire_lf_perimeter_nrt/items?filter=fireid%3D${fireId}&limit=50&f=geojson`;
+  const url = `https://openveda.cloud/api/features/collections/public.eis_fire_lf_perimeter_nrt/items?filter=fireid%3D${fireId}&limit=50&f=geojson`;
 
   try {
     const response = await fetch(url);
@@ -125,7 +125,7 @@ export const fetchFirePerimeters = async (fireId: string) => {
 };
 
 export const fetchAlternativeFirePerimeters = async (fireId: string) => {
-  const url = `https://firenrt.delta-backend.com/collections/public.eis_fire_snapshot_perimeter_nrt/items?filter=fireid%3D${fireId}&limit=50&f=geojson`;
+  const url = `https://openveda.cloud/api/features/public.eis_fire_snapshot_perimeter_nrt/items?filter=fireid%3D${fireId}&limit=50&f=geojson`;
 
   try {
     const response = await fetch(url);
