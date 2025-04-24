@@ -40,8 +40,9 @@ npm install
 # or
 yarn
 
-# Create a .env file in the project root and set your Mapbox token
+# Create a .env file in the project root and set your environment variables
 VITE_MAPBOX_TOKEN=your-mapbox-access-token
+VITE_FEATURES_API_ENDPOINT='https://openveda.cloud/api/features'
 
 # Start the development server
 npm run dev
