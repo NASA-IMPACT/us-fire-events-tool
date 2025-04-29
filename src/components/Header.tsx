@@ -105,6 +105,16 @@ const Header: React.FC = () => {
 
             <ul className="usa-list font-sans-sm margin-top-0 margin-bottom-4">
               <li>
+                <a href="https://earth-information-system.github.io/fireatlas/docs/" className="text-primary" target="_blank" rel="noopener noreferrer">
+                  Data source documentation
+                </a>
+              </li>
+              <li>
+                <a href="https://earth-information-system.github.io/fireatlas/docs/nrt.html#accessing-nrt-data" className="text-primary" target="_blank" rel="noopener noreferrer">
+                  Accessing the Near Real Time Data
+                </a>
+              </li>
+              <li>
                 <a href="https://docs.openveda.cloud/user-guide/notebooks/tutorials/mapping-fires.html#collection-information" className="text-primary" target="_blank" rel="noopener noreferrer">
                   OpenVEDA documentation
                 </a>
