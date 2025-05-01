@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { format } from 'date-fns';
 import { useAppState } from '../../contexts/AppStateContext';
-import { useEvents, getFeatureProperties, getFireId } from '../../contexts/EventsContext';
+import { useEvents, getFeatureProperties, getFireId, MVTFeature } from '../../contexts/EventsContext';
 import ReactSlider from 'react-slider';
 import { useMap } from '../../contexts/MapContext';
 import { ToggleSlider } from "react-toggle-slider";
@@ -11,14 +11,14 @@ interface EventDetailsProps {
 }
 
 const EventDetails: React.FC<EventDetailsProps> = ({ onBack }) => {
-  const { selectedEventId, events } = useEvents();
+  const { selectedEventId, firePerimeters } = useEvents();
   const { windLayerType, setWindLayerType, show3DMap, toggle3DMap } = useAppState();
   const { layerOpacity, setLayerOpacity } = useMap();
 
   const selectedEvent = useMemo(() => {
-    if (!selectedEventId) return null;
-    return events.find(event => getFireId(event) === selectedEventId) || null;
-  }, [selectedEventId, events]);
+    if (!selectedEventId || !firePerimeters?.features?.length) return null;
+    return firePerimeters.features[firePerimeters.features.length - 1] as MVTFeature;
+  }, [selectedEventId, firePerimeters]);
 
   const eventProperties = useMemo(() => {
     if (!selectedEvent) return null;
