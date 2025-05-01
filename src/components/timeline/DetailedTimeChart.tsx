@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { format } from 'date-fns';
 import ReactSlider from 'react-slider';
-import { Play, RotateCw, Video, X } from 'lucide-react';
+import { Pause, Play, RotateCw, Video, X } from 'lucide-react';
 import { useEvents } from '../../contexts/EventsContext';
 import { useAppState } from '../../contexts/AppStateContext';
 import { YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts';
@@ -651,7 +651,11 @@ const DetailedTimeChart = () => {
             aria-label={isPlaying ? "Pause" : "Play"}
             disabled={isRecording || isPreparingToRecord}
           >
-            <Play size={24} />
+            {isPlaying ? (
+              <Pause size={24} />
+            ) : (
+              <Play size={24} />
+            )}
           </button>
 
           <button
