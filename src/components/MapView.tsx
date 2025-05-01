@@ -71,7 +71,7 @@ const MapView = () => {
             onLoad={() => {
                 setTimeout(collectVisibleFeatures, 500);
             }}
-            pickingRadius={20}
+            pickingRadius={10}
             useDevicePixels={false}
             getTooltip={({ object }) => {
                 if (!object || !object.properties) return null;
