@@ -112,7 +112,7 @@ const areFeatureArraysEqual = (prevFeatures: MVTFeature[], nextFeatures: MVTFeat
 };
 
 export const fetchFirePerimeters = async (fireId: string) => {
-  const url = `${baseUrl}/collections/public.eis_fire_lf_perimeter_nrt/items?filter=fireid%3D${fireId}&limit=50&f=geojson`;
+  const url = `${baseUrl}/collections/public.eis_fire_lf_perimeter_nrt/items?filter=fireid%3D${fireId}&limit=500&f=geojson`;
 
   try {
     const response = await fetch(url);
@@ -127,7 +127,7 @@ export const fetchFirePerimeters = async (fireId: string) => {
 };
 
 export const fetchAlternativeFirePerimeters = async (fireId: string) => {
-  const url = `${baseUrl}/collections/public.eis_fire_snapshot_perimeter_nrt/items?filter=fireid%3D${fireId}&limit=50&f=geojson`;
+  const url = `${baseUrl}/collections/public.eis_fire_snapshot_perimeter_nrt/items?filter=fireid%3D${fireId}&limit=500&f=geojson`;
 
   try {
     const response = await fetch(url);
