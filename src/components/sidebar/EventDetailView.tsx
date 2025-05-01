@@ -51,7 +51,7 @@ const EventDetails: React.FC<EventDetailsProps> = ({ onBack }) => {
   };
 
   const area = eventProperties.farea ? Number(eventProperties.farea).toFixed(2) : '0.00';
-  const durationDays = eventProperties.duration ? Math.round(eventProperties.duration) : 0;
+  const durationDays = eventProperties.duration ? eventProperties.duration : 0;
   const meanFRP = eventProperties.meanfrp ? Number(eventProperties.meanfrp).toFixed(2) : '0.00';
   const perimeter = eventProperties.fperim ? Number(eventProperties.fperim).toFixed(2) : '0.00';
   const pixelDensity = eventProperties.pixden ? Number(eventProperties.pixden).toFixed(2) : '0.00';
