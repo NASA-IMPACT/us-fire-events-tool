@@ -36,6 +36,7 @@ export const createMVTLayer = ({
       const passes = filterFunction ? filterFunction(feature) : true;
       return passes ? [255, 69, 0, 255] : [255, 69, 0, 0];
     },
+    uniqueIdProperty: 'primarykey',
     lineWidthMinPixels,
     pickable: true,
     opacity: opacity / 100,
