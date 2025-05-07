@@ -36,9 +36,7 @@ git clone https://github.com/NASA-IMPACT/us-fire-events-tool.git
 cd us-fire-events-tool
 
 # Install dependencies
-npm install
-# or
-yarn
+npm install --legacy-peer-deps
 
 # Create a .env file in the project root and set your environment variables
 VITE_MAPBOX_TOKEN=your-mapbox-access-token
