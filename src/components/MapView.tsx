@@ -12,12 +12,14 @@ import { CompassWidget, FullscreenWidget, ZoomWidget } from '@deck.gl/widgets';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import '@deck.gl/widgets/stylesheet.css';
 import 'deck.gl/stylesheet.css';
+import { useEnv } from '../contexts/EnvContext';
 
 /**
  * Map visualization component
  * Renders a map with multiple layers based on application state
  */
 const MapView = () => {
+    const { mapboxAccessToken } = useEnv();
     const { updateEvents } = useEvents();
     const { show3DMap, setMapBounds, setViewMode } = useAppState();
 
@@ -113,7 +115,7 @@ const MapView = () => {
             ]}
         >
             <Map
-                mapboxAccessToken={import.meta.env.VITE_MAPBOX_TOKEN}
+                mapboxAccessToken={mapboxAccessToken}
                 mapStyle={MAP_STYLE}
                 projection="mercator"
                 attributionControl={false}

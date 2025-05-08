@@ -1,5 +1,6 @@
 import { createContext, useContext, useReducer, useEffect, ReactNode, useMemo, useCallback, useRef } from 'react';
 import { useAppState } from './AppStateContext';
+import { useEnv } from './EnvContext';
 
 export interface MVTFeature {
   geometry: {
@@ -80,8 +81,6 @@ interface EventsContextValue extends Omit<EventsState, 'filters'> {
   getFilteredEvents: (start: Date, end: Date) => MVTFeature[];
 }
 
-const baseUrl = import.meta.env.VITE_FEATURES_API_ENDPOINT;
-
 export const getFeatureProperties = (feature: MVTFeature | null) => {
   if (!feature) return {};
   return feature.properties || (feature.object && feature.object.properties) || {};
@@ -111,7 +110,7 @@ const areFeatureArraysEqual = (prevFeatures: MVTFeature[], nextFeatures: MVTFeat
   return true;
 };
 
-export const fetchFirePerimeters = async (fireId: string) => {
+export const fetchFirePerimeters = async (fireId: string, baseUrl: string) => {
   const url = `${baseUrl}/collections/public.eis_fire_lf_perimeter_nrt/items?filter=fireid%3D${fireId}&limit=500&f=geojson`;
 
   try {
@@ -126,7 +125,7 @@ export const fetchFirePerimeters = async (fireId: string) => {
   }
 };
 
-export const fetchAlternativeFirePerimeters = async (fireId: string) => {
+export const fetchAlternativeFirePerimeters = async (fireId: string, baseUrl: string) => {
   const url = `${baseUrl}/collections/public.eis_fire_snapshot_perimeter_nrt/items?filter=fireid%3D${fireId}&limit=500&f=geojson`;
 
   try {
@@ -175,6 +174,7 @@ const eventsReducer = (state: EventsState, action: EventsAction): EventsState =>
 
 export const EventsProvider = ({ children }: { children: ReactNode }) => {
   const { timeRange } = useAppState();
+  const { featuresApiEndpoint } = useEnv();
 
   const initialState: EventsState = {
     events: [],
@@ -240,10 +240,10 @@ export const EventsProvider = ({ children }: { children: ReactNode }) => {
     dispatch({ type: 'SELECT_EVENT', payload: eventId });
 
     if (eventId) {
-      let perimeters = await fetchFirePerimeters(eventId);
+      let perimeters = await fetchFirePerimeters(eventId, featuresApiEndpoint);
 
       if (!perimeters || !perimeters.features || perimeters.features.length === 0) {
-        perimeters = await fetchAlternativeFirePerimeters(eventId);
+        perimeters = await fetchAlternativeFirePerimeters(eventId, featuresApiEndpoint);
       }
 
       dispatch({ type: 'SET_FIRE_PERIMETERS', payload: perimeters });

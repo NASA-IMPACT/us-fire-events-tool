@@ -11,10 +11,10 @@ import { TerrainLayer } from '@deck.gl/geo-layers';
  */
 export const createTerrainLayer = ({
   id = 'terrain',
+  mapboxAccessToken
 }) => {
-  const mapboxToken = import.meta.env.VITE_MAPBOX_TOKEN;
 
-  if (!mapboxToken) {
+  if (!mapboxAccessToken) {
     console.error('Mapbox token is required for TerrainLayer');
     return null;
   }
@@ -32,7 +32,7 @@ export const createTerrainLayer = ({
     },
     terrainDrawMode: 'drape',
     elevationData: `https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png`,
-    texture: `https://api.mapbox.com/v4/mapbox.satellite/{z}/{x}/{y}@2x.png?access_token=${mapboxToken}`,
+    texture: `https://api.mapbox.com/v4/mapbox.satellite/{z}/{x}/{y}@2x.png?access_token=${mapboxAccessToken}`,
     operation: 'terrain+draw'
   });
 };

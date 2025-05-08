@@ -6,16 +6,7 @@ import { useFilters } from '../../../contexts/FiltersContext';
 import { LAYER_TYPES } from '../config/constants';
 import { createLayers } from '../LayerFactory';
 import _ from 'lodash';
-
-const baseUrl = import.meta.env.VITE_FEATURES_API_ENDPOINT;
-
-export const MVT_URLS: Record<MVTLayerId, string> = {
-  perimeterNrt: `${baseUrl}/collections/public.eis_fire_lf_perimeter_nrt/tiles/{z}/{x}/{y}`,
-  fireline: `${baseUrl}/collections/public.eis_fire_lf_fireline_nrt/tiles/{z}/{x}/{y}`,
-  newfirepix: `${baseUrl}/collections/public.eis_fire_lf_newfirepix_nrt/tiles/{z}/{x}/{y}`,
-  archivePerimeters: `${baseUrl}/collections/public.eis_fire_lf_perimeter_archive/tiles/{z}/{x}/{y}`,
-  archiveFirepix: `${baseUrl}/collections/public.eis_fire_lf_newfirepix_archive/tiles/{z}/{x}/{y}`,
-};
+import { useEnv } from '../../../contexts/EnvContext';
 
 export type MVTLayerId =
   | 'perimeterNrt'
@@ -56,6 +47,16 @@ export const useLayers = ({
   viewState,
   setViewMode
 }: UseLayersProps) => {
+  const { mapboxAccessToken, featuresApiEndpoint: baseUrl } = useEnv();
+
+  const MVT_URLS: Record<MVTLayerId, string> = {
+    perimeterNrt: `${baseUrl}/collections/public.eis_fire_lf_perimeter_nrt/tiles/{z}/{x}/{y}`,
+    fireline: `${baseUrl}/collections/public.eis_fire_lf_fireline_nrt/tiles/{z}/{x}/{y}`,
+    newfirepix: `${baseUrl}/collections/public.eis_fire_lf_newfirepix_nrt/tiles/{z}/{x}/{y}`,
+    archivePerimeters: `${baseUrl}/collections/public.eis_fire_lf_perimeter_archive/tiles/{z}/{x}/{y}`,
+    archiveFirepix: `${baseUrl}/collections/public.eis_fire_lf_newfirepix_archive/tiles/{z}/{x}/{y}`,
+  };
+
   const [layers, setLayers] = useState([]);
   const [lastTimeRangeEnd, setLastTimeRangeEnd] = useState(null);
   const debouncedTimeUpdate = useRef(null);
@@ -207,7 +208,8 @@ export const useLayers = ({
         layerConfigs.push({
           type: LAYER_TYPES.TERRAIN,
           opacity: layerOpacity,
-          viewState
+          mapboxAccessToken,
+          viewState,
         });
       }
 
