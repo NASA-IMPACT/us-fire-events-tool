@@ -50,11 +50,11 @@ export const useLayers = ({
   const { mapboxAccessToken, featuresApiEndpoint: baseUrl } = useEnv();
 
   const MVT_URLS: Record<MVTLayerId, string> = {
-    perimeterNrt: `${baseUrl}/collections/public.eis_fire_lf_perimeter_nrt/tiles/{z}/{x}/{y}`,
-    fireline: `${baseUrl}/collections/public.eis_fire_lf_fireline_nrt/tiles/{z}/{x}/{y}`,
-    newfirepix: `${baseUrl}/collections/public.eis_fire_lf_newfirepix_nrt/tiles/{z}/{x}/{y}`,
-    archivePerimeters: `${baseUrl}/collections/public.eis_fire_lf_perimeter_archive/tiles/{z}/{x}/{y}`,
-    archiveFirepix: `${baseUrl}/collections/public.eis_fire_lf_newfirepix_archive/tiles/{z}/{x}/{y}`,
+    perimeterNrt: `${baseUrl}/collections/public.eis_fire_lf_perimeter_nrt/tiles/WebMercatorQuad/{z}/{x}/{y}`,
+    fireline: `${baseUrl}/collections/public.eis_fire_lf_fireline_nrt/tiles/WebMercatorQuad/{z}/{x}/{y}`,
+    newfirepix: `${baseUrl}/collections/public.eis_fire_lf_newfirepix_nrt/tiles/WebMercatorQuad/{z}/{x}/{y}`,
+    archivePerimeters: `${baseUrl}/collections/public.eis_fire_lf_perimeter_archive/tiles/WebMercatorQuad/{z}/{x}/{y}`,
+    archiveFirepix: `${baseUrl}/collections/public.eis_fire_lf_newfirepix_archive/tiles/WebMercatorQuad/{z}/{x}/{y}`,
   };
 
   const [layers, setLayers] = useState([]);
