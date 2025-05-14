@@ -46,7 +46,7 @@ export const useMapInteraction = ({
     const { width, height, layerManager } = deckRef.current.deck;
     const availableLayerIds = layerManager.layers.map(l => l.id);
 
-    const priorityLayers = ['perimeterNrt', 'fireline', 'newfirepix', 'archivePerimeters', 'archiveFirepix'];
+    const priorityLayers = ['perimeter-nrt', 'fireline', 'newfirepix'];
     const targetLayerId = priorityLayers.find(id => availableLayerIds.includes(id));
     if (!targetLayerId) return;
 

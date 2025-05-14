@@ -10,16 +10,10 @@ const LayerSwitcher: React.FC<LayerSwitcherProps> = ({ onClose }) => {
     showPerimeterNrt,
     showFireline,
     showNewFirepix,
-    showArchivePerimeters,
-    showArchiveFirepix,
     setShowPerimeterNrt,
     setShowFireline,
-    setShowNewFirepix,
-    setShowArchivePerimeters,
-    setShowArchiveFirepix,
+    setShowNewFirepix
   } = useAppState();
-
-  const archiveActive = showArchivePerimeters || showArchiveFirepix;
 
   const layerItem = (
     label: string,
@@ -69,9 +63,9 @@ const LayerSwitcher: React.FC<LayerSwitcherProps> = ({ onClose }) => {
         </div>
       </div>
 
-      {layerItem('Fireline (spread)', showFireline, () => setShowFireline(!showFireline), archiveActive)}
-      {layerItem('New fire pixels (uncertainty)', showNewFirepix, () => setShowNewFirepix(!showNewFirepix), archiveActive)}
-      {layerItem('All perimeters (NRT)', showPerimeterNrt, () => setShowPerimeterNrt(!showPerimeterNrt), archiveActive)}
+      {layerItem('All perimeters (NRT)', showPerimeterNrt, () => setShowPerimeterNrt(!showPerimeterNrt))}
+      {layerItem('Fireline (spread)', showFireline, () => setShowFireline(!showFireline))}
+      {layerItem('New fire pixels (uncertainty)', showNewFirepix, () => setShowNewFirepix(!showNewFirepix))}
     </div>
   );
 };
