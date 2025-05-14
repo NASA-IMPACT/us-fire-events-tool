@@ -16,8 +16,6 @@ interface AppState {
   showPerimeterNrt: boolean;
   showFireline: boolean;
   showNewFirepix: boolean;
-  showArchivePerimeters: boolean;
-  showArchiveFirepix: boolean;
   showSatelliteImagery: boolean;
   mapBounds: [number, number, number, number] | null;
 }
@@ -36,9 +34,7 @@ type AppAction =
   | { type: 'SET_SHOW_PERIMETER_NRT'; payload: boolean }
   | { type: 'SET_WIND_LAYER_TYPE'; payload: 'grid' | 'wind' | null }
   | { type: 'SET_SHOW_FIRELINE'; payload: boolean }
-  | { type: 'SET_SHOW_NEWFIREPIX'; payload: boolean }
-  | { type: 'SET_SHOW_ARCHIVE_PERIMETERS'; payload: boolean }
-  | { type: 'SET_SHOW_ARCHIVE_FIREPIX'; payload: boolean };
+  | { type: 'SET_SHOW_NEWFIREPIX'; payload: boolean };
 
 const createStableDate = (date: Date | string): Date => {
   const stableDate = new Date(date);
@@ -71,8 +67,6 @@ const initialState: AppState = {
   showPerimeterNrt: true,
   showFireline: false,
   showNewFirepix: false,
-  showArchivePerimeters: false,
-  showArchiveFirepix: false,
   showSatelliteImagery: false,
   mapBounds: null
 };
@@ -129,20 +123,6 @@ const appReducer = (state: AppState, action: AppAction): AppState => {
     case 'SET_SHOW_NEWFIREPIX':
       return { ...state, showNewFirepix: action.payload };
 
-    case 'SET_SHOW_ARCHIVE_PERIMETERS':
-      return {
-        ...state,
-        showArchivePerimeters: action.payload,
-        ...(action.payload ? { showFireline: false, showNewFirepix: false } : {})
-      };
-
-    case 'SET_SHOW_ARCHIVE_FIREPIX':
-      return {
-        ...state,
-        showArchiveFirepix: action.payload,
-        ...(action.payload ? { showFireline: false, showNewFirepix: false } : {})
-      };
-
     default:
       return state;
   }
@@ -162,8 +142,6 @@ interface AppContextValue extends AppState {
   setShowPerimeterNrt: (enabled: boolean) => void;
   setShowFireline: (enabled: boolean) => void;
   setShowNewFirepix: (enabled: boolean) => void;
-  setShowArchivePerimeters: (enabled: boolean) => void;
-  setShowArchiveFirepix: (enabled: boolean) => void;
   setWindLayerType: (type: 'grid' | 'wind' | null) => void;
 }
 
@@ -224,14 +202,6 @@ export const AppStateProvider = ({ children }: { children: ReactNode }) => {
     dispatch({ type: 'SET_SHOW_NEWFIREPIX', payload: val });
   }, []);
 
-  const setShowArchivePerimeters = useCallback((val: boolean) => {
-    dispatch({ type: 'SET_SHOW_ARCHIVE_PERIMETERS', payload: val });
-  }, []);
-
-  const setShowArchiveFirepix = useCallback((val: boolean) => {
-    dispatch({ type: 'SET_SHOW_ARCHIVE_FIREPIX', payload: val });
-  }, []);
-
   const value: AppContextValue = {
     ...state,
     setViewMode,
@@ -247,8 +217,6 @@ export const AppStateProvider = ({ children }: { children: ReactNode }) => {
     setShowPerimeterNrt,
     setShowFireline,
     setShowNewFirepix,
-    setShowArchivePerimeters,
-    setShowArchiveFirepix,
     windLayerType: state.windLayerType
   };
 

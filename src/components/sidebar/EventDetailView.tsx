@@ -112,13 +112,8 @@ const EventDetails: React.FC<EventDetailsProps> = ({ onBack }) => {
         </button>
       </div>
 
-      <div className="padding-x-3 padding-y-3 overflow-auto flex-fill">
+      <div className="padding-x-3 padding-y-2 overflow-auto flex-fill">
         <div className="display-flex flex-align-center margin-bottom-1">
-          <span className={`margin-right-1 ${isActive ? 'text-error' : 'text-base-dark'}`}>
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-              <circle cx="12" cy="12" r="10" fill={isActive ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2"/>
-            </svg>
-          </span>
           <h1 className={`font-body font-weight-700 font-sans-lg margin-0 ${isActive ? 'text-error' : 'text-base-ink'}`}>
             {eventName}
           </h1>
@@ -171,19 +166,11 @@ const EventDetails: React.FC<EventDetailsProps> = ({ onBack }) => {
         </div>
 
         <div className="border-top-0">
-          <table className="usa-table usa-table--borderless width-full border-base-darker">
+          <table className="usa-table usa-table--borderless width-full margin-bottom-0 border-base-darker">
             <tbody>
-              <tr className="border-top-0">
-                <th scope="row" className="font-body font-weight-regular font-sans-3xs text-base-ink padding-y-2 padding-x-0 border-top-0">Status</th>
-                <td className="font-body font-weight-regular font-sans-3xs text-base-ink text-right padding-y-2 padding-x-0 border-top-0">
-                  <span className={`margin-left-1 font-sans-2xs text-white bg-${isActive ? 'error' : 'base-dark'} radius-sm padding-x-05 padding-y-05`}>
-                    {isActive ? 'Active' : 'Inactive'}
-                  </span>
-                </td>
-              </tr>
               <tr className="border-base-darker">
-                <th scope="row" className="font-body font-weight-regular font-sans-3xs text-base-ink padding-y-2 padding-x-0 border-base-darker">Pixel density</th>
-                <td className="font-body font-weight-regular font-sans-3xs text-base-ink text-right padding-y-2 padding-x-0 border-base-darker">{pixelDensity} px/km²</td>
+                <th scope="row" className="font-body font-weight-regular font-sans-3xs text-base-ink padding-y-2 padding-x-0 border-base-darker border-top-0">Pixel density</th>
+                <td className="font-body font-weight-regular font-sans-3xs text-base-ink text-right padding-y-2 padding-x-0 border-base-darker border-top-0">{pixelDensity} px/km²</td>
               </tr>
               <tr className="border-base-darker">
                 <th scope="row" className="font-body font-weight-regular font-sans-3xs text-base-ink padding-y-2 padding-x-0 border-base-darker">New pixels</th>
@@ -197,7 +184,7 @@ const EventDetails: React.FC<EventDetailsProps> = ({ onBack }) => {
           </table>
         </div>
 
-        <div className="margin-top-3 margin-bottom-3 border-bottom-1px border-base-lighter padding-y-2">
+        <div className="margin-top-0 margin-bottom-3 border-bottom-1px border-base-lighter padding-y-2">
           <h3 className="margin-top-0 margin-bottom-2 font-weight-700 font-sans-2xs text-base-dark">Fire spread</h3>
 
           <div className="display-flex flex-wrap">

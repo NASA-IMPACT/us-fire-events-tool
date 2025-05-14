@@ -2,7 +2,7 @@ import { MVTLayer } from '@deck.gl/geo-layers';
 import { USA_BBOX } from './config/constants';
 
 /**
- * Creates an MVT layer for fire-related visualization (perimeters, firelines, firepix, archives).
+ * Creates an MVT layer for fire-related visualization (perimeters, firelines, firepix).
  *
  * @param {Object} options - Layer configuration options
  * @param {string} options.id - Unique layer ID

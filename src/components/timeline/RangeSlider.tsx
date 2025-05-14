@@ -5,7 +5,7 @@ import Calendar from 'react-calendar';
 import ReactSlider from 'react-slider';
 import { useEvents } from '../../contexts/EventsContext';
 import { useAppState } from '../../contexts/AppStateContext';
-import { BarChart, Bar, ResponsiveContainer, XAxis } from 'recharts';
+import { BarChart, Bar, ResponsiveContainer, XAxis, YAxis } from 'recharts';
 import AdvancedFilters from '../filters/AdvancedFilters';
 import { useFilters } from '../../contexts/FiltersContext';
 
@@ -185,6 +185,15 @@ const TimeRangeSlider = () => {
         />
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={chartData} barGap={2} barCategoryGap={0}>
+            <YAxis
+              width={1}
+              axisLine={false}
+              tickLine={false}
+              style={{ transform: "translate(0px, 0)", fontSize: '10px' }}
+              tick={{
+                className: 'font-body font-weight-regular font-sans-3xs text-base'
+              }}
+            />
             <XAxis
               dataKey="date"
               scale="time"

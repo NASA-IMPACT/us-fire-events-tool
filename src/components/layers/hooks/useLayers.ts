@@ -11,9 +11,7 @@ import { useEnv } from '../../../contexts/EnvContext';
 export type MVTLayerId =
   | 'perimeterNrt'
   | 'fireline'
-  | 'newfirepix'
-  | 'archivePerimeters'
-  | 'archiveFirepix';
+  | 'newfirepix';
 
 type UseLayersProps = {
   collectVisibleFeatures: () => void;
@@ -27,7 +25,7 @@ type UseLayersProps = {
  * It dynamically configures and filters MVT, GeoJSON, Terrain and wind/grid layers based on user-selected options,
  * time range, and filter settings from multiple contexts (AppState, Events, Filters, and Map).
  *
- * Layer visibility is controlled by boolean flags such as `showPerimeterNrt`, `showFireline`, `showArchivePerimeters`, etc.
+ * Layer visibility is controlled by boolean flags such as `showPerimeterNrt`, `showFireline`, etc.
  * Fire features are filtered based on advanced filter options like area, duration, FRP, region, and activity status.
  *
  * Also manages side effects such as selecting events and fitting bounds on map click,
@@ -52,16 +50,14 @@ export const useLayers = ({
   const MVT_URLS: Record<MVTLayerId, string> = {
     perimeterNrt: `${baseUrl}/collections/public.eis_fire_lf_perimeter_nrt/tiles/WebMercatorQuad/{z}/{x}/{y}`,
     fireline: `${baseUrl}/collections/public.eis_fire_lf_fireline_nrt/tiles/WebMercatorQuad/{z}/{x}/{y}`,
-    newfirepix: `${baseUrl}/collections/public.eis_fire_lf_newfirepix_nrt/tiles/WebMercatorQuad/{z}/{x}/{y}`,
-    archivePerimeters: `${baseUrl}/collections/public.eis_fire_lf_perimeter_archive/tiles/WebMercatorQuad/{z}/{x}/{y}`,
-    archiveFirepix: `${baseUrl}/collections/public.eis_fire_lf_newfirepix_archive/tiles/WebMercatorQuad/{z}/{x}/{y}`,
+    newfirepix: `${baseUrl}/collections/public.eis_fire_lf_newfirepix_nrt/tiles/WebMercatorQuad/{z}/{x}/{y}`
   };
 
   const [layers, setLayers] = useState([]);
   const [lastTimeRangeEnd, setLastTimeRangeEnd] = useState(null);
   const debouncedTimeUpdate = useRef(null);
 
-  const { windLayerType, show3DMap, timeRange, showPerimeterNrt, showFireline, showNewFirepix, showArchiveFirepix, showArchivePerimeters  } = useAppState();
+  const { windLayerType, show3DMap, timeRange, showPerimeterNrt, showFireline, showNewFirepix  } = useAppState();
   const { firePerimeters, selectEvent } = useEvents();
   const { layerOpacity } = useMap();
   const {
@@ -213,65 +209,11 @@ export const useLayers = ({
         });
       }
 
-      const archiveMode = showArchivePerimeters || showArchiveFirepix;
-
-      if (!archiveMode) {
-
-        if (showPerimeterNrt) {
-          layerConfigs.push({
-            type: LAYER_TYPES.MVT,
-            id: 'perimeter-nrt',
-            data: MVT_URLS.perimeterNrt,
-            filterFunction: featurePassesFilters,
-            opacity: layerOpacity,
-            onTileLoad: handleTileLoad,
-            onClick: handleClick,
-            updateTriggers: {
-              getFillColor: [timeRange, showAdvancedFilters, fireArea, duration, meanFrp, region, isActive],
-              getLineColor: [timeRange, showAdvancedFilters, fireArea, duration, meanFrp, region, isActive],
-            }
-          });
-        }
-
-        if (showFireline) {
-          layerConfigs.push({
-            type: LAYER_TYPES.MVT,
-            id: 'fireline',
-            data: MVT_URLS.fireline,
-            filterFunction: featurePassesFilters,
-            opacity: layerOpacity,
-            onTileLoad: handleTileLoad,
-            onClick: handleClick,
-            updateTriggers: {
-              getFillColor: [timeRange, showAdvancedFilters, fireArea, duration, meanFrp, region, isActive],
-              getLineColor: [timeRange, showAdvancedFilters, fireArea, duration, meanFrp, region, isActive],
-            }
-          });
-        }
-
-        if (showNewFirepix) {
-          layerConfigs.push({
-            type: LAYER_TYPES.MVT,
-            id: 'newfirepix',
-            data: MVT_URLS.newfirepix,
-            filterFunction: featurePassesFilters,
-            opacity: layerOpacity,
-            lineWidthMinPixels: 2,
-            onTileLoad: handleTileLoad,
-            onClick: handleClick,
-            updateTriggers: {
-              getFillColor: [timeRange, showAdvancedFilters, fireArea, duration, meanFrp, region, isActive],
-              getLineColor: [timeRange, showAdvancedFilters, fireArea, duration, meanFrp, region, isActive],
-            }
-          });
-        }
-      }
-
-      if (showArchivePerimeters) {
+      if (showPerimeterNrt) {
         layerConfigs.push({
           type: LAYER_TYPES.MVT,
-          id: 'archive-perimeters',
-          data: MVT_URLS.archivePerimeters,
+          id: 'perimeter-nrt',
+          data: MVT_URLS.perimeterNrt,
           filterFunction: featurePassesFilters,
           opacity: layerOpacity,
           onTileLoad: handleTileLoad,
@@ -283,13 +225,30 @@ export const useLayers = ({
         });
       }
 
-      if (showArchiveFirepix) {
+      if (showFireline) {
         layerConfigs.push({
           type: LAYER_TYPES.MVT,
-          id: 'archive-firepix',
-          data: MVT_URLS.archiveFirepix,
+          id: 'fireline',
+          data: MVT_URLS.fireline,
           filterFunction: featurePassesFilters,
           opacity: layerOpacity,
+          onTileLoad: handleTileLoad,
+          onClick: handleClick,
+          updateTriggers: {
+            getFillColor: [timeRange, showAdvancedFilters, fireArea, duration, meanFrp, region, isActive],
+            getLineColor: [timeRange, showAdvancedFilters, fireArea, duration, meanFrp, region, isActive],
+          }
+        });
+      }
+
+      if (showNewFirepix) {
+        layerConfigs.push({
+          type: LAYER_TYPES.MVT,
+          id: 'newfirepix',
+          data: MVT_URLS.newfirepix,
+          filterFunction: featurePassesFilters,
+          opacity: layerOpacity,
+          lineWidthMinPixels: 2,
           onTileLoad: handleTileLoad,
           onClick: handleClick,
           updateTriggers: {
@@ -338,7 +297,7 @@ export const useLayers = ({
     };
 
     initializeLayers();
-  }, [windLayerType, firePerimeters, handleTileLoad, featurePassesFilters, handleClick, layerOpacity, show3DMap, lastTimeRangeEnd, collectVisibleFeatures, isInteracting, timeRange, showAdvancedFilters, fireArea, duration, meanFrp, region, isActive, viewState, zoomToFeature, showArchivePerimeters, showArchiveFirepix, showFireline, showNewFirepix, showPerimeterNrt]);
+  }, [windLayerType, firePerimeters, handleTileLoad, featurePassesFilters, handleClick, layerOpacity, show3DMap, lastTimeRangeEnd, collectVisibleFeatures, isInteracting, timeRange, showAdvancedFilters, fireArea, duration, meanFrp, region, isActive, viewState, zoomToFeature, showFireline, showNewFirepix, showPerimeterNrt]);
 
   return layers;
 };
