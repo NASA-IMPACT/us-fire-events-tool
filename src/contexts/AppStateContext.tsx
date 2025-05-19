@@ -64,9 +64,9 @@ const initialState: AppState = {
   playbackSpeed: 1,
   windLayerType: null,
   show3DMap: false,
-  showPerimeterNrt: true,
+  showPerimeterNrt: false,
   showFireline: false,
-  showNewFirepix: false,
+  showNewFirepix: true,
   showSatelliteImagery: false,
   mapBounds: null
 };
