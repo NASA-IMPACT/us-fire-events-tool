@@ -6,6 +6,7 @@ import { useEvents } from '../../contexts/EventsContext';
 import { useAppState } from '../../contexts/AppStateContext';
 import { YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts';
 import WebMWriter from 'webm-writer';
+import { GIFBuilder } from '@loaders.gl/video';
 
 const DetailedTimeChart = () => {
   const { selectedEventId, firePerimeters } = useEvents();
@@ -23,12 +24,14 @@ const DetailedTimeChart = () => {
   const [isRecording, setIsRecording] = useState(false);
   const [isPreparingToRecord, setIsPreparingToRecord] = useState(false);
   const webmWriterRef = useRef(null);
+  const capturedGifFrames = useRef([]);
   const recordingIntervalRef = useRef(null);
   const frameCountRef = useRef(0);
   const totalFramesRef = useRef(0);
   const isRecordingRef = useRef(false);
   const animationCompleteRef = useRef(false);
   const [videoFps, setVideoFps] = useState(1);
+  const [exportFormat, setExportFormat] = useState('webm');
   const recordingEndTimeoutRef = useRef(null);
 
   const yAxisOptions = ['Fire area (km²)', 'Mean FRP', 'Duration (days)'];
@@ -311,52 +314,40 @@ const DetailedTimeChart = () => {
   };
 
   const captureFrame = () => {
-    if (!isRecordingRef.current || !webmWriterRef.current) {
-      return;
-    }
+    if (!isRecordingRef.current || !webmWriterRef.current) return;
 
     try {
       const deckGLCanvas = document.getElementById('deckgl-overlay');
-
-      if (!deckGLCanvas) {
-        console.error("Could not find required canvases");
-        return;
-      }
+      if (!deckGLCanvas) return;
 
       const compositeCanvas = document.createElement('canvas');
       compositeCanvas.width = deckGLCanvas.width;
       compositeCanvas.height = deckGLCanvas.height;
 
       const ctx = compositeCanvas.getContext('2d', { alpha: false });
-
       ctx.fillRect(0, 0, compositeCanvas.width, compositeCanvas.height);
       ctx.drawImage(deckGLCanvas, 0, 0);
 
       if (!currentPerimeter?.time) return;
 
       const timestampText = format(new Date(currentPerimeter.time), 'yyyy-MM-dd HH:mm');
-
       ctx.font = '64px sans-serif';
       ctx.fillStyle = 'white';
       ctx.strokeStyle = 'black';
       ctx.lineWidth = 3;
       ctx.textBaseline = 'top';
       ctx.textAlign = 'right';
-
-      const paddingX = 32;
-      const paddingY = 32;
-      const x = compositeCanvas.width - paddingX;
-      const y = paddingY;
-
+      const x = compositeCanvas.width - 32;
+      const y = 32;
       ctx.strokeText(timestampText, x, y);
       ctx.fillText(timestampText, x, y);
 
-
       webmWriterRef.current.addFrame(compositeCanvas);
+      capturedGifFrames.current.push(compositeCanvas);
 
       frameCountRef.current++;
-    } catch (error) {
-      console.error("Error capturing frame:", error);
+    } catch (err) {
+      console.error('Error capturing frame:', err);
     }
   };
 
@@ -424,30 +415,60 @@ const DetailedTimeChart = () => {
     setIsPlaying(false);
     isRecordingRef.current = false;
 
-    webmWriterRef.current.complete()
-      .then(webMBlob => {
-        const url = URL.createObjectURL(webMBlob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `fire-animation-${format(new Date(), 'yyyy-MM-dd_HH-mm-ss')}-${timePoints.length}frames-${videoFps}fps.webm`;
-        document.body.appendChild(a);
-        a.click();
-
+    webmWriterRef.current.complete().then(async (webMBlob) => {
+      if (exportFormat === 'webm') {
+        const webmUrl = URL.createObjectURL(webMBlob);
+        const aWebm = document.createElement('a');
+        aWebm.href = webmUrl;
+        aWebm.download = `fire-animation-${format(new Date(), 'yyyy-MM-dd_HH-mm-ss')}.webm`;
+        document.body.appendChild(aWebm);
+        aWebm.click();
         setTimeout(() => {
-          document.body.removeChild(a);
-          URL.revokeObjectURL(url);
+          document.body.removeChild(aWebm);
+          URL.revokeObjectURL(webmUrl);
         }, 100);
+      }
 
-        setIsRecording(false);
-        setIsPreparingToRecord(false);
-        setIsPlaying(false);
-      })
-      .catch(error => {
-        console.error("Error completing recording:", error);
-        setIsRecording(false);
-        setIsPreparingToRecord(false);
-        setIsPlaying(false);
-      });
+      if (exportFormat === 'gif') {
+        const firstCanvas = capturedGifFrames.current[0];
+        if (!firstCanvas) return;
+        const safeFps = Number.isFinite(videoFps) && videoFps > 0 ? videoFps : 1;
+        const frameDuration = Math.max(1, Math.round(10 / safeFps));
+
+        const gifBuilder = new GIFBuilder({
+          source: 'images',
+          width: firstCanvas.width,
+          height: firstCanvas.height,
+          frameDuration
+        });
+
+        capturedGifFrames.current.forEach(canvas => gifBuilder.add(canvas));
+        const gifBase64 = await gifBuilder.build();
+        const gifBlob = await (await fetch(gifBase64)).blob();
+        const gifUrl = URL.createObjectURL(gifBlob);
+        const aGif = document.createElement('a');
+        aGif.href = gifUrl;
+        aGif.download = `fire-animation-${format(new Date(), 'yyyy-MM-dd_HH-mm-ss')}.gif`;
+        document.body.appendChild(aGif);
+        aGif.click();
+        setTimeout(() => {
+          document.body.removeChild(aGif);
+          URL.revokeObjectURL(gifUrl);
+        }, 100);
+      }
+
+      setIsRecording(false);
+      setIsPreparingToRecord(false);
+      setIsPlaying(false);
+      capturedGifFrames.current = [];
+    }).catch((error) => {
+      console.error("Error completing recording:", error);
+      setIsRecording(false);
+      setIsPreparingToRecord(false);
+      setIsPlaying(false);
+      capturedGifFrames.current = [];
+    });
+
   };
 
   useEffect(() => {
@@ -516,6 +537,19 @@ const DetailedTimeChart = () => {
             <>Prepare Video <Video size={18} className="margin-left-1" /></>
           )}
         </button>
+
+        <div className="display-flex flex-align-center">
+          <span className="margin-right-1 font-role-body font-weight-regular type-scale-3xs color-base-ink">Format:</span>
+          <select
+            className="usa-select margin-right-2"
+            value={exportFormat}
+            onChange={(e) => setExportFormat(e.target.value)}
+          >
+            <option value="webm">WebM</option>
+            <option value="gif">GIF</option>
+          </select>
+        </div>
+
       </div>
 
       <div className="chart-container" ref={chartRef}>
