@@ -1,38 +1,40 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { format } from 'date-fns';
 import ReactSlider from 'react-slider';
-import { Pause, Play, RotateCw, Video, X } from 'lucide-react';
+import { Loader2, Pause, Play, RotateCw, Video, X } from 'lucide-react';
 import { useEvents } from '../../contexts/EventsContext';
 import { useAppState } from '../../contexts/AppStateContext';
-import { YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts';
-import WebMWriter from 'webm-writer';
-import { GIFBuilder } from '@loaders.gl/video';
+import {
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  BarChart,
+  Bar
+} from 'recharts';
+import useRecordVideo from './useVideoRecording';
+
 
 const DetailedTimeChart = () => {
   const { selectedEventId, firePerimeters } = useEvents();
-  const { windLayerType, setWindLayerType, setTimeRange, show3DMap, toggle3DMap } = useAppState();
+  const {
+    windLayerType,
+    setWindLayerType,
+    setTimeRange,
+    show3DMap,
+    toggle3DMap
+  } = useAppState();
 
   const [sliderValue, setSliderValue] = useState(0);
   const [currentPerimeter, setCurrentPerimeter] = useState(null);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [animationSpeed, setAnimationSpeed] = useState(2000);
+  const [timePointIndexes, setTimePointIndexes] = useState([]);
+  const [baseFrameDelay, setBaseFrameDelay] = useState(500);
+
   const chartRef = useRef(null);
   const sliderContainerRef = useRef(null);
   const animationRef = useRef(null);
-  const [timePointIndexes, setTimePointIndexes] = useState([]);
-
-  const [isRecording, setIsRecording] = useState(false);
-  const [isPreparingToRecord, setIsPreparingToRecord] = useState(false);
-  const webmWriterRef = useRef(null);
-  const capturedGifFrames = useRef([]);
-  const recordingIntervalRef = useRef(null);
-  const frameCountRef = useRef(0);
-  const totalFramesRef = useRef(0);
-  const isRecordingRef = useRef(false);
   const animationCompleteRef = useRef(false);
-  const [videoFps, setVideoFps] = useState(1);
-  const [exportFormat, setExportFormat] = useState('webm');
-  const recordingEndTimeoutRef = useRef(null);
 
   const yAxisOptions = ['Fire area (km²)', 'Mean FRP', 'Duration (days)'];
   const [selectedYAxis, setSelectedYAxis] = useState(yAxisOptions[0]);
@@ -51,138 +53,153 @@ const DetailedTimeChart = () => {
         maxDate: new Date(),
         totalRange: 0,
         perimeterData: [],
-        maxArea: 0,
         timePoints: [],
         chartData: []
       };
     }
 
-    const sortedFeatures = [...firePerimeters.features].sort((a, b) => {
-      const timeA = new Date(a.properties.primarykey.split('|')[2]).getTime();
-      const timeB = new Date(b.properties.primarykey.split('|')[2]).getTime();
-      return timeA - timeB;
+    const sorted = [...firePerimeters.features].sort((a, b) => {
+      const ta = new Date(a.properties.primarykey.split('|')[2]).getTime();
+      const tb = new Date(b.properties.primarykey.split('|')[2]).getTime();
+      return ta - tb;
     });
 
-    const data = sortedFeatures.map(feature => {
-      const time = new Date(feature.properties.primarykey.split('|')[2]);
-      const areaKm2 = (feature.properties.farea || 0);
-      const meanFrp = feature.properties.meanfrp || 0;
-      const duration = feature.properties.duration || 0;
-
+    const data = sorted.map((f) => {
+      const t = new Date(f.properties.primarykey.split('|')[2]);
       return {
-        time,
-        timestamp: time.getTime(),
-        area: areaKm2,
-        meanFrp,
-        duration,
-        properties: feature.properties
+        time: t,
+        timestamp: t.getTime(),
+        area: f.properties.farea || 0,
+        meanFrp: f.properties.meanfrp || 0,
+        duration: f.properties.duration || 0,
+        properties: f.properties
       };
     });
 
-    const minTime = data[0].timestamp;
-    const maxTime = data[data.length - 1].timestamp;
-
-    const startDate = new Date(minTime);
-    const endDate = new Date(maxTime);
-
-    const timePoints = data.map(d => ({
+    const timePoints = data.map((d) => ({
       time: d.time,
       timestamp: d.timestamp
     }));
 
-    const chartData = data.map(d => ({
-      time: d.time,
-      timestamp: d.timestamp,
+    const chartData = data.map((d) => ({
+      ...d,
       date: format(d.time, 'MMM d, HH:mm'),
-      area: d.area,
-      meanFrp: d.meanFrp,
-      duration: d.duration,
       name: format(d.time, 'MMM d, yyyy HH:mm')
     }));
 
     return {
-      minDate: startDate,
-      maxDate: endDate,
-      totalRange: endDate.getTime() - startDate.getTime(),
+      minDate: data[0].time,
+      maxDate: data[data.length - 1].time,
+      totalRange: data[data.length - 1].timestamp - data[0].timestamp,
       perimeterData: data,
-      maxArea: Math.max(...data.map(d => d.area)) * 1.2,
       timePoints,
       chartData
     };
   }, [firePerimeters]);
 
+  function resetAnimation() {
+    animationCompleteRef.current = false;
+    setIsPlaying(false);
+    setSliderValue(timePointIndexes[0] || 0);
+  }
+
+  const getCurrentPerimeter = () => currentPerimeter;
+
+  const {
+    isRecording,
+    isPreparingToRecord,
+    isExporting,
+    exportFormat,
+    setExportFormat,
+    speedMultiplier,
+    setSpeedMultiplier,
+    captureFrame,
+    handleExportVideo,
+    stopRecording,
+    isRecordingRef
+  } = useRecordVideo({
+    show3DMap,
+    toggle3DMap,
+    windLayerType,
+    setWindLayerType,
+    resetAnimation,
+    setIsPlaying,
+    getCurrentPerimeter,
+    animationCompleteRef,
+    baseFrameDelay
+  });
+
   useEffect(() => {
-    if (timePoints.length > 0) {
-      const indexes = timePoints.map((_, index) => (index / (timePoints.length - 1)) * 100);
-      setTimePointIndexes(indexes);
+    if (timePoints.length) {
+      setTimePointIndexes(
+        timePoints.map((_, idx) => (idx / (timePoints.length - 1)) * 100)
+      );
     }
   }, [timePoints]);
 
   useEffect(() => {
-    if (perimeterData.length > 0) {
-      setSliderValue(0);
-      setCurrentPerimeter(perimeterData[perimeterData.length - 1]);
-
-      setTimeRange({
-        start: minDate,
-        end: perimeterData[perimeterData.length - 1].time
-      });
-    }
+    if (!perimeterData.length) return;
+    setSliderValue(0);
+    setCurrentPerimeter(perimeterData[perimeterData.length - 1]);
+    setTimeRange({
+      start: minDate,
+      end: perimeterData[perimeterData.length - 1].time
+    });
   }, [minDate, perimeterData, setTimeRange]);
 
   useEffect(() => {
-    if (totalRange === 0 || perimeterData.length === 0 || timePoints.length === 0 || timePointIndexes.length === 0) return;
+    if (
+      totalRange === 0 ||
+      !perimeterData.length ||
+      !timePoints.length ||
+      !timePointIndexes.length
+    )
+      return;
 
-    let closestPointIndex = 0;
-    let closestDistance = Infinity;
-
-    timePointIndexes.forEach((position, index) => {
-      const distance = Math.abs(position - sliderValue);
-      if (distance < closestDistance) {
-        closestDistance = distance;
-        closestPointIndex = index;
+    let closestIdx = 0;
+    let closestDist = Infinity;
+    timePointIndexes.forEach((pos, idx) => {
+      const d = Math.abs(pos - sliderValue);
+      if (d < closestDist) {
+        closestDist = d;
+        closestIdx = idx;
       }
     });
 
-    const nextPerimeter = perimeterData[closestPointIndex];
-
+    const nextPerimeter = perimeterData[closestIdx];
     if (!currentPerimeter || nextPerimeter.timestamp !== currentPerimeter.timestamp) {
       setCurrentPerimeter(nextPerimeter);
     }
 
     if (!currentPerimeter || nextPerimeter.time !== currentPerimeter.time) {
-      setTimeRange({
-        start: minDate,
-        end: nextPerimeter.time
-      });
+      setTimeRange({ start: minDate, end: nextPerimeter.time });
     }
 
-    if (Math.abs(sliderValue - timePointIndexes[closestPointIndex]) > 0.1) {
-      setSliderValue(timePointIndexes[closestPointIndex]);
+    if (Math.abs(sliderValue - timePointIndexes[closestIdx]) > 0.1) {
+      setSliderValue(timePointIndexes[closestIdx]);
     }
-  }, [sliderValue, minDate, perimeterData, setTimeRange, timePoints, timePointIndexes, totalRange]);
+  }, [
+    sliderValue,
+    minDate,
+    perimeterData,
+    setTimeRange,
+    timePoints,
+    timePointIndexes,
+    totalRange,
+    currentPerimeter
+  ]);
 
   useEffect(() => {
     if (isPlaying) {
       if (sliderValue >= 100) {
         setIsPlaying(false);
         animationCompleteRef.current = true;
-
-        if (isRecordingRef.current) {
-          if (recordingEndTimeoutRef.current) {
-            clearTimeout(recordingEndTimeoutRef.current);
-          }
-
-          recordingEndTimeoutRef.current = setTimeout(() => {
-            stopRecording();
-          }, 2000);
-        }
+        if (isRecordingRef.current) stopRecording();
         return;
       }
 
       let currentIndex = 0;
       let minDiff = Infinity;
-
       timePointIndexes.forEach((pos, idx) => {
         const diff = Math.abs(sliderValue - pos);
         if (diff < minDiff) {
@@ -191,30 +208,32 @@ const DetailedTimeChart = () => {
         }
       });
 
-      const nextIndex = Math.min(currentIndex + 1, timePointIndexes.length - 1);
-      const nextPosition = timePointIndexes[nextIndex];
+      const nextIdx = Math.min(currentIndex + 1, timePointIndexes.length - 1);
+      const nextPos = timePointIndexes[nextIdx];
+
+      const frameDelay = baseFrameDelay / speedMultiplier;
 
       animationRef.current = setTimeout(() => {
-        setSliderValue(nextPosition);
+        setSliderValue(nextPos);
+        if (isRecordingRef.current) captureFrame();
+      }, frameDelay);
 
-        if (isRecordingRef.current) {
-          captureFrame();
-        }
-      }, animationSpeed);
-
-      if (nextIndex === timePointIndexes.length - 1) {
+      if (nextIdx === timePointIndexes.length - 1) {
         animationCompleteRef.current = true;
         setIsPlaying(false);
         if (isRecordingRef.current) stopRecording();
       }
     }
 
-    return () => {
-      if (animationRef.current) {
-        clearTimeout(animationRef.current);
-      }
-    };
-  }, [isPlaying, sliderValue, animationSpeed, timePointIndexes]);
+    return () => clearTimeout(animationRef.current);
+  }, [
+    isPlaying,
+    sliderValue,
+    timePointIndexes,
+    captureFrame,
+    stopRecording,
+    isRecordingRef
+  ]);
 
   const togglePlayback = () => {
     if (sliderValue >= 100) {
@@ -226,276 +245,64 @@ const DetailedTimeChart = () => {
     }
   };
 
-  const resetAnimation = () => {
-    animationCompleteRef.current = false;
-    setIsPlaying(false);
-    setSliderValue(timePointIndexes[0] || 0);
-  };
+  const getYAxisKey = () =>
+    selectedYAxis === 'Fire area (km²)'
+      ? 'area'
+      : selectedYAxis === 'Mean FRP'
+      ? 'meanFrp'
+      : 'duration';
 
-  const getYAxisKey = () => {
-    if (selectedYAxis === 'Fire area (km²)') {
-      return 'area';
-    } else if (selectedYAxis === 'Mean FRP') {
-      return 'meanFrp';
-    } else {
-      return 'duration';
-    }
-  };
-
-  const formatYAxisTick = (value) => {
-    if (selectedYAxis === 'Fire area (km²)') {
-      return value.toFixed(1);
-    } else if (selectedYAxis === 'Mean FRP') {
-      return value.toFixed(1);
-    } else {
-      return value.toFixed(1);
-    }
-  };
+  const formatYAxisTick = (v) => v.toFixed(1);
 
   const customTooltip = ({ active, payload }) => {
-    if (active && payload && payload.length) {
-      const data = payload[0].payload;
-      let displayValue;
-      let unit = '';
+    if (!active || !payload?.length) return null;
+    const d = payload[0].payload;
+    const value =
+      selectedYAxis === 'Fire area (km²)'
+        ? `${d.area.toFixed(2)} km²`
+        : selectedYAxis === 'Mean FRP'
+        ? d.meanFrp.toFixed(2)
+        : `${d.duration.toFixed(2)} days`;
 
-      if (selectedYAxis === 'Fire area (km²)') {
-        displayValue = data.area.toFixed(2);
-        unit = ' km²';
-      } else if (selectedYAxis === 'Mean FRP') {
-        displayValue = data.meanFrp.toFixed(2);
-      } else {
-        displayValue = data.duration.toFixed(2);
-        unit = ' days';
-      }
-
-      return (
-        <div className="bg-white padding-2 radius-md border-1px border-base-lighter shadow-1 z-top">
-          <p className="text-bold">{format(data.time, 'HH:mm MMM d, yyyy')}</p>
-          <p>
-            {selectedYAxis}: {displayValue}{unit}
-          </p>
-        </div>
-      );
-    }
-    return null;
+    return (
+      <div className="bg-white padding-2 radius-md border-1px border-base-lighter shadow-1 z-top">
+        <p className="text-bold">{format(d.time, 'HH:mm MMM d, yyyy')}</p>
+        <p>
+          {selectedYAxis}: {value}
+        </p>
+      </div>
+    );
   };
 
   const enhancedChartData = useMemo(() => {
     if (!chartData.length || !currentPerimeter) return chartData;
-
-    return chartData.map(dataPoint => ({
-      ...dataPoint,
-      isHighlighted: dataPoint.timestamp <= currentPerimeter.timestamp
+    return chartData.map((d) => ({
+      ...d,
+      isHighlighted: d.timestamp <= currentPerimeter.timestamp
     }));
   }, [chartData, currentPerimeter]);
-
-  const handleExportVideo = () => {
-    if (isRecordingRef.current) {
-      stopRecording();
-    } else if (isPreparingToRecord) {
-      startRecording();
-    } else {
-      prepareToRecord();
-    }
-  };
-
-  const prepareToRecord = () => {
-    if (!show3DMap) {
-      toggle3DMap();
-    }
-
-    if (windLayerType === 'wind') {
-      setWindLayerType('grid');
-    }
-
-    animationCompleteRef.current = false;
-    setIsPreparingToRecord(true);
-    resetAnimation();
-  };
-
-  const captureFrame = () => {
-    if (!isRecordingRef.current || !webmWriterRef.current) return;
-
-    try {
-      const deckGLCanvas = document.getElementById('deckgl-overlay');
-      if (!deckGLCanvas) return;
-
-      const compositeCanvas = document.createElement('canvas');
-      compositeCanvas.width = deckGLCanvas.width;
-      compositeCanvas.height = deckGLCanvas.height;
-
-      const ctx = compositeCanvas.getContext('2d', { alpha: false });
-      ctx.fillRect(0, 0, compositeCanvas.width, compositeCanvas.height);
-      ctx.drawImage(deckGLCanvas, 0, 0);
-
-      if (!currentPerimeter?.time) return;
-
-      const timestampText = format(new Date(currentPerimeter.time), 'yyyy-MM-dd HH:mm');
-      ctx.font = '64px sans-serif';
-      ctx.fillStyle = 'white';
-      ctx.strokeStyle = 'black';
-      ctx.lineWidth = 3;
-      ctx.textBaseline = 'top';
-      ctx.textAlign = 'right';
-      const x = compositeCanvas.width - 32;
-      const y = 32;
-      ctx.strokeText(timestampText, x, y);
-      ctx.fillText(timestampText, x, y);
-
-      webmWriterRef.current.addFrame(compositeCanvas);
-      capturedGifFrames.current.push(compositeCanvas);
-
-      frameCountRef.current++;
-    } catch (err) {
-      console.error('Error capturing frame:', err);
-    }
-  };
-
-  const startRecording = () => {
-    try {
-      if (recordingEndTimeoutRef.current) {
-        clearTimeout(recordingEndTimeoutRef.current);
-        recordingEndTimeoutRef.current = null;
-      }
-
-      setIsPreparingToRecord(false);
-
-      isRecordingRef.current = true;
-      setIsRecording(true);
-
-      animationCompleteRef.current = false;
-
-      webmWriterRef.current = new WebMWriter({
-        quality: 0.95,
-        frameRate: videoFps,
-        transparent: false,
-        debug: true
-      });
-
-      resetAnimation();
-
-      frameCountRef.current = 0;
-
-      setTimeout(() => {
-        setIsPlaying(true);
-      }, 500);
-
-      const animationDuration = timePoints.length * animationSpeed;
-      totalFramesRef.current = Math.ceil(videoFps * (animationDuration / 1000));
-      totalFramesRef.current = Math.ceil(totalFramesRef.current * 1.2);
-
-      setIsPlaying(true);
-
-    } catch (error) {
-      console.error("Error starting recording:", error);
-      isRecordingRef.current = false;
-      setIsRecording(false);
-      setIsPreparingToRecord(false);
-    }
-  };
-
-  const stopRecording = () => {
-    if (!isRecordingRef.current || !webmWriterRef.current) {
-      setIsRecording(false);
-      isRecordingRef.current = false;
-      setIsPreparingToRecord(false);
-      return;
-    }
-
-    if (recordingIntervalRef.current) {
-      clearInterval(recordingIntervalRef.current);
-      recordingIntervalRef.current = null;
-    }
-
-    if (recordingEndTimeoutRef.current) {
-      clearTimeout(recordingEndTimeoutRef.current);
-      recordingEndTimeoutRef.current = null;
-    }
-
-    setIsPlaying(false);
-    isRecordingRef.current = false;
-
-    webmWriterRef.current.complete().then(async (webMBlob) => {
-      if (exportFormat === 'webm') {
-        const webmUrl = URL.createObjectURL(webMBlob);
-        const aWebm = document.createElement('a');
-        aWebm.href = webmUrl;
-        aWebm.download = `fire-animation-${format(new Date(), 'yyyy-MM-dd_HH-mm-ss')}.webm`;
-        document.body.appendChild(aWebm);
-        aWebm.click();
-        setTimeout(() => {
-          document.body.removeChild(aWebm);
-          URL.revokeObjectURL(webmUrl);
-        }, 100);
-      }
-
-      if (exportFormat === 'gif') {
-        const firstCanvas = capturedGifFrames.current[0];
-        if (!firstCanvas) return;
-        const safeFps = Number.isFinite(videoFps) && videoFps > 0 ? videoFps : 1;
-        const frameDuration = Math.max(1, Math.round(10 / safeFps));
-
-        const gifBuilder = new GIFBuilder({
-          source: 'images',
-          width: firstCanvas.width,
-          height: firstCanvas.height,
-          frameDuration
-        });
-
-        capturedGifFrames.current.forEach(canvas => gifBuilder.add(canvas));
-        const gifBase64 = await gifBuilder.build();
-        const gifBlob = await (await fetch(gifBase64)).blob();
-        const gifUrl = URL.createObjectURL(gifBlob);
-        const aGif = document.createElement('a');
-        aGif.href = gifUrl;
-        aGif.download = `fire-animation-${format(new Date(), 'yyyy-MM-dd_HH-mm-ss')}.gif`;
-        document.body.appendChild(aGif);
-        aGif.click();
-        setTimeout(() => {
-          document.body.removeChild(aGif);
-          URL.revokeObjectURL(gifUrl);
-        }, 100);
-      }
-
-      setIsRecording(false);
-      setIsPreparingToRecord(false);
-      setIsPlaying(false);
-      capturedGifFrames.current = [];
-    }).catch((error) => {
-      console.error("Error completing recording:", error);
-      setIsRecording(false);
-      setIsPreparingToRecord(false);
-      setIsPlaying(false);
-      capturedGifFrames.current = [];
-    });
-
-  };
-
-  useEffect(() => {
-    return () => {
-      if (recordingIntervalRef.current) {
-        clearInterval(recordingIntervalRef.current);
-      }
-      if (recordingEndTimeoutRef.current) {
-        clearTimeout(recordingEndTimeoutRef.current);
-      }
-    };
-  }, []);
 
   if (!selectedEventId) return null;
 
   return (
-    <div className="detailed-time-chart bg-base-lightest radius-md padding-3 shadow-2 z-top" style={{ width: "800px", height: '215px' }}>
+    <div
+      className="detailed-time-chart bg-base-lightest radius-md padding-3 shadow-2 z-top"
+      style={{ width: '800px', height: '215px' }}
+    >
       <div className="display-flex flex-align-center flex-justify margin-bottom-2">
         <div className="display-flex flex-align-center">
-          <span className="margin-right-1 font-role-body font-weight-regular type-scale-3xs color-base-ink">y-axis:</span>
+          <span className="margin-right-1 font-body-3xs font-weight-regular color-base-ink">
+            y-axis:
+          </span>
           <select
-            className="y-axis-select"
+            className="usa-select margin-top-0"
             value={selectedYAxis}
             onChange={(e) => setSelectedYAxis(e.target.value)}
           >
-            {yAxisOptions.map(option => (
-              <option key={option} value={option}>{option}</option>
+            {yAxisOptions.map((o) => (
+              <option key={o} value={o}>
+                {o}
+              </option>
             ))}
           </select>
         </div>
@@ -504,44 +311,60 @@ const DetailedTimeChart = () => {
           <button
             className="control-button"
             onClick={togglePlayback}
-            aria-label={isPlaying ? "Pause" : "Play"}
+            aria-label={isPlaying ? 'Pause' : 'Play'}
             disabled={isRecording || isPreparingToRecord}
           >
-            {isPlaying ? (
-              <Pause size={24} />
-            ) : (
-              <Play size={24} />
-            )}
+            {isPlaying ? <Pause size={12} /> : <Play size={16} />}
           </button>
-
           <button
-            className="control-button"
+            className="control-button margin-left-0"
             onClick={resetAnimation}
             aria-label="Reset"
             disabled={isRecording || isPreparingToRecord}
           >
-            <RotateCw size={24} />
+            <RotateCw size={16} />
           </button>
-
         </div>
 
         <button
-          className={`export-button border-radius-md padding-1 padding-x-105 ${isPreparingToRecord ? 'preparing' : isRecording ? 'recording' : ''}`}
+          style={{ height: '40px'}}
+          className={`usa-button export-button font-body-3xs padding-1 ${
+            isExporting
+              ? 'bg-base-lighter color-base font-italic'
+              : isPreparingToRecord
+              ? 'preparing'
+              : isRecording
+              ? 'recording'
+              : ''
+          }`}
           onClick={handleExportVideo}
+          disabled={isExporting}
         >
-          {isRecording ? (
-            <>Stop Recording <X size={18} className="margin-left-1" /></>
+          {isExporting ? (
+            <>
+              Processing... <Loader2 size={16} className="spin margin-left-1" />
+            </>
+          ) : isRecording ? (
+            <>
+              Stop Recording <X size={16} className="margin-left-1" />
+            </>
           ) : isPreparingToRecord ? (
-            <>Start Recording <Video size={18} className="margin-left-1" /></>
+            <>
+              Start Recording <Video size={16} className="margin-left-1" />
+            </>
           ) : (
-            <>Prepare Video <Video size={18} className="margin-left-1" /></>
+            <>
+              Prepare Video <Video size={16} className="margin-left-1" />
+            </>
           )}
         </button>
 
-        <div className="display-flex flex-align-center">
-          <span className="margin-right-1 font-role-body font-weight-regular type-scale-3xs color-base-ink">Format:</span>
+        <div className="display-flex flex-align-center flex-col margin-right-2">
+          <span className="font-role-body font-weight-regular font-body-3xs color-base-ink margin-right-1">
+            Format
+          </span>
           <select
-            className="usa-select margin-right-2"
+            className="usa-select margin-top-0"
             value={exportFormat}
             onChange={(e) => setExportFormat(e.target.value)}
           >
@@ -550,40 +373,57 @@ const DetailedTimeChart = () => {
           </select>
         </div>
 
+        <div className="display-flex flex-align-center flex-col">
+          <span className="font-role-body font-weight-regular font-body-3xs color-base-ink margin-right-1">
+            Speed
+          </span>
+          <select
+            className="usa-select margin-top-0"
+            value={baseFrameDelay}
+            onChange={(e) => setBaseFrameDelay(Number(e.target.value))}
+          >
+            <option value={500}>1x</option>
+            <option value={250}>2x</option>
+            <option value={50}>3x</option>
+          </select>
+        </div>
+
       </div>
 
       <div className="chart-container" ref={chartRef}>
         <ResponsiveContainer width="100%" height="100%">
           <BarChart
-              data={enhancedChartData}
-              margin={{ top: 10, bottom: 0 }}
-              barSize={100}
-              barGap={0}
-              barCategoryGap={0}
+            data={enhancedChartData}
+            margin={{ top: 10, bottom: 0 }}
+            barSize={100}
+            barGap={0}
+            barCategoryGap={0}
           >
             <CartesianGrid strokeDasharray="3 3" />
             <YAxis
               dataKey={getYAxisKey()}
               tickFormatter={formatYAxisTick}
-              tick={{ fontSize: 12, fontFamily: "Source Sans Pro Web, Helvetica Neue, Helvetica, Roboto, Arial, sans-serif", fill: "#71767a" }}
+              tick={{
+                fontSize: 12,
+                fontFamily:
+                  'Source Sans Pro Web, Helvetica Neue, Helvetica, Roboto, Arial, sans-serif',
+                fill: '#71767a'
+              }}
               className="font-role-body font-weight-regular type-scale-3xs color-base"
             />
-            <Tooltip content={customTooltip} cursor={{fill: 'transparent'}} />
+            <Tooltip content={customTooltip} cursor={{ fill: 'transparent' }} />
             <Bar
               dataKey={getYAxisKey()}
-              shape={(props) => {
-                const isHighlighted = props.payload.isHighlighted;
-                return (
-                  <rect
-                    x={props.x}
-                    y={props.y}
-                    width={props.width}
-                    height={props.height}
-                    fill={isHighlighted ? '#1a6baa' : '#DFE1E2'}
-                    opacity={isHighlighted ? 1 : 0.5}
-                  />
-                );
-              }}
+              shape={(p) => (
+                <rect
+                  x={p.x}
+                  y={p.y}
+                  width={p.width}
+                  height={p.height}
+                  fill={p.payload.isHighlighted ? '#1a6baa' : '#DFE1E2'}
+                  opacity={p.payload.isHighlighted ? 1 : 0.5}
+                />
+              )}
             />
           </BarChart>
         </ResponsiveContainer>
@@ -595,9 +435,9 @@ const DetailedTimeChart = () => {
           thumbClassName="thumb"
           trackClassName="track"
           value={sliderValue}
-          onChange={(value) => {
+          onChange={(v) => {
             setIsPlaying(false);
-            setSliderValue(value);
+            setSliderValue(v);
           }}
           min={0}
           max={100}
@@ -609,8 +449,12 @@ const DetailedTimeChart = () => {
       </div>
 
       <div className="time-labels display-flex flex-justify">
-        <div className="theme-font-role-body theme-font-weight-regular theme-type-scale-3xs theme-color-base">{format(minDate, 'HH:mm MMM d, yyyy')}</div>
-        <div className="theme-font-role-body theme-font-weight-regular theme-type-scale-3xs theme-color-base">{format(maxDate, 'HH:mm MMM d, yyyy')}</div>
+        <div className="theme-font-role-body theme-font-weight-regular theme-type-scale-3xs theme-color-base">
+          {format(minDate, 'HH:mm MMM d, yyyy')}
+        </div>
+        <div className="theme-font-role-body theme-font-weight-regular theme-type-scale-3xs theme-color-base">
+          {format(maxDate, 'HH:mm MMM d, yyyy')}
+        </div>
       </div>
     </div>
   );

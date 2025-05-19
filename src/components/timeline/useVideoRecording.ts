@@ -1,152 +1,215 @@
-import { useRef, useState } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import { format } from 'date-fns';
 import WebMWriter from 'webm-writer';
 import { GIFBuilder } from '@loaders.gl/video';
 
-export const useRecordVideo = ({
-  currentPerimeter,
+interface Perimeter {
+  time?: Date;
+}
+
+interface UseRecordVideoProps {
+  show3DMap: boolean;
+  toggle3DMap: () => void;
+  windLayerType: string;
+  setWindLayerType: (type: string) => void;
+  resetAnimation: () => void;
+  setIsPlaying: (value: boolean) => void;
+  getCurrentPerimeter: () => Perimeter | null;
+  animationCompleteRef: React.MutableRefObject<boolean>;
+  baseFrameDelay: number;
+}
+
+/**
+ * A custom hook for recording the Deck.gl canvas as either a WebM or GIF animation.
+ * Assumes a canvas with id="deckgl-overlay" is present in the DOM.
+ *
+ * - Records frames from Deck.gl using a canvas snapshot approach
+ * - Overlays a timestamp (from a perimeter object) onto each frame
+ * - Supports two export formats: WebM (via webm-writer) and GIF (via @loaders.gl)
+ *
+ **/
+
+export default function useRecordVideo({
   show3DMap,
   toggle3DMap,
   windLayerType,
   setWindLayerType,
-  animationSpeed,
-  videoFps,
-  exportFormat,
-  timePoints,
   resetAnimation,
-  setIsPlaying
-}) => {
+  setIsPlaying,
+  getCurrentPerimeter,
+  animationCompleteRef,
+  baseFrameDelay
+}: UseRecordVideoProps) {
   const [isRecording, setIsRecording] = useState(false);
   const [isPreparingToRecord, setIsPreparingToRecord] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
+  const [videoFps, setVideoFps] = useState(1);
+  const [speedMultiplier, setSpeedMultiplier] = useState(1);
+  const [exportFormat, setExportFormat] = useState<'webm' | 'gif'>('webm');
 
-  const webmWriterRef = useRef(null);
-  const capturedGifFrames = useRef([]);
-  const recordingEndTimeoutRef = useRef(null);
-  const frameCountRef = useRef(0);
-  const totalFramesRef = useRef(0);
+  const webmWriterRef = useRef<WebMWriter | null>(null);
+  const capturedGifFrames = useRef<HTMLCanvasElement[]>([]);
+  const recordingEndTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isRecordingRef = useRef(false);
 
-  const prepareToRecord = () => {
+  const interval =
+    baseFrameDelay >= 500 ? 0.5 :
+    baseFrameDelay >= 250 ? 0.25 : 0.1;
+
+  const captureFrame = useCallback(() => {
+    if (!isRecordingRef.current) return;
+
+    const deckCanvas = document.getElementById('deckgl-overlay') as HTMLCanvasElement | null;
+    if (!deckCanvas) return;
+
+    const c = document.createElement('canvas');
+    c.width = deckCanvas.width;
+    c.height = deckCanvas.height;
+
+    const ctx = c.getContext('2d', { alpha: false });
+    if (!ctx) return;
+
+    ctx.fillRect(0, 0, c.width, c.height);
+    ctx.drawImage(deckCanvas, 0, 0);
+
+    const perimeter = getCurrentPerimeter();
+    if (!perimeter?.time) return;
+
+    const ts = format(perimeter.time, 'yyyy-MM-dd HH:mm');
+    ctx.font = '64px sans-serif';
+    ctx.fillStyle = 'white';
+    ctx.strokeStyle = 'black';
+    ctx.lineWidth = 3;
+    ctx.textAlign = 'right';
+    ctx.textBaseline = 'top';
+    ctx.strokeText(ts, c.width - 32, 32);
+    ctx.fillText(ts, c.width - 32, 32);
+
+    if (webmWriterRef.current) webmWriterRef.current.addFrame(c);
+    capturedGifFrames.current.push(c);
+  }, [getCurrentPerimeter]);
+
+  const prepareToRecord = useCallback(() => {
     if (!show3DMap) toggle3DMap();
     if (windLayerType === 'wind') setWindLayerType('grid');
+
+    animationCompleteRef.current = false;
     setIsPreparingToRecord(true);
     resetAnimation();
-  };
+  }, [show3DMap, toggle3DMap, windLayerType, setWindLayerType, animationCompleteRef, resetAnimation]);
 
-  const startRecording = () => {
-    try {
-      clearTimeout(recordingEndTimeoutRef.current);
-      setIsPreparingToRecord(false);
-      isRecordingRef.current = true;
-      setIsRecording(true);
-      webmWriterRef.current = new WebMWriter({
-        quality: 0.95,
-        frameRate: videoFps,
-        transparent: false,
-        debug: true
-      });
-      resetAnimation();
-      frameCountRef.current = 0;
-      setTimeout(() => setIsPlaying(true), 500);
-      const duration = timePoints.length * animationSpeed;
-      totalFramesRef.current = Math.ceil(videoFps * (duration / 1000) * 1.2);
-    } catch (error) {
-      console.error('Error starting recording:', error);
-      isRecordingRef.current = false;
+  const startRecording = useCallback(() => {
+    if (recordingEndTimeoutRef.current) clearTimeout(recordingEndTimeoutRef.current);
+
+    setIsPreparingToRecord(false);
+    isRecordingRef.current = true;
+    setIsRecording(true);
+    animationCompleteRef.current = false;
+
+    webmWriterRef.current = exportFormat === 'webm'
+      ? new WebMWriter({
+          quality: 0.95,
+          frameRate: 1000 / baseFrameDelay,
+          transparent: false,
+          debug: true
+        })
+      : null;
+
+    capturedGifFrames.current = [];
+    resetAnimation();
+    setTimeout(() => setIsPlaying(true), 500);
+  }, [exportFormat, baseFrameDelay, resetAnimation, setIsPlaying, animationCompleteRef]);
+
+  const stopRecording = useCallback(() => {
+    if (!isRecordingRef.current) {
       setIsRecording(false);
       setIsPreparingToRecord(false);
+      setIsExporting(false);
+      return;
     }
-  };
 
-  const captureFrame = () => {
-    if (!isRecordingRef.current || !webmWriterRef.current) return;
-    try {
-      const canvas = document.getElementById('deckgl-overlay');
-      if (!canvas || !currentPerimeter?.time) return;
-      const composite = document.createElement('canvas');
-      composite.width = canvas.width;
-      composite.height = canvas.height;
-      const ctx = composite.getContext('2d', { alpha: false });
-      ctx.fillRect(0, 0, composite.width, composite.height);
-      ctx.drawImage(canvas, 0, 0);
+    if (recordingEndTimeoutRef.current) clearTimeout(recordingEndTimeoutRef.current);
 
-      const timestamp = format(new Date(currentPerimeter.time), 'yyyy-MM-dd HH:mm');
-      ctx.font = '64px sans-serif';
-      ctx.fillStyle = 'white';
-      ctx.strokeStyle = 'black';
-      ctx.lineWidth = 3;
-      ctx.textAlign = 'right';
-      ctx.strokeText(timestamp, composite.width - 32, 32);
-      ctx.fillText(timestamp, composite.width - 32, 32);
-
-      webmWriterRef.current.addFrame(composite);
-      capturedGifFrames.current.push(composite);
-      frameCountRef.current++;
-    } catch (err) {
-      console.error('Error capturing frame:', err);
-    }
-  };
-
-  const stopRecording = async () => {
-    clearTimeout(recordingEndTimeoutRef.current);
-    setIsPlaying(false);
     isRecordingRef.current = false;
-    try {
-      const webMBlob = await webmWriterRef.current.complete();
-      if (exportFormat === 'webm') {
-        const url = URL.createObjectURL(webMBlob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `fire-animation-${format(new Date(), 'yyyy-MM-dd_HH-mm-ss')}.webm`;
-        document.body.appendChild(a);
-        a.click();
-        setTimeout(() => {
-          document.body.removeChild(a);
-          URL.revokeObjectURL(url);
-        }, 100);
+    setIsPlaying(false);
+    setIsExporting(true);
+
+    const finalize = async () => {
+      try {
+        if (exportFormat === 'webm' && webmWriterRef.current) {
+          const blob = await webmWriterRef.current.complete();
+          const url = URL.createObjectURL(blob);
+          triggerDownload(url, 'webm');
+        }
+
+        if (exportFormat === 'gif' && capturedGifFrames.current.length > 0) {
+          const [first] = capturedGifFrames.current;
+          const gifBuilder = new GIFBuilder({
+            source: 'images',
+            width: first.width,
+            height: first.height,
+            numFrames: capturedGifFrames.current.length,
+            interval
+          });
+
+          capturedGifFrames.current.forEach(c => gifBuilder.add(c));
+          const base64 = await gifBuilder.build();
+          const blob = await (await fetch(base64)).blob();
+          const url = URL.createObjectURL(blob);
+          triggerDownload(url, 'gif');
+        }
+      } catch (err) {
+        console.error('Error exporting video:', err);
       }
 
-      if (exportFormat === 'gif') {
-        const first = capturedGifFrames.current[0];
-        if (!first) return;
-        const duration = Math.max(1, Math.round(10 / videoFps));
-        const builder = new GIFBuilder({
-          source: 'images',
-          width: first.width,
-          height: first.height,
-          frameDuration: duration
-        });
-        capturedGifFrames.current.forEach(c => builder.add(c));
-        const base64 = await builder.build();
-        const blob = await (await fetch(base64)).blob();
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `fire-animation-${format(new Date(), 'yyyy-MM-dd_HH-mm-ss')}.gif`;
-        document.body.appendChild(a);
-        a.click();
-        setTimeout(() => {
-          document.body.removeChild(a);
-          URL.revokeObjectURL(url);
-        }, 100);
-      }
-    } catch (err) {
-      console.error('Error completing recording:', err);
-    } finally {
       setIsRecording(false);
       setIsPreparingToRecord(false);
+      setIsExporting(false);
       capturedGifFrames.current = [];
-    }
-  };
+      webmWriterRef.current = null;
+    };
+
+    finalize();
+  }, [exportFormat, setIsPlaying, interval]);
+
+  const handleExportVideo = useCallback(() => {
+    if (isRecordingRef.current) stopRecording();
+    else if (isPreparingToRecord) startRecording();
+    else prepareToRecord();
+  }, [isPreparingToRecord, startRecording, stopRecording, prepareToRecord]);
+
+  useEffect(() => {
+    return () => {
+      if (recordingEndTimeoutRef.current) clearTimeout(recordingEndTimeoutRef.current);
+    };
+  }, []);
 
   return {
     isRecording,
     isPreparingToRecord,
-    prepareToRecord,
-    startRecording,
-    stopRecording,
-    captureFrame,
+    isExporting,
+    videoFps,
+    setVideoFps,
+    speedMultiplier,
+    setSpeedMultiplier,
+    exportFormat,
+    setExportFormat,
     isRecordingRef,
-    recordingEndTimeoutRef
+    captureFrame,
+    handleExportVideo,
+    stopRecording
   };
-};
+}
+
+function triggerDownload(url: string, ext: 'webm' | 'gif') {
+  const a = Object.assign(document.createElement('a'), {
+    href: url,
+    download: `fire-animation-${format(new Date(), 'yyyy-MM-dd_HH-mm-ss')}.${ext}`
+  });
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(() => {
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }, 100);
+}
