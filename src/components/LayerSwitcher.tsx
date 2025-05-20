@@ -64,8 +64,8 @@ const LayerSwitcher: React.FC<LayerSwitcherProps> = ({ onClose }) => {
       </div>
 
       {layerItem('All perimeters (NRT)', showPerimeterNrt, () => setShowPerimeterNrt(!showPerimeterNrt))}
-      {layerItem('Fireline (spread)', showFireline, () => setShowFireline(!showFireline))}
-      {layerItem('New fire pixels (uncertainty)', showNewFirepix, () => setShowNewFirepix(!showNewFirepix))}
+      {layerItem('Firelines (NRT)', showFireline, () => setShowFireline(!showFireline))}
+      {layerItem('New fire pixels (NRT)', showNewFirepix, () => setShowNewFirepix(!showNewFirepix))}
     </div>
   );
 };
