@@ -6,6 +6,8 @@ import ReactSlider from 'react-slider';
 import { useMap } from '../../contexts/MapContext';
 import { ToggleSlider } from "react-toggle-slider";
 
+import './event-detail-view.scss';
+
 interface EventDetailsProps {
   onBack: () => void;
 }
@@ -60,46 +62,6 @@ const EventDetails: React.FC<EventDetailsProps> = ({ onBack }) => {
 
   return (
     <div className="height-full display-flex flex-column bg-white">
-      <style>
-        {`
-          .opacity-slider {
-            width: 100%;
-            height: 6px;
-            position: relative;
-          }
-
-          .opacity-slider .track {
-            top: 2px;
-            height: 4px;
-            background: #d9d9d9;
-            border-radius: 2px;
-          }
-
-          .opacity-slider .track-0 {
-            background: #1a6baa;
-          }
-
-          .opacity-slider .thumb {
-            width: 14px;
-            height: 14px;
-            cursor: pointer;
-            background: #fff;
-            border-radius: 50%;
-            border: 2px solid #1a6baa;
-            top: -5px;
-            outline: none;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.2);
-          }
-
-          .opacity-slider .thumb:hover {
-            box-shadow: 0 0 0 2px rgba(26, 107, 170, 0.3);
-          }
-
-          .slider-value {
-            font-size: 12px;
-          }
-        `}
-      </style>
       <div className="padding-y-2 padding-x-3 border-bottom border-base-lighter display-flex flex-row flex-align-center">
         <button
           className="usa-button usa-button--unstyled text-base-dark display-flex flex-align-center"
@@ -184,8 +146,8 @@ const EventDetails: React.FC<EventDetailsProps> = ({ onBack }) => {
           </table>
         </div>
 
-        <div className="margin-top-0 margin-bottom-2 border-bottom-1px border-base-lighter padding-y-2">
-          <h3 className="margin-top-0 margin-bottom-2 font-weight-700 font-sans-2xs text-base-dark">Fire spread</h3>
+        <div className="margin-top-0 margin-bottom-1 border-bottom-1px border-base-lighter padding-y-2">
+          <h3 className="margin-top-0 margin-bottom-1 font-weight-700 font-sans-2xs text-base-dark">Fire spread</h3>
 
           <div className="display-flex flex-wrap">
             <div className="display-flex flex-align-center margin-right-4 margin-bottom-0">
@@ -204,8 +166,8 @@ const EventDetails: React.FC<EventDetailsProps> = ({ onBack }) => {
             </div>
           </div>
 
-          <div className="margin-top-3">
-            <div className="display-flex flex-align-center margin-bottom-1">
+          <div className="margin-top-2">
+            <div className="display-flex flex-align-center">
               <label className="font-body font-weight-bold font-sans-3xs text-base-ink margin-right-2">Opacity</label>
               <div className="display-flex flex-align-center flex-fill">
                 <ReactSlider
