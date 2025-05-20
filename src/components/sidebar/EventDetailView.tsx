@@ -119,7 +119,7 @@ const EventDetails: React.FC<EventDetailsProps> = ({ onBack }) => {
           </h1>
         </div>
 
-        <div className="margin-bottom-3">
+        <div className="margin-bottom-2">
           <span className="font-body font-weight-regular font-sans-3xs text-base-dark">
             {formatDate(startDate)} → {formatDate(endDate)}
           </span>
@@ -184,21 +184,21 @@ const EventDetails: React.FC<EventDetailsProps> = ({ onBack }) => {
           </table>
         </div>
 
-        <div className="margin-top-0 margin-bottom-3 border-bottom-1px border-base-lighter padding-y-2">
+        <div className="margin-top-0 margin-bottom-2 border-bottom-1px border-base-lighter padding-y-2">
           <h3 className="margin-top-0 margin-bottom-2 font-weight-700 font-sans-2xs text-base-dark">Fire spread</h3>
 
           <div className="display-flex flex-wrap">
-            <div className="display-flex flex-align-center margin-right-4 margin-bottom-1">
+            <div className="display-flex flex-align-center margin-right-4 margin-bottom-0">
               <div className="width-3 height-3 bg-base-dark margin-right-1"></div>
               <span className="font-body font-weight-regular font-sans-3xs text-base-dark">Previous</span>
             </div>
 
-            <div className="display-flex flex-align-center margin-right-4 margin-bottom-1">
+            <div className="display-flex flex-align-center margin-right-4 margin-bottom-0">
               <div className="width-3 height-3 bg-error margin-right-1"></div>
               <span className="font-body font-weight-regular font-sans-3xs text-base-dark">Current</span>
             </div>
 
-            <div className="display-flex flex-align-center margin-bottom-1">
+            <div className="display-flex flex-align-center margin-bottom-0">
               <div className="width-3 height-3 bg-warning margin-right-1"></div>
               <span className="font-body font-weight-regular font-sans-3xs text-base-dark">Perimeter</span>
             </div>

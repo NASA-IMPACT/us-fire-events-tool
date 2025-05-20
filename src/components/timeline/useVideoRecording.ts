@@ -45,7 +45,7 @@ export default function useRecordVideo({
   const [isExporting, setIsExporting] = useState(false);
   const [videoFps, setVideoFps] = useState(1);
   const [speedMultiplier, setSpeedMultiplier] = useState(1);
-  const [exportFormat, setExportFormat] = useState<'webm' | 'gif'>('webm');
+  const [exportFormat, setExportFormat] = useState<'webm' | 'gif'>('gif');
 
   const webmWriterRef = useRef<WebMWriter | null>(null);
   const capturedGifFrames = useRef<HTMLCanvasElement[]>([]);

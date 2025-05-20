@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useRef } from 'react';
+import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { format } from 'date-fns';
 import ReactSlider from 'react-slider';
 import { Loader2, Pause, Play, RotateCw, Video, X } from 'lucide-react';
@@ -10,10 +10,13 @@ import {
   Tooltip,
   ResponsiveContainer,
   BarChart,
-  Bar
+  Bar,
+  XAxis
 } from 'recharts';
 import useRecordVideo from './useVideoRecording';
+import { Props as BarProps } from 'recharts/types/cartesian/Bar';
 
+const yAxisOptions = ['Fire area (km²)', 'Mean FRP', 'Duration (days)'];
 
 const DetailedTimeChart = () => {
   const { selectedEventId, firePerimeters } = useEvents();
@@ -30,14 +33,43 @@ const DetailedTimeChart = () => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [timePointIndexes, setTimePointIndexes] = useState([]);
   const [baseFrameDelay, setBaseFrameDelay] = useState(500);
+  const [selectedYAxis, setSelectedYAxis] = useState(yAxisOptions[0]);
 
   const chartRef = useRef(null);
   const sliderContainerRef = useRef(null);
   const animationRef = useRef(null);
   const animationCompleteRef = useRef(false);
 
-  const yAxisOptions = ['Fire area (km²)', 'Mean FRP', 'Duration (days)'];
-  const [selectedYAxis, setSelectedYAxis] = useState(yAxisOptions[0]);
+  const getCurrentPerimeter = () => currentPerimeter;
+
+  const resetAnimation = useCallback(() => {
+    animationCompleteRef.current = false;
+    setIsPlaying(false);
+    setSliderValue(timePointIndexes[0] || 0);
+  }, [timePointIndexes]);
+
+  const {
+    isRecording,
+    isPreparingToRecord,
+    isExporting,
+    exportFormat,
+    setExportFormat,
+    speedMultiplier,
+    captureFrame,
+    handleExportVideo,
+    stopRecording,
+    isRecordingRef
+  } = useRecordVideo({
+    show3DMap,
+    toggle3DMap,
+    windLayerType,
+    setWindLayerType,
+    resetAnimation,
+    setIsPlaying,
+    getCurrentPerimeter,
+    animationCompleteRef,
+    baseFrameDelay
+  });
 
   const {
     minDate,
@@ -96,38 +128,6 @@ const DetailedTimeChart = () => {
       chartData
     };
   }, [firePerimeters]);
-
-  function resetAnimation() {
-    animationCompleteRef.current = false;
-    setIsPlaying(false);
-    setSliderValue(timePointIndexes[0] || 0);
-  }
-
-  const getCurrentPerimeter = () => currentPerimeter;
-
-  const {
-    isRecording,
-    isPreparingToRecord,
-    isExporting,
-    exportFormat,
-    setExportFormat,
-    speedMultiplier,
-    setSpeedMultiplier,
-    captureFrame,
-    handleExportVideo,
-    stopRecording,
-    isRecordingRef
-  } = useRecordVideo({
-    show3DMap,
-    toggle3DMap,
-    windLayerType,
-    setWindLayerType,
-    resetAnimation,
-    setIsPlaying,
-    getCurrentPerimeter,
-    animationCompleteRef,
-    baseFrameDelay
-  });
 
   useEffect(() => {
     if (timePoints.length) {
@@ -210,19 +210,18 @@ const DetailedTimeChart = () => {
 
       const nextIdx = Math.min(currentIndex + 1, timePointIndexes.length - 1);
       const nextPos = timePointIndexes[nextIdx];
-
       const frameDelay = baseFrameDelay / speedMultiplier;
 
       animationRef.current = setTimeout(() => {
         setSliderValue(nextPos);
         if (isRecordingRef.current) captureFrame();
-      }, frameDelay);
 
-      if (nextIdx === timePointIndexes.length - 1) {
-        animationCompleteRef.current = true;
-        setIsPlaying(false);
-        if (isRecordingRef.current) stopRecording();
-      }
+        if (nextIdx === timePointIndexes.length - 1) {
+          animationCompleteRef.current = true;
+          setIsPlaying(false);
+          if (isRecordingRef.current) stopRecording();
+        }
+      }, frameDelay);
     }
 
     return () => clearTimeout(animationRef.current);
@@ -232,29 +231,35 @@ const DetailedTimeChart = () => {
     timePointIndexes,
     captureFrame,
     stopRecording,
-    isRecordingRef
+    isRecordingRef,
+    baseFrameDelay,
+    speedMultiplier
   ]);
 
-  const togglePlayback = () => {
+  const togglePlayback = useCallback(() => {
     if (sliderValue >= 100) {
       animationCompleteRef.current = false;
       setSliderValue(timePointIndexes[0] || 0);
       setIsPlaying(true);
     } else {
-      setIsPlaying(!isPlaying);
+      setIsPlaying((prev) => !prev);
     }
-  };
+  }, [sliderValue, timePointIndexes]);
 
-  const getYAxisKey = () =>
-    selectedYAxis === 'Fire area (km²)'
-      ? 'area'
-      : selectedYAxis === 'Mean FRP'
-      ? 'meanFrp'
-      : 'duration';
+  const getYAxisKey = useCallback(() => {
+    switch (selectedYAxis) {
+      case 'Fire area (km²)':
+        return 'area';
+      case 'Mean FRP':
+        return 'meanFrp';
+      default:
+        return 'duration';
+    }
+  }, [selectedYAxis]);
 
   const formatYAxisTick = (v) => v.toFixed(1);
 
-  const customTooltip = ({ active, payload }) => {
+  const customTooltip = useCallback(({ active, payload }) => {
     if (!active || !payload?.length) return null;
     const d = payload[0].payload;
     const value =
@@ -272,7 +277,7 @@ const DetailedTimeChart = () => {
         </p>
       </div>
     );
-  };
+  }, [selectedYAxis]);
 
   const enhancedChartData = useMemo(() => {
     if (!chartData.length || !currentPerimeter) return chartData;
@@ -282,6 +287,14 @@ const DetailedTimeChart = () => {
     }));
   }, [chartData, currentPerimeter]);
 
+  const xAxisTicks = useMemo(() => {
+    if (!enhancedChartData.length) return [];
+    const step = Math.ceil(enhancedChartData.length / 8);
+    return enhancedChartData
+      .filter((_, idx) => idx % step === 0)
+      .map((d) => d.timestamp);
+  }, [enhancedChartData]);
+
   if (!selectedEventId) return null;
 
   return (
@@ -290,140 +303,93 @@ const DetailedTimeChart = () => {
       style={{ width: '800px', height: '215px' }}
     >
       <div className="display-flex flex-align-center flex-justify margin-bottom-2">
-        <div className="display-flex flex-align-center">
-          <span className="margin-right-1 font-body-3xs font-weight-regular color-base-ink">
-            y-axis:
-          </span>
-          <select
-            className="usa-select margin-top-0"
-            value={selectedYAxis}
-            onChange={(e) => setSelectedYAxis(e.target.value)}
-          >
-            {yAxisOptions.map((o) => (
-              <option key={o} value={o}>
-                {o}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        <div className="display-flex flex-align-center">
-          <button
-            className="control-button"
-            onClick={togglePlayback}
-            aria-label={isPlaying ? 'Pause' : 'Play'}
-            disabled={isRecording || isPreparingToRecord}
-          >
-            {isPlaying ? <Pause size={12} /> : <Play size={16} />}
-          </button>
-          <button
-            className="control-button margin-left-0"
-            onClick={resetAnimation}
-            aria-label="Reset"
-            disabled={isRecording || isPreparingToRecord}
-          >
-            <RotateCw size={16} />
-          </button>
-        </div>
-
-        <button
-          style={{ height: '40px'}}
-          className={`usa-button export-button font-body-3xs padding-1 ${
-            isExporting
-              ? 'bg-base-lighter color-base font-italic'
-              : isPreparingToRecord
-              ? 'preparing'
-              : isRecording
-              ? 'recording'
-              : ''
-          }`}
-          onClick={handleExportVideo}
-          disabled={isExporting}
-        >
-          {isExporting ? (
-            <>
-              Processing... <Loader2 size={16} className="spin margin-left-1" />
-            </>
-          ) : isRecording ? (
-            <>
-              Stop Recording <X size={16} className="margin-left-1" />
-            </>
-          ) : isPreparingToRecord ? (
-            <>
-              Start Recording <Video size={16} className="margin-left-1" />
-            </>
-          ) : (
-            <>
-              Prepare Video <Video size={16} className="margin-left-1" />
-            </>
-          )}
-        </button>
-
-        <div className="display-flex flex-align-center flex-col margin-right-2">
-          <span className="font-role-body font-weight-regular font-body-3xs color-base-ink margin-right-1">
-            Format
-          </span>
-          <select
-            className="usa-select margin-top-0"
-            value={exportFormat}
-            onChange={(e) => setExportFormat(e.target.value)}
-          >
-            <option value="webm">WebM</option>
-            <option value="gif">GIF</option>
-          </select>
-        </div>
-
-        <div className="display-flex flex-align-center flex-col">
-          <span className="font-role-body font-weight-regular font-body-3xs color-base-ink margin-right-1">
-            Speed
-          </span>
-          <select
-            className="usa-select margin-top-0"
-            value={baseFrameDelay}
-            onChange={(e) => setBaseFrameDelay(Number(e.target.value))}
-          >
-            <option value={500}>1x</option>
-            <option value={250}>2x</option>
-            <option value={50}>3x</option>
-          </select>
-        </div>
-
+        <YAxisSelector selectedYAxis={selectedYAxis} onChange={setSelectedYAxis} />
+        <PlaybackControls
+          isPlaying={isPlaying}
+          togglePlayback={togglePlayback}
+          resetAnimation={resetAnimation}
+          isRecording={isRecording}
+          isPreparingToRecord={isPreparingToRecord}
+        />
+        <ExportButton
+          isExporting={isExporting}
+          isRecording={isRecording}
+          isPreparingToRecord={isPreparingToRecord}
+          handleExportVideo={handleExportVideo}
+        />
+        <ExportSettings
+          exportFormat={exportFormat}
+          setExportFormat={setExportFormat}
+          baseFrameDelay={baseFrameDelay}
+          setBaseFrameDelay={setBaseFrameDelay}
+        />
       </div>
 
       <div className="chart-container" ref={chartRef}>
-        <ResponsiveContainer width="100%" height="100%">
+        <ResponsiveContainer width="100%" height={113}>
           <BarChart
             data={enhancedChartData}
-            margin={{ top: 10, bottom: 0 }}
-            barSize={100}
+            margin={{ top: 10, bottom: 0, left: 30 }}
             barGap={0}
-            barCategoryGap={0}
+            barCategoryGap="0"
+            barSize={20}
           >
             <CartesianGrid strokeDasharray="3 3" />
+            <XAxis
+              dataKey="timestamp"
+              type="number"
+              scale="time"
+              domain={['auto', 'auto']}
+              ticks={xAxisTicks}
+              tickFormatter={(tick) => {
+                const date = new Date(tick);
+                const hour = date.getHours();
+                return hour === 0 || hour === 12 ? format(date, 'HH:mm MMM d') : '';
+              }}
+              tick={{
+                fontSize: 10,
+                fill: '#71767a',
+                transform: 'translate(0, 30px)'
+              }}
+              tickLine={false}
+              axisLine={false}
+              padding={{ left: 10, right: 10 }}
+            />
             <YAxis
               dataKey={getYAxisKey()}
               tickFormatter={formatYAxisTick}
+              width={1}
+              axisLine={false}
+              tickLine={false}
               tick={{
                 fontSize: 12,
                 fontFamily:
                   'Source Sans Pro Web, Helvetica Neue, Helvetica, Roboto, Arial, sans-serif',
                 fill: '#71767a'
               }}
-              className="font-role-body font-weight-regular type-scale-3xs color-base"
+              className="font-body-3xs color-base"
             />
-            <Tooltip content={customTooltip} cursor={{ fill: 'transparent' }} />
+            <Tooltip content={customTooltip} cursor={false} />
             <Bar
               dataKey={getYAxisKey()}
-              shape={(p) => (
-                <rect
-                  x={p.x}
-                  y={p.y}
-                  width={p.width}
-                  height={p.height}
-                  fill={p.payload.isHighlighted ? '#1a6baa' : '#DFE1E2'}
-                  opacity={p.payload.isHighlighted ? 1 : 0.5}
-                />
-              )}
+              isAnimationActive={false}
+              shape={(props: BarProps) => {
+                const { x, y, width, height, payload } = props;
+                if (x == null || y == null || width == null || height == null) return null;
+                return (
+                  <rect
+                    x={x}
+                    y={y}
+                    width={width}
+                    height={height}
+                    fill={payload.isHighlighted ? '#1a6baa' : '#DFE1E2'}
+                    opacity={payload.isHighlighted ? 1 : 0.5}
+                    rx={2}
+                    ry={2}
+                    style={{ outline: 'none', stroke: 'none' }}
+                  />
+                );
+              }}
             />
           </BarChart>
         </ResponsiveContainer>
@@ -447,17 +413,128 @@ const DetailedTimeChart = () => {
           disabled={isRecording || isPreparingToRecord}
         />
       </div>
-
-      <div className="time-labels display-flex flex-justify">
-        <div className="theme-font-role-body theme-font-weight-regular theme-type-scale-3xs theme-color-base">
-          {format(minDate, 'HH:mm MMM d, yyyy')}
-        </div>
-        <div className="theme-font-role-body theme-font-weight-regular theme-type-scale-3xs theme-color-base">
-          {format(maxDate, 'HH:mm MMM d, yyyy')}
-        </div>
-      </div>
     </div>
   );
 };
 
 export default DetailedTimeChart;
+
+
+const YAxisSelector = ({ selectedYAxis, onChange }) => (
+  <div className="display-flex flex-align-center">
+    <span className="margin-right-1 font-body-3xs font-weight-regular color-base-ink">
+      y-axis:
+    </span>
+    <select
+      className="usa-select margin-top-0"
+      value={selectedYAxis}
+      onChange={(e) => onChange(e.target.value)}
+    >
+      {yAxisOptions.map((o) => (
+        <option key={o} value={o}>
+          {o}
+        </option>
+      ))}
+    </select>
+  </div>
+);
+
+const PlaybackControls = ({
+  isPlaying,
+  togglePlayback,
+  resetAnimation,
+  isRecording,
+  isPreparingToRecord
+}) => (
+  <div className="display-flex flex-align-center">
+    <button
+      className="control-button padding-1"
+      onClick={togglePlayback}
+      aria-label={isPlaying ? 'Pause' : 'Play'}
+      disabled={isRecording || isPreparingToRecord}
+    >
+      {isPlaying ? <Pause size={12} /> : <Play size={16} />}
+    </button>
+    <button
+      className="control-button padding-1 margin-left-1"
+      onClick={resetAnimation}
+      aria-label="Reset"
+      disabled={isRecording || isPreparingToRecord}
+    >
+      <RotateCw size={16} />
+    </button>
+  </div>
+);
+
+const ExportButton = ({
+  isExporting,
+  isRecording,
+  isPreparingToRecord,
+  handleExportVideo
+}) => (
+  <button
+    style={{ height: '40px' }}
+    className={`usa-button export-button font-body-3xs padding-1 ${
+      isExporting
+        ? 'bg-base-lighter color-base font-italic'
+        : isPreparingToRecord
+        ? 'preparing'
+        : isRecording
+        ? 'recording'
+        : ''
+    }`}
+    onClick={handleExportVideo}
+    disabled={isExporting}
+  >
+    {isExporting ? (
+      <>
+        Processing... <Loader2 size={16} className="spin margin-left-1" />
+      </>
+    ) : isRecording ? (
+      <>
+        Stop Recording <X size={16} className="margin-left-1" />
+      </>
+    ) : isPreparingToRecord ? (
+      <>
+        Start Recording <Video size={16} className="margin-left-1" />
+      </>
+    ) : (
+      <>
+        Prepare Video <Video size={16} className="margin-left-1" />
+      </>
+    )}
+  </button>
+);
+
+const ExportSettings = ({ exportFormat, setExportFormat, baseFrameDelay, setBaseFrameDelay }) => (
+  <>
+    <div className="display-flex flex-align-center flex-col margin-right-2">
+      <span className="font-role-body font-weight-regular font-body-3xs color-base-ink margin-right-1">
+        Format
+      </span>
+      <select
+        className="usa-select margin-top-0"
+        value={exportFormat}
+        onChange={(e) => setExportFormat(e.target.value)}
+      >
+        <option value="webm">WebM</option>
+        <option value="gif">GIF</option>
+      </select>
+    </div>
+
+    <div className="display-flex flex-align-center flex-col">
+      <span className="font-role-body font-weight-regular font-body-3xs color-base-ink margin-right-1">
+        Speed
+      </span>
+      <select
+        className="usa-select margin-top-0"
+        value={baseFrameDelay}
+        onChange={(e) => setBaseFrameDelay(Number(e.target.value))}
+      >
+        <option value={500}>1x</option>
+        <option value={250}>2x</option>
+        <option value={50}>3x</option>
+      </select>
+    </div>
+  </>
+);
