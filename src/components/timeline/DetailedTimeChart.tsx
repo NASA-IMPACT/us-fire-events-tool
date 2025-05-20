@@ -214,12 +214,22 @@ const DetailedTimeChart = () => {
 
       animationRef.current = setTimeout(() => {
         setSliderValue(nextPos);
-        if (isRecordingRef.current) captureFrame();
+        if (isRecordingRef.current) {
+          requestAnimationFrame(() => {
+            captureFrame();
+          });
+        }
 
         if (nextIdx === timePointIndexes.length - 1) {
           animationCompleteRef.current = true;
           setIsPlaying(false);
-          if (isRecordingRef.current) stopRecording();
+
+          if (isRecordingRef.current) {
+            requestAnimationFrame(() => {
+              captureFrame();
+              setTimeout(() => stopRecording(), 0);
+            });
+          }
         }
       }, frameDelay);
     }
