@@ -123,6 +123,25 @@ const TimeRangeSlider = () => {
     }));
   }, [eventsByTime, timeRange]);
 
+  const xAxisTicks = useMemo(() => {
+    if (!chartData.length) return [];
+
+    const step = Math.ceil(chartData.length / 8);
+    const ticks = chartData
+      .filter((_, idx) => idx % step === 0)
+      .map((d) => d.date.getTime());
+
+    const today = new Date();
+    today.setHours(23, 59, 59, 999);
+    const todayTs = today.getTime();
+
+    if (!ticks.includes(todayTs)) {
+      ticks.push(todayTs);
+    }
+
+    return ticks;
+  }, [chartData]);
+
   return (
     <div className="bg-base-lightest radius-md padding-3 shadow-2 z-top" style={{ width: "800px", height: 'auto' }}>
       <div className="display-flex flex-align-center margin-bottom-1">
@@ -184,12 +203,12 @@ const TimeRangeSlider = () => {
           }}
         />
         <ResponsiveContainer width="100%" height="100%">
-          <BarChart data={chartData} barGap={2} barCategoryGap={0}>
+          <BarChart data={chartData} barGap={2} barCategoryGap={0} style={{ marginLeft: '10px' }}>
             <YAxis
               width={1}
               axisLine={false}
               tickLine={false}
-              style={{ transform: "translate(0px, 0)", fontSize: '10px' }}
+              style={{ transform: "translate(-10px, 0)", fontSize: '10px' }}
               tick={{
                 className: 'font-body font-weight-regular font-sans-3xs text-base'
               }}
@@ -197,7 +216,10 @@ const TimeRangeSlider = () => {
             <XAxis
               dataKey="date"
               scale="time"
-              tickFormatter={(date) => format(date, 'MMM d')}
+              type="number"
+              domain={['auto', new Date().setHours(23, 59, 59, 999)]}
+              ticks={xAxisTicks}
+              tickFormatter={(date) => format(new Date(date), 'MMM d')}
               tickLine={false}
               axisLine={false}
               height={30}

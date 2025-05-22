@@ -151,6 +151,7 @@ export default function useRecordVideo({
             source: 'images',
             width: first.width,
             height: first.height,
+            sampleInterval: 10,
             numFrames: capturedGifFrames.current.length,
             interval
           });

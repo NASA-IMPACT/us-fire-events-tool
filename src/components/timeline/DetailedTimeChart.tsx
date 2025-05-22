@@ -300,9 +300,16 @@ const DetailedTimeChart = () => {
   const xAxisTicks = useMemo(() => {
     if (!enhancedChartData.length) return [];
     const step = Math.ceil(enhancedChartData.length / 8);
-    return enhancedChartData
+    const ticks = enhancedChartData
       .filter((_, idx) => idx % step === 0)
       .map((d) => d.timestamp);
+
+    const lastTimestamp = enhancedChartData[enhancedChartData.length - 1].timestamp;
+    if (ticks[ticks.length - 1] !== lastTimestamp) {
+      ticks.push(lastTimestamp);
+    }
+
+    return ticks;
   }, [enhancedChartData]);
 
   if (!selectedEventId) return null;
