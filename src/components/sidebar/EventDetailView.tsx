@@ -7,13 +7,14 @@ import { useMap } from '../../contexts/MapContext';
 import { ToggleSlider } from "react-toggle-slider";
 
 import './event-detail-view.scss';
+import { Loader2 } from 'lucide-react';
 
 interface EventDetailsProps {
   onBack: () => void;
 }
 
 const EventDetails: React.FC<EventDetailsProps> = ({ onBack }) => {
-  const { selectedEventId, firePerimeters } = useEvents();
+  const { selectedEventId, firePerimeters, firePerimetersLoading } = useEvents();
   const { windLayerType, setWindLayerType, show3DMap, toggle3DMap } = useAppState();
   const { layerOpacity, setLayerOpacity } = useMap();
 
@@ -26,6 +27,15 @@ const EventDetails: React.FC<EventDetailsProps> = ({ onBack }) => {
     if (!selectedEvent) return null;
     return getFeatureProperties(selectedEvent);
   }, [selectedEvent]);
+
+  if (firePerimetersLoading) {
+    return (
+      <div className="padding-4 display-flex flex-column flex-align-center flex-justify-center">
+        <Loader2 size={16} className="spin margin-bottom-1" />
+        <p className="font-sans-3xs text-base-dark">Loading event details, please wait…</p>
+      </div>
+    );
+  }
 
   if (!selectedEvent || !eventProperties) {
     return (

@@ -76,11 +76,12 @@ const Explorer: React.FC = () => {
       <div className="display-flex height-viewport">
         <div className="position-relative flex-fill">
           <div
-            className="display-flex position-absolute z-top bg-white border-0 shadow-2 radius-md padding-05 cursor-pointer"
+            className="display-flex position-absolute z-top bg-white border-0 shadow-2 radius-md cursor-pointer"
             style={{
               top: '50px',
               right: viewMode === 'detail' && selectedEventId ? '380px' : '10px',
               transition: 'right 0.2s ease',
+              padding: '5px 5px 2px 5px'
             }}
             onClick={() => setShowLayerPanel(!showLayerPanel)}
             aria-label="Toggle layer switcher"

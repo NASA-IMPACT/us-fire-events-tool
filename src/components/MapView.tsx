@@ -78,7 +78,7 @@ const MapView: React.FC<MapViewProps> = ({ onLoadingStatesChange }) => {
     return (
         <DeckGL
             ref={deckRef}
-            viewState={viewState}
+            initialViewState={viewState}
             onViewStateChange={handleViewStateChange}
             onInteractionStateChange={handleInteractionStateChange}
             layers={layers}

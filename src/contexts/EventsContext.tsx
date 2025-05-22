@@ -60,13 +60,15 @@ interface EventsState {
   filters: EventFilterParams;
   selectedEventId: string | null;
   firePerimeters: GeoJSON.FeatureCollection | null;
+  firePerimetersLoading: boolean;
 }
 
 type EventsAction =
   | { type: 'SET_EVENTS'; payload: MVTFeature[] }
   | { type: 'APPLY_FILTERS'; payload: EventFilterParams }
   | { type: 'SELECT_EVENT'; payload: string | null }
-  | { type: 'SET_FIRE_PERIMETERS'; payload: GeoJSON.FeatureCollection | null };
+  | { type: 'SET_FIRE_PERIMETERS'; payload: GeoJSON.FeatureCollection | null }
+  | { type: 'SET_FIRE_PERIMETERS_LOADING'; payload: boolean };
 
 interface EventsContextValue extends Omit<EventsState, 'filters'> {
   updateEvents: (mvtFeatures: MVTFeature[]) => void;
@@ -167,6 +169,11 @@ const eventsReducer = (state: EventsState, action: EventsAction): EventsState =>
         ...state,
         firePerimeters: action.payload
       };
+    case 'SET_FIRE_PERIMETERS_LOADING':
+      return {
+        ...state,
+        firePerimetersLoading: action.payload
+      };
     default:
       return state;
   }
@@ -240,6 +247,8 @@ export const EventsProvider = ({ children }: { children: ReactNode }) => {
     dispatch({ type: 'SELECT_EVENT', payload: eventId });
 
     if (eventId) {
+      dispatch({ type: 'SET_FIRE_PERIMETERS_LOADING', payload: true });
+
       let perimeters = await fetchFirePerimeters(eventId, featuresApiEndpoint);
 
       if (!perimeters || !perimeters.features || perimeters.features.length === 0) {
@@ -247,6 +256,7 @@ export const EventsProvider = ({ children }: { children: ReactNode }) => {
       }
 
       dispatch({ type: 'SET_FIRE_PERIMETERS', payload: perimeters });
+      dispatch({ type: 'SET_FIRE_PERIMETERS_LOADING', payload: false });
     } else {
       dispatch({ type: 'SET_FIRE_PERIMETERS', payload: null });
     }
@@ -307,7 +317,8 @@ export const EventsProvider = ({ children }: { children: ReactNode }) => {
     selectedEventId: state.selectedEventId,
     selectEvent,
     getFilteredEvents,
-    firePerimeters: state.firePerimeters
+    firePerimeters: state.firePerimeters,
+    firePerimetersLoading: state.firePerimetersLoading
   };
 
   return (
