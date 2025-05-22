@@ -73,7 +73,6 @@ const DetailedTimeChart = () => {
 
   const {
     minDate,
-    maxDate,
     totalRange,
     perimeterData,
     timePoints,
@@ -131,9 +130,8 @@ const DetailedTimeChart = () => {
 
   useEffect(() => {
     if (timePoints.length) {
-      setTimePointIndexes(
-        timePoints.map((_, idx) => (idx / (timePoints.length - 1)) * 100)
-      );
+      const indexes = timePoints.map((_, idx) => (idx / (timePoints.length - 1)) * 100);
+      setTimePointIndexes(indexes);
     }
   }, [timePoints]);
 
@@ -190,55 +188,50 @@ const DetailedTimeChart = () => {
   ]);
 
   useEffect(() => {
-    if (isPlaying) {
-      if (sliderValue >= 100) {
-        setIsPlaying(false);
-        animationCompleteRef.current = true;
-        if (isRecordingRef.current) stopRecording();
-        return;
+    if (!isPlaying || !timePointIndexes.length) return;
+
+    let currentIndex = 0;
+    let minDiff = Infinity;
+    timePointIndexes.forEach((pos, idx) => {
+      const diff = Math.abs(sliderValue - pos);
+      if (diff < minDiff) {
+        minDiff = diff;
+        currentIndex = idx;
       }
+    });
 
-      let currentIndex = 0;
-      let minDiff = Infinity;
-      timePointIndexes.forEach((pos, idx) => {
-        const diff = Math.abs(sliderValue - pos);
-        if (diff < minDiff) {
-          minDiff = diff;
-          currentIndex = idx;
-        }
-      });
+    const nextIdx = Math.min(currentIndex + 1, timePointIndexes.length - 1);
+    const isLastFrame = currentIndex === timePointIndexes.length - 1;
+    const frameDelay = baseFrameDelay / speedMultiplier;
 
-      const nextIdx = Math.min(currentIndex + 1, timePointIndexes.length - 1);
-      const nextPos = timePointIndexes[nextIdx];
-      const frameDelay = baseFrameDelay / speedMultiplier;
-
-      animationRef.current = setTimeout(() => {
-        setSliderValue(nextPos);
+    animationRef.current = setTimeout(() => {
+      if (isLastFrame) {
         if (isRecordingRef.current) {
           requestAnimationFrame(() => {
             captureFrame();
+            stopRecording();
           });
         }
 
-        if (nextIdx === timePointIndexes.length - 1) {
-          animationCompleteRef.current = true;
-          setIsPlaying(false);
+        animationCompleteRef.current = true;
+        setIsPlaying(false);
+        return;
+      }
 
-          if (isRecordingRef.current) {
-            requestAnimationFrame(() => {
-              captureFrame();
-              setTimeout(() => stopRecording(), 0);
-            });
-          }
-        }
-      }, frameDelay);
-    }
+      if (isRecordingRef.current) {
+        requestAnimationFrame(captureFrame);
+      }
+
+      setSliderValue(timePointIndexes[nextIdx]);
+    }, frameDelay);
+
 
     return () => clearTimeout(animationRef.current);
   }, [
     isPlaying,
     sliderValue,
     timePointIndexes,
+    timePoints,
     captureFrame,
     stopRecording,
     isRecordingRef,

@@ -130,9 +130,6 @@ export default function useRecordVideo({
 
     if (recordingEndTimeoutRef.current) clearTimeout(recordingEndTimeoutRef.current);
 
-    if (animationCompleteRef.current && isRecordingRef.current) {
-      captureFrame();
-    }
     isRecordingRef.current = false;
     setIsPlaying(false);
     setIsExporting(true);
