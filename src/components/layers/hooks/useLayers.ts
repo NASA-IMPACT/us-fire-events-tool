@@ -20,6 +20,12 @@ type UseLayersProps = {
   setViewMode: (mode: 'detail' | 'default' | string) => void;
 };
 
+type LoadingStates = {
+  perimeterNrt: boolean;
+  fireline: boolean;
+  newfirepix: boolean;
+};
+
 /**
  * Custom hook that returns an array of deck.gl layers based on application state.
  * It dynamically configures and filters MVT, GeoJSON, Terrain and wind/grid layers based on user-selected options,
@@ -37,7 +43,7 @@ type UseLayersProps = {
  * @param {Object} params.viewState - Current map view state (used for terrain layer configuration)
  * @param {Function} params.setViewMode - Callback to change the view mode (e.g., to "detail" when a feature is selected)
  *
- * @returns {Array<Object>} - Array of configured and filtered deck.gl layers
+ * @returns {Object} - Object containing layers array and loading states for each layer
  */
 export const useLayers = ({
   collectVisibleFeatures,
@@ -55,7 +61,14 @@ export const useLayers = ({
 
   const [layers, setLayers] = useState([]);
   const [lastTimeRangeEnd, setLastTimeRangeEnd] = useState(null);
+  const [loadingStates, setLoadingStates] = useState<LoadingStates>({
+    perimeterNrt: false,
+    fireline: false,
+    newfirepix: false
+  });
+
   const debouncedTimeUpdate = useRef(null);
+  const loadingTimers = useRef<Record<string, NodeJS.Timeout>>({});
 
   const { windLayerType, show3DMap, timeRange, showPerimeterNrt, showFireline, showNewFirepix  } = useAppState();
   const { firePerimeters, selectEvent } = useEvents();
@@ -68,6 +81,35 @@ export const useLayers = ({
     isActive,
     showAdvancedFilters
   } = useFilters();
+
+  const clearLoadingTimer = useCallback((layerId: string) => {
+    if (loadingTimers.current[layerId]) {
+      clearTimeout(loadingTimers.current[layerId]);
+      delete loadingTimers.current[layerId];
+    }
+  }, []);
+
+  const setLayerLoading = useCallback((layerId: keyof LoadingStates, isLoading: boolean) => {
+    if (isLoading) {
+      setLoadingStates(prev => ({ ...prev, [layerId]: true }));
+
+      clearLoadingTimer(layerId);
+
+      loadingTimers.current[layerId] = setTimeout(() => {
+        setLoadingStates(prev => ({ ...prev, [layerId]: false }));
+        delete loadingTimers.current[layerId];
+      }, 10000);
+    } else {
+      setLoadingStates(prev => ({ ...prev, [layerId]: false }));
+      clearLoadingTimer(layerId);
+    }
+  }, [clearLoadingTimer]);
+
+  useEffect(() => {
+    return () => {
+      Object.values(loadingTimers.current).forEach(timer => clearTimeout(timer));
+    };
+  }, []);
 
   const featurePassesFilters = useCallback((feature) => {
     if (!feature?.properties) return false;
@@ -170,13 +212,24 @@ export const useLayers = ({
     setViewMode('detail');
   }, [featurePassesFilters, zoomToFeature, selectEvent, setViewMode]);
 
-  const handleTileLoad = useCallback((tile) => {
-    if (!tile?.data?.length) return;
+  const createTileLoadHandler = useCallback((layerId: keyof LoadingStates) => {
+    return (tile) => {
+      if (!tile?.data?.length) return;
 
-    if (!isInteracting) {
-      collectVisibleFeatures();
-    }
-  }, [collectVisibleFeatures, isInteracting]);
+      setLayerLoading(layerId, false);
+
+      if (!isInteracting) {
+        collectVisibleFeatures();
+      }
+    };
+  }, [collectVisibleFeatures, isInteracting, setLayerLoading]);
+
+  const createTileErrorHandler = useCallback((layerId: keyof LoadingStates) => {
+    return (error) => {
+      console.error(`Tile loading error for ${layerId}:`, error);
+      setLayerLoading(layerId, false);
+    };
+  }, [setLayerLoading]);
 
   useEffect(() => {
     debouncedTimeUpdate.current = _.debounce((newTimeEnd) => {
@@ -210,38 +263,50 @@ export const useLayers = ({
       }
 
       if (showPerimeterNrt) {
+        setLayerLoading('perimeterNrt', true);
+
         layerConfigs.push({
           type: LAYER_TYPES.MVT,
           id: 'perimeter-nrt',
           data: MVT_URLS.perimeterNrt,
           filterFunction: featurePassesFilters,
           opacity: layerOpacity,
-          onTileLoad: handleTileLoad,
+          onTileLoad: createTileLoadHandler('perimeterNrt'),
+          onTileError: createTileErrorHandler('perimeterNrt'),
           onClick: handleClick,
           updateTriggers: {
             getFillColor: [timeRange, showAdvancedFilters, fireArea, duration, meanFrp, region, isActive],
             getLineColor: [timeRange, showAdvancedFilters, fireArea, duration, meanFrp, region, isActive],
           }
         });
+      } else {
+        setLayerLoading('perimeterNrt', false);
       }
 
       if (showFireline) {
+        setLayerLoading('fireline', true);
+
         layerConfigs.push({
           type: LAYER_TYPES.MVT,
           id: 'fireline',
           data: MVT_URLS.fireline,
           filterFunction: featurePassesFilters,
           opacity: layerOpacity,
-          onTileLoad: handleTileLoad,
+          onTileLoad: createTileLoadHandler('fireline'),
+          onTileError: createTileErrorHandler('fireline'),
           onClick: handleClick,
           updateTriggers: {
             getFillColor: [timeRange, showAdvancedFilters, fireArea, duration, meanFrp, region, isActive],
             getLineColor: [timeRange, showAdvancedFilters, fireArea, duration, meanFrp, region, isActive],
           }
         });
+      } else {
+        setLayerLoading('fireline', false);
       }
 
       if (showNewFirepix) {
+        setLayerLoading('newfirepix', true);
+
         layerConfigs.push({
           type: LAYER_TYPES.MVT,
           id: 'newfirepix',
@@ -249,13 +314,16 @@ export const useLayers = ({
           filterFunction: featurePassesFilters,
           opacity: layerOpacity,
           lineWidthMinPixels: 2,
-          onTileLoad: handleTileLoad,
+          onTileLoad: createTileLoadHandler('newfirepix'),
+          onTileError: createTileErrorHandler('newfirepix'),
           onClick: handleClick,
           updateTriggers: {
             getFillColor: [timeRange, showAdvancedFilters, fireArea, duration, meanFrp, region, isActive],
             getLineColor: [timeRange, showAdvancedFilters, fireArea, duration, meanFrp, region, isActive],
           }
         });
+      } else {
+        setLayerLoading('newfirepix', false);
       }
 
       if (firePerimeters) {
@@ -297,7 +365,32 @@ export const useLayers = ({
     };
 
     initializeLayers();
-  }, [windLayerType, firePerimeters, handleTileLoad, featurePassesFilters, handleClick, layerOpacity, show3DMap, lastTimeRangeEnd, collectVisibleFeatures, isInteracting, timeRange, showAdvancedFilters, fireArea, duration, meanFrp, region, isActive, viewState, zoomToFeature, showFireline, showNewFirepix, showPerimeterNrt]);
+  }, [
+    windLayerType,
+    firePerimeters,
+    featurePassesFilters,
+    handleClick,
+    layerOpacity,
+    show3DMap,
+    lastTimeRangeEnd,
+    collectVisibleFeatures,
+    isInteracting,
+    timeRange,
+    showAdvancedFilters,
+    fireArea,
+    duration,
+    meanFrp,
+    region,
+    isActive,
+    viewState,
+    zoomToFeature,
+    showFireline,
+    showNewFirepix,
+    showPerimeterNrt,
+    createTileLoadHandler,
+    createTileErrorHandler,
+    setLayerLoading
+  ]);
 
-  return layers;
+  return { layers, loadingStates };
 };

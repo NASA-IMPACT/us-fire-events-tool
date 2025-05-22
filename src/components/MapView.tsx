@@ -18,7 +18,15 @@ import { useEnv } from '../contexts/EnvContext';
  * Map visualization component
  * Renders a map with multiple layers based on application state
  */
-const MapView = () => {
+type MapViewProps = {
+  onLoadingStatesChange?: (loadingStates: {
+    perimeterNrt: boolean;
+    fireline: boolean;
+    newfirepix: boolean;
+  }) => void;
+};
+
+const MapView: React.FC<MapViewProps> = ({ onLoadingStatesChange }) => {
     const { mapboxAccessToken } = useEnv();
     const { updateEvents } = useEvents();
     const { show3DMap, setMapBounds, setViewMode } = useAppState();
@@ -38,12 +46,18 @@ const MapView = () => {
         show3DMap
     });
 
-    const layers = useLayers({
+    const { layers, loadingStates } = useLayers({
         collectVisibleFeatures,
         isInteracting,
         viewState,
         setViewMode
     });
+
+    useEffect(() => {
+        if (onLoadingStatesChange) {
+            onLoadingStatesChange(loadingStates);
+        }
+    }, [loadingStates, onLoadingStatesChange]);
 
     useEffect(() => {
         const handleFitBounds = (event) => {

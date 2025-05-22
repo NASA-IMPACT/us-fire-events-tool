@@ -1,11 +1,19 @@
 import { useAppState } from '../contexts/AppStateContext';
-import { Eye, EyeOff, X } from 'lucide-react';
+import { Eye, EyeOff, X, Loader2 } from 'lucide-react';
 
 type LayerSwitcherProps = {
   onClose: () => void;
+  loadingStates?: {
+    perimeterNrt?: boolean;
+    fireline?: boolean;
+    newfirepix?: boolean;
+  };
 };
 
-const LayerSwitcher: React.FC<LayerSwitcherProps> = ({ onClose }) => {
+const LayerSwitcher: React.FC<LayerSwitcherProps> = ({
+  onClose,
+  loadingStates = {}
+}) => {
   const {
     showPerimeterNrt,
     showFireline,
@@ -19,6 +27,7 @@ const LayerSwitcher: React.FC<LayerSwitcherProps> = ({ onClose }) => {
     label: string,
     visible: boolean,
     toggle: () => void,
+    isLoading = false,
     disabled = false,
     isLast = false
   ) => (
@@ -29,13 +38,25 @@ const LayerSwitcher: React.FC<LayerSwitcherProps> = ({ onClose }) => {
       }`}
       style={{ cursor: 'pointer' }}
     >
-      <span
-        className={`font-sans-3xs ${
-          !visible || disabled ? 'text-base-lighter' : 'text-base-dark'
-        }`}
-      >
-        {label}
-      </span>
+      <div className="display-flex align-items-center">
+        <span
+          className={`font-sans-3xs ${
+            !visible || disabled ? 'text-base-lighter' : 'text-base-dark'
+          }`}
+        >
+          {label}
+        </span>
+
+        {visible && isLoading && (
+          <div className="margin-left-1">
+            <Loader2
+              size={12}
+              className="spin text-blue-500"
+              aria-label="Loading tiles"
+            />
+          </div>
+        )}
+      </div>
 
       <button
         className={`bg-transparent border-0 cursor-pointer margin-left-1 visibility-hidden group-hover:visibility-visible ${
@@ -63,9 +84,26 @@ const LayerSwitcher: React.FC<LayerSwitcherProps> = ({ onClose }) => {
         </div>
       </div>
 
-      {layerItem('All perimeters (NRT)', showPerimeterNrt, () => setShowPerimeterNrt(!showPerimeterNrt))}
-      {layerItem('Firelines (NRT)', showFireline, () => setShowFireline(!showFireline))}
-      {layerItem('New fire pixels (NRT)', showNewFirepix, () => setShowNewFirepix(!showNewFirepix))}
+      {layerItem(
+        'All perimeters (NRT)',
+        showPerimeterNrt,
+        () => setShowPerimeterNrt(!showPerimeterNrt),
+        loadingStates.perimeterNrt
+      )}
+      {layerItem(
+        'Firelines (NRT)',
+        showFireline,
+        () => setShowFireline(!showFireline),
+        loadingStates.fireline
+      )}
+      {layerItem(
+        'New fire pixels (NRT)',
+        showNewFirepix,
+        () => setShowNewFirepix(!showNewFirepix),
+        loadingStates.newfirepix,
+        false,
+        true
+      )}
     </div>
   );
 };

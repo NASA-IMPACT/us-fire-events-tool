@@ -11,8 +11,19 @@ import { Layers } from 'lucide-react';
 
 import 'mapbox-gl/dist/mapbox-gl.css';
 
+type LoadingStates = {
+  perimeterNrt: boolean;
+  fireline: boolean;
+  newfirepix: boolean;
+};
+
 const Explorer: React.FC = () => {
   const [showLayerPanel, setShowLayerPanel] = useState(true);
+  const [loadingStates, setLoadingStates] = useState<LoadingStates>({
+    perimeterNrt: false,
+    fireline: false,
+    newfirepix: false
+  });
 
   const {
     viewMode,
@@ -21,6 +32,9 @@ const Explorer: React.FC = () => {
     show3DMap,
     windLayerType,
     setWindLayerType,
+    showPerimeterNrt,
+    showFireline,
+    showNewFirepix
   } = useAppState();
 
   const { selectEvent, selectedEventId } = useEvents();
@@ -35,6 +49,25 @@ const Explorer: React.FC = () => {
       setWindLayerType(null);
     }
   };
+
+  const handleLoadingStatesChange = (newLoadingStates: LoadingStates) => {
+    setLoadingStates(newLoadingStates);
+  };
+
+  const hasLoadingLayers = Object.entries(loadingStates).some(([layerKey, isLoading]) => {
+    if (!isLoading) return false;
+
+    switch (layerKey) {
+      case 'perimeterNrt':
+        return showPerimeterNrt;
+      case 'fireline':
+        return showFireline;
+      case 'newfirepix':
+        return showNewFirepix;
+      default:
+        return false;
+    }
+  });
 
   return (
     <>
@@ -52,23 +85,43 @@ const Explorer: React.FC = () => {
             onClick={() => setShowLayerPanel(!showLayerPanel)}
             aria-label="Toggle layer switcher"
           >
-            <Layers size={18} />
+            <div className="position-relative">
+              <Layers size={18} />
+              {/* Loading indicator on the layers button */}
+              {hasLoadingLayers && (
+                <div
+                  className="position-absolute"
+                  style={{
+                    width: '6px',
+                    height: '6px',
+                    top: '0px',
+                    right: '0px',
+                    backgroundColor: '#3b82f6',
+                    borderRadius: '50%',
+                    animation: 'spin 1.5s ease-in-out infinite'
+                  }}
+                />
+              )}
+            </div>
           </div>
 
           {showLayerPanel && (
             <div
               className="position-absolute z-top"
               style={{
-                top: '50px',
+                top: '90px',
                 right: viewMode === 'detail' && selectedEventId ? '380px' : '10px',
                 transition: 'right 0.2s ease',
               }}
             >
-              <LayerSwitcher onClose={() => setShowLayerPanel(false)} />
+              <LayerSwitcher
+                onClose={() => setShowLayerPanel(false)}
+                loadingStates={loadingStates}
+              />
             </div>
           )}
 
-          <MapView />
+          <MapView onLoadingStatesChange={handleLoadingStatesChange} />
 
           {viewMode === 'detail' && selectedEventId ? (
             <div
