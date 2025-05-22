@@ -109,7 +109,7 @@ const Explorer: React.FC = () => {
             <div
               className="position-absolute z-top"
               style={{
-                top: '90px',
+                top: '50px',
                 right: viewMode === 'detail' && selectedEventId ? '380px' : '10px',
                 transition: 'right 0.2s ease',
               }}
