@@ -145,7 +145,7 @@ export default function useRecordVideo({
         if (exportFormat === 'gif' && capturedGifFrames.current.length > 0) {
           const [first] = capturedGifFrames.current;
 
-          const scale = 0.5;
+          const scale = 0.6;
           const width = Math.floor(first.width * scale);
           const height = Math.floor(first.height * scale);
 
