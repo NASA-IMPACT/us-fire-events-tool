@@ -1,5 +1,5 @@
 import { useAppState } from '../contexts/AppStateContext';
-import { Eye, EyeOff, X } from 'lucide-react';
+import { Eye, EyeOff, Loader2, X } from 'lucide-react';
 
 type LayerSwitcherProps = {
   onClose: () => void;
@@ -47,7 +47,7 @@ const LayerSwitcher: React.FC<LayerSwitcherProps> = ({
           {label}
         </span>
 
-        {/* {visible && isLoading && (
+        {visible && isLoading && (
           <div className="margin-left-1">
             <Loader2
               size={12}
@@ -55,7 +55,7 @@ const LayerSwitcher: React.FC<LayerSwitcherProps> = ({
               aria-label="Loading tiles"
             />
           </div>
-        )} */}
+        )}
       </div>
 
       <button

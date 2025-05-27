@@ -93,24 +93,26 @@ const TimeRangeSlider = () => {
     const filteredEnd = getDateFromPercent(sliderValues[1]);
 
     if (!timeRange ||
-        timeRange.start.getTime() !== filteredStart.getTime() ||
-        timeRange.end.getTime() !== filteredEnd.getTime()) {
+        Math.abs(timeRange.start.getTime() - filteredStart.getTime()) > 1000 ||
+        Math.abs(timeRange.end.getTime() - filteredEnd.getTime()) > 1000) {
       setTimeRange({ start: filteredStart, end: filteredEnd });
     }
+  }, [sliderValues, minDate, totalRange, setTimeRange]);
 
+  useEffect(() => {
     if (chartRef.current) {
       const chartWidth = chartRef.current.clientWidth;
       const left = (sliderValues[0] / 100) * chartWidth;
       const width = ((sliderValues[1] - sliderValues[0]) / 100) * chartWidth;
 
       if (
-        highlightedArea.left !== left ||
-        highlightedArea.width !== width
+        Math.abs(highlightedArea.left - left) > 1 ||
+        Math.abs(highlightedArea.width - width) > 1
       ) {
         setHighlightedArea({ left, width });
       }
     }
-  }, [sliderValues, minDate, totalRange, setTimeRange, timeRange]);
+  }, [sliderValues, highlightedArea.left, highlightedArea.width]);
 
   const chartData = useMemo(() => {
     if (!timeRange || !eventsByTime.length) return [];
@@ -188,7 +190,7 @@ const TimeRangeSlider = () => {
           className="usa-button usa-button--unstyled text-underline margin-left-auto font-sans-3xs"
         >
           <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path fill-rule="evenodd" clip-rule="evenodd" d="M3.54157 5.08465C5.2249 7.07696 8.33324 10.7693 8.33324 10.7693V15.3847C8.33324 15.8077 8.70824 16.1539 9.16657 16.1539H10.8332C11.2916 16.1539 11.6666 15.8077 11.6666 15.3847V10.7693C11.6666 10.7693 14.7666 7.07696 16.4499 5.08465C16.8749 4.57696 16.4832 3.84619 15.7916 3.84619H4.1999C3.50824 3.84619 3.11657 4.57696 3.54157 5.08465Z" fill="#005EA2"/>
+            <path fillRule="evenodd" clipRule="evenodd" d="M3.54157 5.08465C5.2249 7.07696 8.33324 10.7693 8.33324 10.7693V15.3847C8.33324 15.8077 8.70824 16.1539 9.16657 16.1539H10.8332C11.2916 16.1539 11.6666 15.8077 11.6666 15.3847V10.7693C11.6666 10.7693 14.7666 7.07696 16.4499 5.08465C16.8749 4.57696 16.4832 3.84619 15.7916 3.84619H4.1999C3.50824 3.84619 3.11657 4.57696 3.54157 5.08465Z" fill="#005EA2"/>
           </svg>
           {showSearchFilters ? 'Hide advanced filters' : 'Show advanced filters'}
         </button>
