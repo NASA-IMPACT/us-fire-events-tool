@@ -30,15 +30,17 @@ const Header: React.FC = () => {
   return (
     <header className="header bg-white height-5 padding-y-05 padding-x-105 display-flex flex-row flex-justify-between flex-align-center width-full position-fixed top-0 left-0 z-top">
       <div className="display-flex flex-align-center">
-        <img
-          src="/NASA_logo.svg"
-          alt="NASA Logo"
-          className="height-4 margin-right-2"
-          aria-hidden="false"
-        />
-        <span className="font-public-sans font-sans-2xs font-weight-bold text-base margin-right-2">
-          Earthdata VEDA Dashboard
-        </span>
+        <a href="/" className="display-flex flex-align-center text-no-underline">
+          <img
+            src="/NASA_logo.svg"
+            alt="NASA Logo"
+            className="height-4 margin-right-2"
+            aria-hidden="false"
+          />
+          <span className="font-public-sans font-sans-2xs font-weight-bold text-base margin-right-2">
+            Earthdata VEDA Dashboard
+          </span>
+        </a>
         <span className="font-public-sans font-sans-xs font-weight-bold text-ink margin-0 margin-right-1">
           Fire Events Explorer
         </span>
