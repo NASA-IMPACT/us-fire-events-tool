@@ -54,7 +54,7 @@ export const useLayers = ({
   const { mapboxAccessToken, featuresApiEndpoint: baseUrl } = useEnv();
 
   const MVT_URLS: Record<MVTLayerId, string> = {
-    perimeterNrt: `${baseUrl}/collections/pg_temp.eis_fire_lf_perimeter_nrt_latest/tiles/WebMercatorQuad/{z}/{x}/{y}?bbox=-125.0,24.5,-66.0,49.5&properties=duration,farea,meanfrp,fperim,n_pixels,n_newpixels,pixden,fireid,primarykey,t,region`,
+    perimeterNrt: `${baseUrl}/collections/public.eis_fire_lf_perimeter_nrt/tiles/WebMercatorQuad/{z}/{x}/{y}?bbox=-125.0,24.5,-66.0,49.5&properties=duration,farea,meanfrp,fperim,n_pixels,n_newpixels,pixden,fireid,primarykey,t,region`,
     fireline: `${baseUrl}/collections/public.eis_fire_lf_fireline_nrt/tiles/WebMercatorQuad/{z}/{x}/{y}?bbox=-125.0,24.5,-66.0,49.5&properties=duration,farea,meanfrp,fperim,n_pixels,n_newpixels,pixden,fireid,primarykey,t,region`,
     newfirepix: `${baseUrl}/collections/public.eis_fire_lf_newfirepix_nrt/tiles/WebMercatorQuad/{z}/{x}/{y}?bbox=-125.0,24.5,-66.0,49.5&properties=duration,farea,meanfrp,fperim,n_pixels,n_newpixels,pixden,fireid,primarykey,t,region`
   };
