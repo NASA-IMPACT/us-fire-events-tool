@@ -70,7 +70,7 @@ const Explorer: React.FC = () => {
   });
 
   return (
-    <>
+    <div className='wildfire-explorer'>
       <Header />
 
       <div className="display-flex height-viewport">
@@ -150,7 +150,7 @@ const Explorer: React.FC = () => {
           </div>
         )}
       </div>
-    </>
+    </div>
   );
 };
 
