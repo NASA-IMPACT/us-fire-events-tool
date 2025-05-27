@@ -21,7 +21,7 @@ type Props = {
   featuresApiEndpoint: string;
 };
 
-export default function FireTool({ mapboxAccessToken, featuresApiEndpoint }: Props) {
+export default function WildfireExplorer({ mapboxAccessToken, featuresApiEndpoint }: Props) {
   return (
     <EnvProvider mapboxAccessToken={mapboxAccessToken} featuresApiEndpoint={featuresApiEndpoint}>
       <QueryClientProvider client={queryClient}>

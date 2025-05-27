@@ -1,4 +1,4 @@
-import FireTool from './FireTool';
+import WildfireExplorer from './WildfireExplorer';
 
-export { FireTool };
-export default FireTool;
+export { WildfireExplorer };
+export default WildfireExplorer;
