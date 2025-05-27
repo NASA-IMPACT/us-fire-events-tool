@@ -40,9 +40,7 @@ export const createMVTLayer = ({
     lineWidthMinPixels,
     pickable: true,
     opacity: opacity / 100,
-    autoHighlight: true,
-    highlightColor: ({object}) =>
-      filterFunction && !filterFunction(object) ? [0, 0, 0, 0] : [255, 255, 255, 120],
+    autoHighlight: false,
     getPickingIndex: (feature) =>
       filterFunction && !filterFunction(feature) ? -1 : feature.properties?.primarykey,
     onClick,
