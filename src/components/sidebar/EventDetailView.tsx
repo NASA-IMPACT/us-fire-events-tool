@@ -30,7 +30,7 @@ const EventDetails: React.FC<EventDetailsProps> = ({ onBack }) => {
 
   if (firePerimetersLoading) {
     return (
-      <div className="padding-4 display-flex flex-column flex-align-center flex-justify-center">
+      <div className="padding-2 display-flex flex-column flex-align-center flex-justify-center">
         <Loader2 size={16} className="spin margin-bottom-1" />
         <p className="font-sans-3xs text-base-dark">Loading event details, please wait…</p>
       </div>
@@ -39,7 +39,7 @@ const EventDetails: React.FC<EventDetailsProps> = ({ onBack }) => {
 
   if (!selectedEvent || !eventProperties) {
     return (
-      <div className="padding-4 display-flex flex-column flex-align-center flex-justify-center">
+      <div className="padding-2 display-flex flex-column flex-align-center flex-justify-center">
         <p>No event selected</p>
         <button className="usa-button" onClick={onBack}>
           Back to list
