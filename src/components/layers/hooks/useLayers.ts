@@ -54,7 +54,7 @@ export const useLayers = ({
   const { mapboxAccessToken, featuresApiEndpoint: baseUrl } = useEnv();
 
   const MVT_URLS: Record<MVTLayerId, string> = {
-    perimeterNrt: `${baseUrl}/collections/public.eis_fire_lf_perimeter_nrt/tiles/WebMercatorQuad/{z}/{x}/{y}?bbox=-125.0,24.5,-66.0,49.5&properties=duration,farea,meanfrp,fperim,n_pixels,n_newpixels,pixden,fireid,primarykey,t,region`,
+    perimeterNrt: `${baseUrl}/collections/pg_temp.eis_fire_lf_perimeter_nrt_latest/tiles/WebMercatorQuad/{z}/{x}/{y}?bbox=-125.0,24.5,-66.0,49.5&properties=duration,farea,meanfrp,fperim,n_pixels,n_newpixels,pixden,fireid,primarykey,t,region`,
     fireline: `${baseUrl}/collections/public.eis_fire_lf_fireline_nrt/tiles/WebMercatorQuad/{z}/{x}/{y}?bbox=-125.0,24.5,-66.0,49.5&properties=duration,farea,meanfrp,fperim,n_pixels,n_newpixels,pixden,fireid,primarykey,t,region`,
     newfirepix: `${baseUrl}/collections/public.eis_fire_lf_newfirepix_nrt/tiles/WebMercatorQuad/{z}/{x}/{y}?bbox=-125.0,24.5,-66.0,49.5&properties=duration,farea,meanfrp,fperim,n_pixels,n_newpixels,pixden,fireid,primarykey,t,region`
   };
@@ -68,7 +68,7 @@ export const useLayers = ({
   });
 
   const debouncedTimeUpdate = useRef(null);
-  const loadingTimers = useRef<Record<string, NodeJS.Timeout>>({});
+  const layerRefs = useRef<Record<string, any>>({});
 
   const { windLayerType, show3DMap, timeRange, showPerimeterNrt, showFireline, showNewFirepix  } = useAppState();
   const { firePerimeters, selectEvent } = useEvents();
@@ -82,34 +82,39 @@ export const useLayers = ({
     showAdvancedFilters
   } = useFilters();
 
-  const clearLoadingTimer = useCallback((layerId: string) => {
-    if (loadingTimers.current[layerId]) {
-      clearTimeout(loadingTimers.current[layerId]);
-      delete loadingTimers.current[layerId];
-    }
-  }, []);
-
-  const setLayerLoading = useCallback((layerId: keyof LoadingStates, isLoading: boolean) => {
-    if (isLoading) {
-      setLoadingStates(prev => ({ ...prev, [layerId]: true }));
-
-      clearLoadingTimer(layerId);
-
-      loadingTimers.current[layerId] = setTimeout(() => {
-        setLoadingStates(prev => ({ ...prev, [layerId]: false }));
-        delete loadingTimers.current[layerId];
-      }, 10000);
-    } else {
-      setLoadingStates(prev => ({ ...prev, [layerId]: false }));
-      clearLoadingTimer(layerId);
-    }
-  }, [clearLoadingTimer]);
-
   useEffect(() => {
-    return () => {
-      Object.values(loadingTimers.current).forEach(timer => clearTimeout(timer));
+    const checkLoadingStates = () => {
+      const newLoadingStates = { ...loadingStates };
+      let hasChanges = false;
+
+      Object.keys(layerRefs.current).forEach(layerId => {
+        const layer = layerRefs.current[layerId];
+        const layerKey = layerId.replace('perimeter-nrt', 'perimeterNrt') as keyof LoadingStates;
+
+        if (layer && typeof layer.isLoaded === 'boolean') {
+          const wasLoading = loadingStates[layerKey];
+          const isNowLoaded = layer.isLoaded;
+
+          if (wasLoading && isNowLoaded) {
+            newLoadingStates[layerKey] = false;
+            hasChanges = true;
+
+            if (!isInteracting) {
+              collectVisibleFeatures();
+            }
+          }
+        }
+      });
+
+      if (hasChanges) {
+        setLoadingStates(newLoadingStates);
+      }
     };
-  }, []);
+
+    const interval = setInterval(checkLoadingStates, 100);
+
+    return () => clearInterval(interval);
+  }, [loadingStates, isInteracting, collectVisibleFeatures]);
 
   const featurePassesFilters = useCallback((feature) => {
     if (!feature?.properties) return false;
@@ -214,22 +219,18 @@ export const useLayers = ({
 
   const createTileLoadHandler = useCallback((layerId: keyof LoadingStates) => {
     return (tile) => {
-      if (!tile?.data?.length) return;
 
-      setLayerLoading(layerId, false);
-
-      if (!isInteracting) {
+      if (!isInteracting && tile?.data?.length) {
         collectVisibleFeatures();
       }
     };
-  }, [collectVisibleFeatures, isInteracting, setLayerLoading]);
+  }, [collectVisibleFeatures, isInteracting]);
 
   const createTileErrorHandler = useCallback((layerId: keyof LoadingStates) => {
     return (error) => {
       console.error(`Tile loading error for ${layerId}:`, error);
-      setLayerLoading(layerId, false);
     };
-  }, [setLayerLoading]);
+  }, []);
 
   useEffect(() => {
     debouncedTimeUpdate.current = _.debounce((newTimeEnd) => {
@@ -263,7 +264,7 @@ export const useLayers = ({
       }
 
       if (showPerimeterNrt) {
-        setLayerLoading('perimeterNrt', true);
+        setLoadingStates(prev => ({ ...prev, perimeterNrt: true }));
 
         layerConfigs.push({
           type: LAYER_TYPES.MVT,
@@ -279,12 +280,10 @@ export const useLayers = ({
             getLineColor: [timeRange, showAdvancedFilters, fireArea, duration, meanFrp, region, isActive],
           }
         });
-      } else {
-        setLayerLoading('perimeterNrt', false);
       }
 
       if (showFireline) {
-        setLayerLoading('fireline', true);
+        setLoadingStates(prev => ({ ...prev, fireline: true }));
 
         layerConfigs.push({
           type: LAYER_TYPES.MVT,
@@ -300,12 +299,10 @@ export const useLayers = ({
             getLineColor: [timeRange, showAdvancedFilters, fireArea, duration, meanFrp, region, isActive],
           }
         });
-      } else {
-        setLayerLoading('fireline', false);
       }
 
       if (showNewFirepix) {
-        setLayerLoading('newfirepix', true);
+        setLoadingStates(prev => ({ ...prev, newfirepix: true }));
 
         layerConfigs.push({
           type: LAYER_TYPES.MVT,
@@ -322,8 +319,6 @@ export const useLayers = ({
             getLineColor: [timeRange, showAdvancedFilters, fireArea, duration, meanFrp, region, isActive],
           }
         });
-      } else {
-        setLayerLoading('newfirepix', false);
       }
 
       if (firePerimeters) {
@@ -361,6 +356,13 @@ export const useLayers = ({
 
       const newLayers = await createLayers(layerConfigs);
 
+      layerRefs.current = {};
+      newLayers.forEach(layer => {
+        if (layer && layer.id) {
+          layerRefs.current[layer.id] = layer;
+        }
+      });
+
       setLayers(newLayers);
     };
 
@@ -388,9 +390,8 @@ export const useLayers = ({
     showNewFirepix,
     showPerimeterNrt,
     createTileLoadHandler,
-    createTileErrorHandler,
-    setLayerLoading
+    createTileErrorHandler
   ]);
 
-  return { layers, loadingStates };
+  return { layers, loadingStates, featurePassesFilters };
 };

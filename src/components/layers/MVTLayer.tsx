@@ -36,17 +36,21 @@ export const createMVTLayer = ({
       const passes = filterFunction ? filterFunction(feature) : true;
       return passes ? [255, 69, 0, 255] : [255, 69, 0, 0];
     },
-    // uniqueIdProperty: 'primarykey',
+    uniqueIdProperty: 'primarykey',
     lineWidthMinPixels,
     pickable: true,
     opacity: opacity / 100,
-    // autoHighlight: true,
-    // highlightColor: [255, 255, 255, 120],
+    autoHighlight: true,
+    highlightColor: ({object}) =>
+      filterFunction && !filterFunction(object) ? [0, 0, 0, 0] : [255, 255, 255, 120],
+    getPickingIndex: (feature) =>
+      filterFunction && !filterFunction(feature) ? -1 : feature.properties?.primarykey,
     onClick,
     updateTriggers: {
       getFillColor: [filterFunction, ...(updateTriggers.getFillColor || [])],
       getLineColor: [filterFunction, ...(updateTriggers.getLineColor || [])]
     },
     onTileLoad,
+    maxRequests: 3
   });
 };
