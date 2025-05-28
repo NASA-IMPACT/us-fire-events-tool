@@ -41,8 +41,6 @@ export const createMVTLayer = ({
     pickable: true,
     opacity: opacity / 100,
     autoHighlight: false,
-    getPickingIndex: (feature) =>
-      filterFunction && !filterFunction(feature) ? -1 : feature.properties?.primarykey,
     onClick,
     updateTriggers: {
       getFillColor: [filterFunction, ...(updateTriggers.getFillColor || [])],

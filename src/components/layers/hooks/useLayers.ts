@@ -196,7 +196,7 @@ export const useLayers = ({
 
   const handleClick = useCallback((info) => {
     const { object } = info;
-    if (!object || !featurePassesFilters(object)) return;
+    if (!object) return;
 
     const fireId = getFireId(object);
     if (!fireId) {
