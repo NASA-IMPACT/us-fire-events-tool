@@ -78,9 +78,9 @@ Update the version field in `package.json` according to semantic versioning:
 
 Make sure you're authenticated with npm under the correct scope. You’ll need a valid auth token with publish permissions from the relevant organization. You can also add the acquired token to your local `.npmrc` file. The current scope is `@dsio`, but the package will soon be migrated to the `@teamimpact` scope.
 
-### Publish the package
+### Build and publish the package
 
-Once authenticated and the version is updated, run `npm publish`. The package is published as a public package and is accessible via the npm registry.
+Once authenticated and the version is updated, run `npm run build:lib` to build the package in library mode. Once built, run `npm publish`. The package is published as a public package and is accessible via the npm registry.
 
 ## Expanding ESLint Configuration
 
