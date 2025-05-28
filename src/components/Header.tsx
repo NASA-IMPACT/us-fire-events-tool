@@ -54,13 +54,13 @@ const Header: React.FC = () => {
 
       <Modal
         id="fire-modal"
-        className="usa-modal--lg bg-base-lightest shadow-3 padding-5 radius-0"
+        className="wildfire-explorer__modal usa-modal--lg bg-base-lightest shadow-3 padding-5 radius-0"
         ref={modalRef}
         modalIsOpen={showModal}
         aria-describedby="fire-modal-description"
         aria-labelledby="fire-modal-heading"
       >
-        <div className="usa-modal__content">
+        <div className="wildfire-explorer__modal-content usa-modal__content">
           <button
             className="usa-button usa-button--unstyled position-absolute"
             style={{ top: '20px', right: '20px' }}
@@ -72,7 +72,7 @@ const Header: React.FC = () => {
               <path d="M19 6.41L17.59 5L12 10.59L6.41 5L5 6.41L10.59 12L5 17.59L6.41 19L12 13.41L17.59 19L19 17.59L13.41 12L19 6.41Z" fill="#71767A"/>
             </svg>
           </button>
-          <div className="usa-modal__main">
+          <div className="wildfire-explorer__modal-main usa-modal__main">
             <div className="display-flex flex-align-center margin-bottom-3">
               <img
                 src="/NASA_logo.svg"
@@ -94,18 +94,18 @@ const Header: React.FC = () => {
 
             <Tag className="border-radius-sm" background="#71767A">Last updated: {today}</Tag>
 
-            <p className="font-sans-sm line-height-body-5 text-ink">
+            <p className="wildfire-explorer__modal-description font-sans-sm line-height-body-5 text-ink">
               This tool visualizes fire data from VIIRS satellite observations over the past 20 days,
               tracking active fires and fire perimeters to understand fire
               progression. It processes data from the FEDs algorithm, which
               uses VIIRS thermal sensors on Suomi NPP and NOAA-20 satellites.
             </p>
 
-            <p className="font-sans-sm line-height-body-5 text-ink margin-bottom-1">
+            <p className="wildfire-explorer__modal-description font-sans-sm line-height-body-5 text-ink margin-bottom-1">
               Find out more:
             </p>
 
-            <ul className="usa-list font-sans-sm margin-top-0 margin-bottom-4">
+            <ul className="wildfire-explorer__modal-list usa-list font-sans-sm margin-top-0 margin-bottom-4">
               <li>
                 <a href="https://earth-information-system.github.io/fireatlas/docs/" className="text-primary" target="_blank" rel="noopener noreferrer">
                   Data source documentation

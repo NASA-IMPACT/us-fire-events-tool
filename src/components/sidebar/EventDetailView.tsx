@@ -159,18 +159,18 @@ const EventDetails: React.FC<EventDetailsProps> = ({ onBack }) => {
         <div className="margin-top-0 margin-bottom-1 border-bottom-1px border-base-lighter padding-y-2">
           <h3 className="margin-top-0 margin-bottom-1 font-weight-700 font-sans-2xs text-base-dark">Fire spread</h3>
 
-          <div className="display-flex flex-wrap">
-            <div className="display-flex flex-align-center margin-right-4 margin-bottom-0">
+          <div className="wildfire-explorer__legend display-flex flex-wrap">
+            <div className="wildfire-explorer__legend-item display-flex flex-align-center margin-right-4 margin-bottom-0">
               <div className="width-3 height-3 bg-base-dark margin-right-1"></div>
               <span className="font-body font-weight-regular font-sans-3xs text-base-dark">Previous</span>
             </div>
 
-            <div className="display-flex flex-align-center margin-right-4 margin-bottom-0">
+            <div className="wildfire-explorer__legend-item display-flex flex-align-center margin-right-4 margin-bottom-0">
               <div className="width-3 height-3 bg-error margin-right-1"></div>
               <span className="font-body font-weight-regular font-sans-3xs text-base-dark">Current</span>
             </div>
 
-            <div className="display-flex flex-align-center margin-bottom-0">
+            <div className="wildfire-explorer__legend-item display-flex flex-align-center margin-bottom-0">
               <div className="width-3 height-3 bg-warning margin-right-1"></div>
               <span className="font-body font-weight-regular font-sans-3xs text-base-dark">Perimeter</span>
             </div>
