@@ -23,4 +23,4 @@ export const INITIAL_VIEW_STATE = {
     minZoom: 0,
 };
 
-export const MAP_STYLE = 'mapbox://styles/devseed/cm7ueetbz00cc01qsdityey6n';
+export const MAP_STYLE = 'mapbox://styles/covid-nasa/cmb6kewie00nq01r2b84y3gsj';
