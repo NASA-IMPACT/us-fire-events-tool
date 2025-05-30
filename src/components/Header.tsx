@@ -95,21 +95,23 @@ const Header: React.FC = () => {
             <Tag className="border-radius-sm" background="#71767A">Last updated: {today}</Tag>
 
             <p className="wildfire-explorer__modal-description font-sans-sm line-height-body-5 text-ink">
-             This tool visualizes near real-time (NRT) fire tracking data from the Fire Event Data Suite (FEDS) 
-             algorithm for the current year. Explore FEDS layers showing the latest fire perimeters, 
-             active portion of the fire perimeter, and active fire pixels. Use the bottom panel to select different date 
-             ranges or subset fires by size, duration, or intensity. Click on an individual fire to visualize the time 
-             series of fire growth every 12 hours and create video outputs in GIF or WebM formats.
+              This tool visualizes near real-time (NRT) satellite-based fire perimeters, active portions of fire perimeters 
+              (fire lines), and active fire pixel detections for the current year.
+            </p>
+
+            <p className="wildfire-explorer__modal-description font-sans-sm line-height-body-5 text-ink">
+              Use the bottom panel to select different date ranges or subset fires by size, duration, or intensity. Click on an 
+              individual fire to visualize the time series of fire growth every 12 hours and create video outputs in GIF or WebM formats.
             </p>
 
             <p className="wildfire-explorer__modal-description font-sans-sm line-height-body-5 text-ink margin-bottom-1">
-              Find out more:
+              These fire tracking data are from the Fire Event Data Suite (FEDS) algorithm. Find out more:
             </p>
 
             <ul className="wildfire-explorer__modal-list usa-list font-sans-sm margin-top-0 margin-bottom-4">
               <li>
                 <a href="https://earth-information-system.github.io/fireatlas/docs/nrt.html#accessing-nrt-data" className="text-primary" target="_blank" rel="noopener noreferrer">
-                  Data source documentation
+                  FEDS data source documentation
                 </a>
               </li>
               <li>
