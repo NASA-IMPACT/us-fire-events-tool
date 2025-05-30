@@ -107,13 +107,8 @@ const Header: React.FC = () => {
 
             <ul className="wildfire-explorer__modal-list usa-list font-sans-sm margin-top-0 margin-bottom-4">
               <li>
-                <a href="https://earth-information-system.github.io/fireatlas/docs/" className="text-primary" target="_blank" rel="noopener noreferrer">
-                  Data source documentation
-                </a>
-              </li>
-              <li>
                 <a href="https://earth-information-system.github.io/fireatlas/docs/nrt.html#accessing-nrt-data" className="text-primary" target="_blank" rel="noopener noreferrer">
-                  Accessing the Near Real Time Data
+                  Data source documentation
                 </a>
               </li>
               <li>
@@ -159,6 +154,38 @@ const Header: React.FC = () => {
                 </svg>
               </button>
             </div>
+
+            <h2>Frequently Asked Questions</h2>
+
+            <h3>Q: What is NRT?</h3>
+            <p>
+              A: Near real-time (NRT) refers to data available 1 to 3 hours after an observation 
+              by an instrument aboard a space-based platform. FEDS data utilize NRT observations 
+              from the Visible Infrared Imaging Radiometer Suite (VIIRS) sensors. FEDS data update 
+              periodically each day based on new VIIRS observations within a few hours of initial 
+              satellite observation.
+            </p>
+
+            <h3>Q: What are the layers?</h3>
+            <p>
+              The <b>Fire Perimeters</b> layer shows the estimated fire-affected area as detected 
+              by the VIIRS sensor. The <b>Active Fire Front</b> layer shows the portion of 
+              the perimeter where active burning is detected. The <b>Fire Detections</b> layer 
+              shows the individual VIIRS pixel detections representing active fire activity.
+            </p>
+
+            <h3>Q: What can you do with this tool?</h3>
+            <p>
+              You can look at active fire perimeters
+              from the start of the calendar year up to today. By clicking on an individual fire 
+              perimeter, you can see its progression history in more detail, including how it spread 
+              over terrain and changed with wind direction. You can also save a movie or GIF showing 
+              its lifetime spread.
+            </p>
+
+
+
+            
           </div>
         </div>
       </Modal>
