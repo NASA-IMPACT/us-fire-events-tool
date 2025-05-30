@@ -95,10 +95,11 @@ const Header: React.FC = () => {
             <Tag className="border-radius-sm" background="#71767A">Last updated: {today}</Tag>
 
             <p className="wildfire-explorer__modal-description font-sans-sm line-height-body-5 text-ink">
-              This tool visualizes fire data from VIIRS satellite observations over the past 20 days,
-              tracking active fires and fire perimeters to understand fire
-              progression. It processes data from the FEDs algorithm, which
-              uses VIIRS thermal sensors on Suomi NPP and NOAA-20 satellites.
+             This tool visualizes near real-time (NRT) fire tracking data from the Fire Event Data Suite (FEDS) 
+             algorithm for the current year. Explore FEDS layers showing the latest fire perimeters, 
+             active portion of the fire perimeter, and active fire pixels. Use the bottom panel to select different date 
+             ranges or subset fires by size, duration, or intensity. Click on an individual fire to visualize the time 
+             series of fire growth every 12 hours and create video outputs in GIF or WebM formats.
             </p>
 
             <p className="wildfire-explorer__modal-description font-sans-sm line-height-body-5 text-ink margin-bottom-1">
