@@ -134,7 +134,6 @@ const Header: React.FC = () => {
                     type="checkbox"
                     id="dont-show-again"
                     className="usa-checkbox__input"
-                    defaultChecked
                     onChange={(e) =>
                       localStorage.setItem(
                         "hideFireModal",
