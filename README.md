@@ -64,7 +64,7 @@ This project uses Vite for development.
 
 ## Publishing to npm
 
-To publish a new version of the Wildfire Explorer as an npm package:
+To publish a new version of the Fire Event Explorer as an npm package:
 
 ### Bump the version
 

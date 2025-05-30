@@ -42,7 +42,7 @@ const Header: React.FC = () => {
           </span>
         </a>
         <span className="font-public-sans font-sans-xs font-weight-bold text-ink margin-0 margin-right-1">
-          Wildfire Explorer
+          Fire Event Explorer
         </span>
       </div>
 
@@ -89,7 +89,7 @@ const Header: React.FC = () => {
               className="font-heading-xl text-ink margin-0 margin-bottom-2"
               id="fire-modal-heading"
             >
-              Wildfire Explorer
+              Fire Event Explorer
             </h1>
 
             <Tag className="border-radius-sm" background="#71767A">Last updated: {today}</Tag>
