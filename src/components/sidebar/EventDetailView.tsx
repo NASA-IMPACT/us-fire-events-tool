@@ -93,7 +93,7 @@ const EventDetails: React.FC<EventDetailsProps> = ({ onBack }) => {
 
         <div className="margin-bottom-2">
           <span className="font-body font-weight-regular font-sans-3xs text-base-dark">
-            {formatDate(startDate)} → {formatDate(endDate)}
+            Observations for {formatDate(endDate)}
           </span>
         </div>
 
