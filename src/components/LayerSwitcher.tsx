@@ -85,19 +85,19 @@ const LayerSwitcher: React.FC<LayerSwitcherProps> = ({
       </div>
 
       {layerItem(
-        'All perimeters (NRT)',
+        'Fire Perimeters',
         showPerimeterNrt,
         () => setShowPerimeterNrt(!showPerimeterNrt),
         loadingStates.perimeterNrt
       )}
       {layerItem(
-        'Firelines (NRT)',
+        'Active Fire Fronts',
         showFireline,
         () => setShowFireline(!showFireline),
         loadingStates.fireline
       )}
       {layerItem(
-        'New fire pixels (NRT)',
+        'Fire Detections',
         showNewFirepix,
         () => setShowNewFirepix(!showNewFirepix),
         loadingStates.newfirepix,

@@ -42,7 +42,7 @@ const Header: React.FC = () => {
           </span>
         </a>
         <span className="font-public-sans font-sans-xs font-weight-bold text-ink margin-0 margin-right-1">
-          Wildfire Explorer
+          Fire Event Explorer
         </span>
       </div>
 
@@ -89,31 +89,29 @@ const Header: React.FC = () => {
               className="font-heading-xl text-ink margin-0 margin-bottom-2"
               id="fire-modal-heading"
             >
-              Wildfire Explorer
+              Fire Event Explorer
             </h1>
 
             <Tag className="border-radius-sm" background="#71767A">Last updated: {today}</Tag>
 
             <p className="wildfire-explorer__modal-description font-sans-sm line-height-body-5 text-ink">
-              This tool visualizes fire data from VIIRS satellite observations over the past 20 days,
-              tracking active fires and fire perimeters to understand fire
-              progression. It processes data from the FEDs algorithm, which
-              uses VIIRS thermal sensors on Suomi NPP and NOAA-20 satellites.
+              This tool visualizes near real-time (NRT) satellite-based fire perimeters, active portions of fire perimeters 
+              (fire lines), and active fire pixel detections for the current year.
+            </p>
+
+            <p className="wildfire-explorer__modal-description font-sans-sm line-height-body-5 text-ink">
+              Use the bottom panel to select different date ranges or subset fires by size, duration, or intensity. Click on an 
+              individual fire to visualize the time series of fire growth every 12 hours and create video outputs in GIF or WebM formats.
             </p>
 
             <p className="wildfire-explorer__modal-description font-sans-sm line-height-body-5 text-ink margin-bottom-1">
-              Find out more:
+              These fire tracking data are from the Fire Event Data Suite (FEDS) algorithm. Find out more:
             </p>
 
             <ul className="wildfire-explorer__modal-list usa-list font-sans-sm margin-top-0 margin-bottom-4">
               <li>
-                <a href="https://earth-information-system.github.io/fireatlas/docs/" className="text-primary" target="_blank" rel="noopener noreferrer">
-                  Data source documentation
-                </a>
-              </li>
-              <li>
                 <a href="https://earth-information-system.github.io/fireatlas/docs/nrt.html#accessing-nrt-data" className="text-primary" target="_blank" rel="noopener noreferrer">
-                  Accessing the Near Real Time Data
+                  FEDS data source documentation
                 </a>
               </li>
               <li>
@@ -134,7 +132,6 @@ const Header: React.FC = () => {
                     type="checkbox"
                     id="dont-show-again"
                     className="usa-checkbox__input"
-                    defaultChecked
                     onChange={(e) =>
                       localStorage.setItem(
                         "hideFireModal",
@@ -160,6 +157,38 @@ const Header: React.FC = () => {
                 </svg>
               </button>
             </div>
+
+            <h2>Frequently Asked Questions</h2>
+
+            <h3>Q: What is NRT?</h3>
+            <p>
+              A: Near real-time (NRT) refers to data available 1 to 3 hours after an observation 
+              by an instrument aboard a space-based platform. FEDS data utilize NRT observations 
+              from the Visible Infrared Imaging Radiometer Suite (VIIRS) sensors. FEDS data update 
+              periodically each day based on new VIIRS observations within a few hours of initial 
+              satellite observation.
+            </p>
+
+            <h3>Q: What are the layers?</h3>
+            <p>
+              The <b>Fire Perimeters</b> layer shows the estimated fire-affected area as detected 
+              by the VIIRS sensor. The <b>Active Fire Front</b> layer shows the portion of 
+              the perimeter where active burning is detected. The <b>Fire Detections</b> layer 
+              shows the individual VIIRS pixel detections representing active fire activity.
+            </p>
+
+            <h3>Q: What can you do with this tool?</h3>
+            <p>
+              You can look at active fire perimeters
+              from the start of the calendar year up to today. By clicking on an individual fire 
+              perimeter, you can see its progression history in more detail, including how it spread 
+              over terrain and changed with wind direction. You can also save a movie or GIF showing 
+              its lifetime spread.
+            </p>
+
+
+
+            
           </div>
         </div>
       </Modal>
