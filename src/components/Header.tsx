@@ -107,7 +107,7 @@ const Header: React.FC = () => {
           <div className="wildfire-explorer__modal-main usa-modal__main">
             <div className="display-flex flex-align-center margin-bottom-3">
               <img
-                src="/NASA_logo.svg"
+                src="https://earthdata.nasa.gov/dashboard/NASA_logo.svg"
                 alt="NASA Logo"
                 className="height-4 margin-right-2"
                 aria-hidden="false"
