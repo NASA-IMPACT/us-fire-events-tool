@@ -11,7 +11,7 @@ export const INTERACTION_TIMEOUT = 500;
 export const FEATURES_COLLECTION_DEBOUNCE = 1500;
 export const WIND_DATA_FETCH_DEBOUNCE = 500;
 
-export const USA_BBOX = [-125.0, 24.5, -66.0, 49.5];
+export const USA_BBOX = [-165.0,24.5,-66.0,69.5];
 
 export const INITIAL_VIEW_STATE = {
     longitude: -95.7129,
