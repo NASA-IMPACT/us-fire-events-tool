@@ -18,6 +18,8 @@ interface AppState {
   showNewFirepix: boolean;
   showSatelliteImagery: boolean;
   mapBounds: [number, number, number, number] | null;
+  exportFormat: 'webm' | 'gif' | 'instagram';
+  isRecording: boolean;
 }
 
 type AppAction =
@@ -34,7 +36,9 @@ type AppAction =
   | { type: 'SET_SHOW_PERIMETER_NRT'; payload: boolean }
   | { type: 'SET_WIND_LAYER_TYPE'; payload: 'grid' | 'wind' | null }
   | { type: 'SET_SHOW_FIRELINE'; payload: boolean }
-  | { type: 'SET_SHOW_NEWFIREPIX'; payload: boolean };
+  | { type: 'SET_SHOW_NEWFIREPIX'; payload: boolean }
+  | { type: 'SET_EXPORT_FORMAT'; payload: 'webm' | 'gif' | 'instagram' }
+  | { type: 'SET_IS_RECORDING'; payload: boolean };
 
 const createStableDate = (date: Date | string): Date => {
   const stableDate = new Date(date);
@@ -68,7 +72,9 @@ const initialState: AppState = {
   showFireline: false,
   showNewFirepix: false,
   showSatelliteImagery: false,
-  mapBounds: null
+  mapBounds: null,
+  exportFormat: 'gif',
+  isRecording: false
 };
 
 const appReducer = (state: AppState, action: AppAction): AppState => {
@@ -123,6 +129,12 @@ const appReducer = (state: AppState, action: AppAction): AppState => {
     case 'SET_SHOW_NEWFIREPIX':
       return { ...state, showNewFirepix: action.payload };
 
+    case 'SET_EXPORT_FORMAT':
+      return { ...state, exportFormat: action.payload };
+
+    case 'SET_IS_RECORDING':
+      return { ...state, isRecording: action.payload };
+
     default:
       return state;
   }
@@ -143,6 +155,8 @@ interface AppContextValue extends AppState {
   setShowFireline: (enabled: boolean) => void;
   setShowNewFirepix: (enabled: boolean) => void;
   setWindLayerType: (type: 'grid' | 'wind' | null) => void;
+  setExportFormat: (format: 'webm' | 'gif' | 'instagram') => void;
+  setIsRecording: (recording: boolean) => void;
 }
 
 const AppStateContext = createContext<AppContextValue | undefined>(undefined);
@@ -202,6 +216,14 @@ export const AppStateProvider = ({ children }: { children: ReactNode }) => {
     dispatch({ type: 'SET_SHOW_NEWFIREPIX', payload: val });
   }, []);
 
+  const setExportFormat = useCallback((format: 'webm' | 'gif' | 'instagram') => {
+    dispatch({ type: 'SET_EXPORT_FORMAT', payload: format });
+  }, []);
+
+  const setIsRecording = useCallback((recording: boolean) => {
+    dispatch({ type: 'SET_IS_RECORDING', payload: recording });
+  }, []);
+
   const value: AppContextValue = {
     ...state,
     setViewMode,
@@ -217,7 +239,9 @@ export const AppStateProvider = ({ children }: { children: ReactNode }) => {
     setShowPerimeterNrt,
     setShowFireline,
     setShowNewFirepix,
-    windLayerType: state.windLayerType
+    windLayerType: state.windLayerType,
+    setExportFormat,
+    setIsRecording
   };
 
   return (

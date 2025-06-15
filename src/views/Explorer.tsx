@@ -124,6 +124,11 @@ const Explorer: React.FC = () => {
 
           <MapView onLoadingStatesChange={handleLoadingStatesChange} />
 
+          {/* Instagram Crop Overlay */}
+          {viewMode === 'detail' && selectedEventId && (
+            <InstagramCropOverlay />
+          )}
+
           {viewMode === 'detail' && selectedEventId ? (
             <div
               className="position-absolute bottom-0 z-top margin-bottom-2"
@@ -149,6 +154,76 @@ const Explorer: React.FC = () => {
             <EventDetails onBack={handleBackToList} />
           </div>
         )}
+      </div>
+    </div>
+  );
+};
+
+// Instagram Crop Overlay Component
+const InstagramCropOverlay: React.FC = () => {
+  const { exportFormat } = useAppState();
+  
+  // Only show overlay when Instagram format is selected
+  if (exportFormat !== 'instagram') {
+    return null;
+  }
+
+  return (
+    <div
+      className="position-absolute"
+      style={{
+        top: '50px', // Account for header
+        left: '0',
+        right: '0',
+        bottom: '0',
+        pointerEvents: 'none',
+        zIndex: 1000
+      }}
+    >
+      {/* Darkened overlay outside crop area */}
+      <div
+        style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.3)',
+          pointerEvents: 'none'
+        }}
+      />
+      
+      {/* Clear crop area - 9:16 aspect ratio */}
+      <div
+        style={{
+          position: 'absolute',
+          top: 0,
+          bottom: 0,
+          left: '50%',
+          transform: 'translateX(-50%)',
+          width: 'calc((100vh - 50px) * 9 / 16)', // 9:16 aspect ratio, accounting for header
+          border: '2px dashed #fff',
+          backgroundColor: 'transparent',
+          pointerEvents: 'none',
+          boxSizing: 'border-box'
+        }}
+      >
+        {/* Label */}
+        <div
+          style={{
+            position: 'absolute',
+            top: '10px',
+            left: '10px',
+            backgroundColor: 'rgba(0, 0, 0, 0.7)',
+            color: 'white',
+            padding: '4px 8px',
+            borderRadius: '4px',
+            fontSize: '12px',
+            fontWeight: 'bold'
+          }}
+        >
+          📱 Instagram Reels (9:16)
+        </div>
       </div>
     </div>
   );

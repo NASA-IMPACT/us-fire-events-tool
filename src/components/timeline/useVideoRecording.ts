@@ -17,6 +17,9 @@ interface UseRecordVideoProps {
   getCurrentPerimeter: () => Perimeter | null;
   animationCompleteRef: React.MutableRefObject<boolean>;
   baseFrameDelay: number;
+  exportFormat: 'webm' | 'gif' | 'instagram';
+  setExportFormat: (format: 'webm' | 'gif' | 'instagram') => void;
+  setIsRecording: (recording: boolean) => void;
 }
 
 /**
@@ -38,19 +41,37 @@ export default function useRecordVideo({
   setIsPlaying,
   getCurrentPerimeter,
   animationCompleteRef,
-  baseFrameDelay
+  baseFrameDelay,
+  exportFormat,
+  setExportFormat,
+  setIsRecording
 }: UseRecordVideoProps) {
-  const [isRecording, setIsRecording] = useState(false);
+  const [isRecording, setIsRecordingLocal] = useState(false);
   const [isPreparingToRecord, setIsPreparingToRecord] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
   const [videoFps, setVideoFps] = useState(1);
   const [speedMultiplier, setSpeedMultiplier] = useState(1);
-  const [exportFormat, setExportFormat] = useState<'webm' | 'gif'>('gif');
 
   const webmWriterRef = useRef<WebMWriter | null>(null);
   const capturedGifFrames = useRef<HTMLCanvasElement[]>([]);
   const recordingEndTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isRecordingRef = useRef(false);
+  const nasaLogoRef = useRef<HTMLImageElement | null>(null);
+
+  // Load NASA logo
+  useEffect(() => {
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => {
+      nasaLogoRef.current = img;
+      console.log('NASA logo loaded successfully');
+    };
+    img.onerror = (e) => {
+      console.warn('Failed to load NASA logo:', e);
+    };
+    // Use the NASA logo PNG from public folder
+    img.src = '/nasa-logo.png';
+  }, []);
 
   const interval =
     baseFrameDelay >= 500 ? 0.5 :
@@ -60,20 +81,72 @@ export default function useRecordVideo({
     if (!isRecordingRef.current) return;
 
     const deckCanvas = document.getElementById('deckgl-overlay') as HTMLCanvasElement | null;
-    if (!deckCanvas) return;
+    if (!deckCanvas) {
+      console.warn('Deck canvas not found');
+      return;
+    }
 
-    const c = document.createElement('canvas');
-    c.width = deckCanvas.width;
-    c.height = deckCanvas.height;
+    let c: HTMLCanvasElement;
+    let ctx: CanvasRenderingContext2D | null;
 
-    const ctx = c.getContext('2d', { alpha: false });
-    if (!ctx) return;
+    if (exportFormat === 'instagram') {
+      // For Instagram, create a 9:16 aspect ratio canvas
+      const aspectRatio = 9 / 16;
+      const canvasHeight = deckCanvas.height;
+      const canvasWidth = canvasHeight * aspectRatio;
+      
+      console.log('Instagram capture:', {
+        originalCanvas: { width: deckCanvas.width, height: deckCanvas.height },
+        targetCanvas: { width: canvasWidth, height: canvasHeight },
+        aspectRatio
+      });
+      
+      c = document.createElement('canvas');
+      c.width = canvasWidth;
+      c.height = canvasHeight;
+      
+      ctx = c.getContext('2d', { alpha: false });
+      if (!ctx) {
+        console.warn('Could not get canvas context');
+        return;
+      }
+      
+      // Fill with black background
+      ctx.fillStyle = 'black';
+      ctx.fillRect(0, 0, c.width, c.height);
+      
+      // Calculate the center crop area from the original canvas
+      const sourceX = (deckCanvas.width - canvasWidth) / 2;
+      const sourceY = 0;
+      const sourceWidth = canvasWidth;
+      const sourceHeight = canvasHeight;
+      
+      console.log('Crop area:', { sourceX, sourceY, sourceWidth, sourceHeight });
+      
+      // Draw the cropped portion of the deck canvas
+      ctx.drawImage(
+        deckCanvas,
+        sourceX, sourceY, sourceWidth, sourceHeight,
+        0, 0, c.width, c.height
+      );
+    } else {
+      // For other formats, use the full canvas
+      c = document.createElement('canvas');
+      c.width = deckCanvas.width;
+      c.height = deckCanvas.height;
 
-    ctx.fillRect(0, 0, c.width, c.height);
-    ctx.drawImage(deckCanvas, 0, 0);
+      ctx = c.getContext('2d', { alpha: false });
+      if (!ctx) return;
+
+      ctx.fillRect(0, 0, c.width, c.height);
+      ctx.drawImage(deckCanvas, 0, 0);
+    }
 
     const perimeter = getCurrentPerimeter();
-    if (!perimeter?.time) return;
+    if (!perimeter?.time) {
+      console.warn('No perimeter time available');
+      return;
+    }
 
     const ts = format(perimeter.time, 'yyyy-MM-dd HH:mm');
     ctx.font = '64px sans-serif';
@@ -85,9 +158,35 @@ export default function useRecordVideo({
     ctx.strokeText(ts, c.width - 32, 32);
     ctx.fillText(ts, c.width - 32, 32);
 
+    // Add NASA logo in bottom right corner
+    if (nasaLogoRef.current) {
+      const logoSize = Math.min(c.width * 0.1, 120); // 10% of width, max 120px
+      const logoX = c.width - logoSize - 20; // 20px margin from right
+      const logoY = c.height - logoSize - 20; // 20px margin from bottom
+      
+      try {
+        ctx.drawImage(
+          nasaLogoRef.current,
+          logoX,
+          logoY,
+          logoSize,
+          logoSize
+        );
+      } catch (e) {
+        console.warn('Failed to draw NASA logo:', e);
+      }
+    }
+
+    console.log('Frame captured:', {
+      format: exportFormat,
+      canvasSize: { width: c.width, height: c.height },
+      hasWebMWriter: !!webmWriterRef.current,
+      timestamp: ts
+    });
+
     if (webmWriterRef.current) webmWriterRef.current.addFrame(c);
     capturedGifFrames.current.push(c);
-  }, [getCurrentPerimeter]);
+  }, [getCurrentPerimeter, exportFormat]);
 
   const prepareToRecord = useCallback(() => {
     if (!show3DMap) toggle3DMap();
@@ -103,10 +202,11 @@ export default function useRecordVideo({
 
     setIsPreparingToRecord(false);
     isRecordingRef.current = true;
-    setIsRecording(true);
+    setIsRecordingLocal(true);
+    setIsRecording(true); // Update global state
     animationCompleteRef.current = false;
 
-    webmWriterRef.current = exportFormat === 'webm'
+    webmWriterRef.current = exportFormat === 'webm' || exportFormat === 'instagram'
       ? new WebMWriter({
           quality: 0.95,
           frameRate: 1000 / baseFrameDelay,
@@ -120,12 +220,13 @@ export default function useRecordVideo({
     setTimeout(() => setIsPlaying(true), 500);
   }, [exportFormat, baseFrameDelay, resetAnimation, setIsPlaying, animationCompleteRef]);
 
-  const stopRecording = useCallback(() => {
+  const stopRecording = useCallback(async () => {
     if (!isRecordingRef.current) {
-      setIsRecording(false);
+      setIsRecordingLocal(false);
+      setIsRecording(false); // Update global state
       setIsPreparingToRecord(false);
       setIsExporting(false);
-      return;
+      return null;
     }
 
     if (recordingEndTimeoutRef.current) clearTimeout(recordingEndTimeoutRef.current);
@@ -136,10 +237,19 @@ export default function useRecordVideo({
 
     const finalize = async () => {
       try {
-        if (exportFormat === 'webm' && webmWriterRef.current) {
+        let resultBlob = null;
+        
+        if ((exportFormat === 'webm' || exportFormat === 'instagram') && webmWriterRef.current) {
           const blob = await webmWriterRef.current.complete();
           const url = URL.createObjectURL(blob);
-          triggerDownload(url, 'webm');
+          
+          if (exportFormat === 'instagram') {
+            triggerDownload(url, 'instagram');
+          } else {
+            triggerDownload(url, 'webm');
+          }
+          
+          resultBlob = blob;
         }
 
         if (exportFormat === 'gif' && capturedGifFrames.current.length > 0) {
@@ -164,19 +274,42 @@ export default function useRecordVideo({
           const url = URL.createObjectURL(blob);
           triggerDownload(url, 'gif');
         }
+        
+        setIsRecordingLocal(false);
+        setIsRecording(false); // Update global state
+        setIsPreparingToRecord(false);
+        setIsExporting(false);
+        capturedGifFrames.current = [];
+        webmWriterRef.current = null;
+        
+        return resultBlob;
       } catch (err) {
         console.error('Error exporting video:', err);
+        setIsRecordingLocal(false);
+        setIsRecording(false); // Update global state
+        setIsPreparingToRecord(false);
+        setIsExporting(false);
+        return null;
       }
-
-      setIsRecording(false);
-      setIsPreparingToRecord(false);
-      setIsExporting(false);
-      capturedGifFrames.current = [];
-      webmWriterRef.current = null;
     };
 
-    finalize();
+    return await finalize();
   }, [exportFormat, setIsPlaying, interval]);
+
+  // New function to get WebM blob for social media export
+  const getWebMBlob = useCallback(async (): Promise<Blob | null> => {
+    if (exportFormat !== 'webm' || !webmWriterRef.current) {
+      console.warn('WebM format not available for social media export');
+      return null;
+    }
+    
+    try {
+      return await webmWriterRef.current.complete();
+    } catch (err) {
+      console.error('Error getting WebM blob:', err);
+      return null;
+    }
+  }, [exportFormat]);
 
   const handleExportVideo = useCallback(() => {
     if (isRecordingRef.current) stopRecording();
@@ -198,19 +331,21 @@ export default function useRecordVideo({
     setVideoFps,
     speedMultiplier,
     setSpeedMultiplier,
-    exportFormat,
-    setExportFormat,
     isRecordingRef,
     captureFrame,
     handleExportVideo,
-    stopRecording
+    stopRecording,
+    getWebMBlob
   };
 }
 
-function triggerDownload(url: string, ext: 'webm' | 'gif') {
+function triggerDownload(url: string, ext: 'webm' | 'gif' | 'instagram') {
+  const fileExt = ext === 'instagram' ? 'mp4' : ext;
+  const fileName = ext === 'instagram' ? 'instagram-reel' : 'fire-animation';
+  
   const a = Object.assign(document.createElement('a'), {
     href: url,
-    download: `fire-animation-${format(new Date(), 'yyyy-MM-dd_HH-mm-ss')}.${ext}`
+    download: `${fileName}-${format(new Date(), 'yyyy-MM-dd_HH-mm-ss')}.${fileExt}`
   });
   document.body.appendChild(a);
   a.click();

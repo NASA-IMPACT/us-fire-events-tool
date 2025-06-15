@@ -1,0 +1,1 @@
+# This folder contains placeholder assets\n# The NASA logo should be saved to public/nasa-logo.png instead\n

@@ -25,7 +25,11 @@ const DetailedTimeChart = () => {
     setWindLayerType,
     setTimeRange,
     show3DMap,
-    toggle3DMap
+    toggle3DMap,
+    exportFormat,
+    setExportFormat,
+    isRecording: globalIsRecording,
+    setIsRecording
   } = useAppState();
 
   const [sliderValue, setSliderValue] = useState(0);
@@ -52,13 +56,12 @@ const DetailedTimeChart = () => {
     isRecording,
     isPreparingToRecord,
     isExporting,
-    exportFormat,
-    setExportFormat,
     speedMultiplier,
     captureFrame,
     handleExportVideo,
     stopRecording,
-    isRecordingRef
+    isRecordingRef,
+    getWebMBlob
   } = useRecordVideo({
     show3DMap,
     toggle3DMap,
@@ -68,7 +71,10 @@ const DetailedTimeChart = () => {
     setIsPlaying,
     getCurrentPerimeter,
     animationCompleteRef,
-    baseFrameDelay
+    baseFrameDelay,
+    exportFormat,
+    setExportFormat,
+    setIsRecording
   });
 
   const {
@@ -429,7 +435,6 @@ const DetailedTimeChart = () => {
 
 export default DetailedTimeChart;
 
-
 const YAxisSelector = ({ selectedYAxis, onChange }) => (
   <div className="display-flex flex-align-center">
     <span className="margin-right-1 font-body-3xs font-weight-regular color-base-ink">
@@ -529,6 +534,7 @@ const ExportSettings = ({ exportFormat, setExportFormat, baseFrameDelay, setBase
       >
         <option value="webm">WebM</option>
         <option value="gif">GIF</option>
+        <option value="instagram">Instagram Reels</option>
       </select>
     </div>
 
