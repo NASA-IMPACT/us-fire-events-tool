@@ -262,8 +262,8 @@ export default function useRecordVideo({
 
     animationCompleteRef.current = false;
     setIsPreparingToRecord(true);
-    resetAnimation();
-  }, [show3DMap, toggle3DMap, windLayerType, setWindLayerType, animationCompleteRef, resetAnimation]);
+    // Removed resetAnimation() - keep slider at current position
+  }, [show3DMap, toggle3DMap, windLayerType, setWindLayerType, animationCompleteRef]);
 
   const startRecording = useCallback(() => {
     if (recordingEndTimeoutRef.current) clearTimeout(recordingEndTimeoutRef.current);
@@ -284,9 +284,9 @@ export default function useRecordVideo({
       : null;
 
     capturedGifFrames.current = [];
-    resetAnimation();
+    // Removed resetAnimation() - recording starts from current slider position
     setTimeout(() => setIsPlaying(true), 500);
-  }, [exportFormat, baseFrameDelay, resetAnimation, setIsPlaying, animationCompleteRef]);
+  }, [exportFormat, baseFrameDelay, setIsPlaying, animationCompleteRef]);
 
   const stopRecording = useCallback(async () => {
     if (!isRecordingRef.current) {

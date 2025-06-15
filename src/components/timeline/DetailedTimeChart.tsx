@@ -426,7 +426,7 @@ const DetailedTimeChart = () => {
           marks={timePointIndexes.length > 0}
           markClassName="slider-mark"
           ariaLabel="Fire perimeter time"
-          disabled={isRecording || isPreparingToRecord}
+          disabled={isRecording}  // Only disable during recording, allow adjustment during prepare
         />
       </div>
     </div>
@@ -466,7 +466,7 @@ const PlaybackControls = ({
       className="control-button padding-1"
       onClick={togglePlayback}
       aria-label={isPlaying ? 'Pause' : 'Play'}
-      disabled={isRecording || isPreparingToRecord}
+      disabled={isRecording}  // Only disable during recording
     >
       {isPlaying ? <Pause size={12} /> : <Play size={16} />}
     </button>
@@ -474,7 +474,7 @@ const PlaybackControls = ({
       className="control-button padding-1 margin-left-1"
       onClick={resetAnimation}
       aria-label="Reset"
-      disabled={isRecording || isPreparingToRecord}
+      disabled={isRecording}  // Only disable during recording
     >
       <RotateCw size={16} />
     </button>
