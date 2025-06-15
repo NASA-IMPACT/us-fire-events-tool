@@ -172,7 +172,7 @@ const InstagramCropOverlay: React.FC = () => {
     <div
       className="position-absolute"
       style={{
-        top: '50px', // Account for header
+        top: '50px', // Start just below the header
         left: '0',
         right: '0',
         bottom: '0',
@@ -180,50 +180,66 @@ const InstagramCropOverlay: React.FC = () => {
         zIndex: 1000
       }}
     >
-      {/* Darkened overlay outside crop area */}
+      {/* Calculate 9:16 crop area dimensions */}
       <div
         style={{
           position: 'absolute',
           top: 0,
+          bottom: 0,
           left: 0,
           right: 0,
-          bottom: 0,
-          backgroundColor: 'rgba(0, 0, 0, 0.3)',
-          pointerEvents: 'none'
-        }}
-      />
-      
-      {/* Clear crop area - 9:16 aspect ratio */}
-      <div
-        style={{
-          position: 'absolute',
-          top: 0,
-          bottom: 0,
-          left: '50%',
-          transform: 'translateX(-50%)',
-          width: 'calc((100vh - 50px) * 9 / 16)', // 9:16 aspect ratio, accounting for header
-          border: '2px dashed #fff',
-          backgroundColor: 'transparent',
-          pointerEvents: 'none',
-          boxSizing: 'border-box'
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'stretch'
         }}
       >
-        {/* Label */}
+        {/* Left dark area */}
         <div
           style={{
-            position: 'absolute',
-            top: '10px',
-            left: '10px',
-            backgroundColor: 'rgba(0, 0, 0, 0.7)',
-            color: 'white',
-            padding: '4px 8px',
-            borderRadius: '4px',
-            fontSize: '12px',
-            fontWeight: 'bold'
+            flex: '1',
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            maxWidth: 'calc((100vw - (100vh - 50px) * 9 / 16) / 2)'
+          }}
+        />
+        
+        {/* Center crop area - bright/clear */}
+        <div
+          style={{
+            width: 'calc((100vh - 50px) * 9 / 16)', // 9:16 aspect ratio based on available height below header
+            minWidth: '200px', // Minimum width
+            maxWidth: '100vw', // Don't exceed viewport
+            border: '2px dashed #fff',
+            backgroundColor: 'transparent',
+            position: 'relative',
+            boxSizing: 'border-box'
           }}
         >
-          📱 Instagram Reels (9:16)
+          {/* Label */}
+          <div
+            style={{
+              position: 'absolute',
+              top: '10px',
+              left: '10px',
+              backgroundColor: 'rgba(0, 0, 0, 0.7)',
+              color: 'white',
+              padding: '4px 8px',
+              borderRadius: '4px',
+              fontSize: '12px',
+              fontWeight: 'bold'
+            }}
+          >
+            📱 Instagram Reels (9:16)
+          </div>
         </div>
+        
+        {/* Right dark area */}
+        <div
+          style={{
+            flex: '1',
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            maxWidth: 'calc((100vw - (100vh - 50px) * 9 / 16) / 2)'
+          }}
+        />
       </div>
     </div>
   );
