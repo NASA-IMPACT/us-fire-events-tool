@@ -2,6 +2,8 @@ import { useState, useRef, useCallback, useEffect } from 'react';
 import { format } from 'date-fns';
 import WebMWriter from 'webm-writer';
 import { GIFBuilder } from '@loaders.gl/video';
+import { FFmpeg } from '@ffmpeg/ffmpeg';
+import { fetchFile } from '@ffmpeg/util';
 
 interface Perimeter {
   time?: Date;
@@ -57,6 +59,7 @@ export default function useRecordVideo({
   const recordingEndTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isRecordingRef = useRef(false);
   const nasaLogoRef = useRef<HTMLImageElement | null>(null);
+  const ffmpegRef = useRef<FFmpeg | null>(null);
 
   // Load NASA logo
   useEffect(() => {
@@ -71,6 +74,67 @@ export default function useRecordVideo({
     };
     // Use the NASA logo PNG from public folder
     img.src = '/nasa-logo.png';
+  }, []);
+
+  // Initialize FFmpeg for Instagram MP4 conversion
+  useEffect(() => {
+    const initFFmpeg = async () => {
+      try {
+        const ffmpeg = new FFmpeg();
+        ffmpeg.on('log', ({ message }) => {
+          console.log('FFmpeg:', message);
+        });
+        await ffmpeg.load({
+          coreURL: 'https://unpkg.com/@ffmpeg/core@0.12.6/dist/esm/ffmpeg-core.js',
+          wasmURL: 'https://unpkg.com/@ffmpeg/core@0.12.6/dist/esm/ffmpeg-core.wasm'
+        });
+        ffmpegRef.current = ffmpeg;
+        console.log('FFmpeg loaded successfully');
+      } catch (error) {
+        console.warn('FFmpeg failed to load:', error);
+      }
+    };
+
+    initFFmpeg();
+  }, []);
+
+  // Convert WebM to MP4 using FFmpeg
+  const convertWebMToMP4 = useCallback(async (webmBlob: Blob): Promise<Blob | null> => {
+    if (!ffmpegRef.current) {
+      console.warn('FFmpeg not available, downloading as WebM with MP4 extension');
+      return webmBlob;
+    }
+
+    try {
+      const ffmpeg = ffmpegRef.current;
+      
+      // Write WebM file to FFmpeg filesystem
+      await ffmpeg.writeFile('input.webm', await fetchFile(webmBlob));
+      
+      // Convert WebM to MP4 with H.264 codec optimized for social media
+      await ffmpeg.exec([
+        '-i', 'input.webm',
+        '-c:v', 'libx264',
+        '-preset', 'medium',
+        '-crf', '23',
+        '-pix_fmt', 'yuv420p',
+        '-movflags', '+faststart',
+        'output.mp4'
+      ]);
+      
+      // Read the converted MP4 file
+      const mp4Data = await ffmpeg.readFile('output.mp4');
+      
+      // Clean up FFmpeg filesystem
+      await ffmpeg.deleteFile('input.webm');
+      await ffmpeg.deleteFile('output.mp4');
+      
+      // Return MP4 blob
+      return new Blob([mp4Data], { type: 'video/mp4' });
+    } catch (error) {
+      console.error('FFmpeg conversion failed:', error);
+      return webmBlob; // Fallback to original WebM
+    }
   }, []);
 
   const interval =
@@ -142,21 +206,25 @@ export default function useRecordVideo({
       ctx.drawImage(deckCanvas, 0, 0);
     }
 
-    const perimeter = getCurrentPerimeter();
-    if (!perimeter?.time) {
-      console.warn('No perimeter time available');
-      return;
-    }
+    // Add timestamp overlay for all formats except Instagram
+    let ts: string | undefined;
+    if (exportFormat !== 'instagram') {
+      const perimeter = getCurrentPerimeter();
+      if (!perimeter?.time) {
+        console.warn('No perimeter time available');
+        return;
+      }
 
-    const ts = format(perimeter.time, 'yyyy-MM-dd HH:mm');
-    ctx.font = '64px sans-serif';
-    ctx.fillStyle = 'white';
-    ctx.strokeStyle = 'black';
-    ctx.lineWidth = 3;
-    ctx.textAlign = 'right';
-    ctx.textBaseline = 'top';
-    ctx.strokeText(ts, c.width - 32, 32);
-    ctx.fillText(ts, c.width - 32, 32);
+      ts = format(perimeter.time, 'yyyy-MM-dd HH:mm');
+      ctx.font = '64px sans-serif';
+      ctx.fillStyle = 'white';
+      ctx.strokeStyle = 'black';
+      ctx.lineWidth = 3;
+      ctx.textAlign = 'right';
+      ctx.textBaseline = 'top';
+      ctx.strokeText(ts, c.width - 32, 32);
+      ctx.fillText(ts, c.width - 32, 32);
+    }
 
     // Add NASA logo in bottom right corner
     if (nasaLogoRef.current) {
@@ -181,7 +249,7 @@ export default function useRecordVideo({
       format: exportFormat,
       canvasSize: { width: c.width, height: c.height },
       hasWebMWriter: !!webmWriterRef.current,
-      timestamp: ts
+      timestamp: ts || 'none (Instagram format)'
     });
 
     if (webmWriterRef.current) webmWriterRef.current.addFrame(c);
@@ -240,16 +308,25 @@ export default function useRecordVideo({
         let resultBlob = null;
         
         if ((exportFormat === 'webm' || exportFormat === 'instagram') && webmWriterRef.current) {
-          const blob = await webmWriterRef.current.complete();
-          const url = URL.createObjectURL(blob);
+          const webmBlob = await webmWriterRef.current.complete();
           
           if (exportFormat === 'instagram') {
-            triggerDownload(url, 'instagram');
+            // Convert WebM to proper MP4 for Instagram
+            console.log('Converting WebM to MP4 for Instagram...');
+            const mp4Blob = await convertWebMToMP4(webmBlob);
+            if (mp4Blob) {
+              const url = URL.createObjectURL(mp4Blob);
+              triggerDownload(url, 'instagram');
+              resultBlob = mp4Blob;
+            } else {
+              console.error('MP4 conversion failed');
+              return null;
+            }
           } else {
+            const url = URL.createObjectURL(webmBlob);
             triggerDownload(url, 'webm');
+            resultBlob = webmBlob;
           }
-          
-          resultBlob = blob;
         }
 
         if (exportFormat === 'gif' && capturedGifFrames.current.length > 0) {
