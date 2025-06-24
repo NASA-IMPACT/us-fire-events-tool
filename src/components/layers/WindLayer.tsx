@@ -1,6 +1,5 @@
 import * as WeatherLayers from 'weatherlayers-gl';
 import { ClipExtension } from '@deck.gl/extensions';
-import { USA_BBOX } from './config/constants';
 
 /**
  * Creates a wind particle layer
@@ -12,6 +11,7 @@ import { USA_BBOX } from './config/constants';
  * @param {number} options.opacity - Layer opacity (0-100)
  * @return {Promise<ParticleLayer>} Configured particle layer
  */
+
 export const createWindLayer = async ({
   timeRangeEnd,
   particleCount = 2000,
@@ -51,9 +51,9 @@ export const createWindLayer = async ({
       image: image,
       imageType: 'VECTOR',
       imageUnscale: [-127, 128],
-      bounds: [-130, 20, -60, 55],
+      bounds: [-134.1214, 21.1222, -60.8912, 52.6287],
+      clipBounds: [-134.1214, 21.1222, -60.8912, 52.6287],
       extensions: [new ClipExtension()],
-      clipBounds: USA_BBOX,
       numParticles: particleCount,
       color: [97, 173, 234, 255],
       fadeOpacity: opacity / 100,

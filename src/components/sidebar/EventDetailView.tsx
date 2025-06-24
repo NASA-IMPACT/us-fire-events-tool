@@ -1,26 +1,64 @@
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { format } from 'date-fns';
 import { useAppState } from '../../contexts/AppStateContext';
-import { useEvents, getFeatureProperties, getFireId, MVTFeature } from '../../contexts/EventsContext';
+import {
+  useEvents,
+  getFeatureProperties,
+  getFireId,
+  MVTFeature,
+} from '../../contexts/EventsContext';
 import ReactSlider from 'react-slider';
 import { useMap } from '../../contexts/MapContext';
-import { ToggleSlider } from "react-toggle-slider";
+import { ToggleSlider } from 'react-toggle-slider';
 
 import './event-detail-view.scss';
 import { Loader2 } from 'lucide-react';
+import { Icon } from '@trussworks/react-uswds';
+import { useEnv } from '../../contexts/EnvContext';
+import DownloadMenu from './DownloadMenu';
 
 interface EventDetailsProps {
   onBack: () => void;
 }
 
 const EventDetails: React.FC<EventDetailsProps> = ({ onBack }) => {
-  const { selectedEventId, firePerimeters, firePerimetersLoading } = useEvents();
-  const { windLayerType, setWindLayerType, show3DMap, toggle3DMap } = useAppState();
+  const { selectedEventId, firePerimeters, firePerimetersLoading } =
+    useEvents();
+  const { windLayerType, setWindLayerType, show3DMap, toggle3DMap } =
+    useAppState();
   const { layerOpacity, setLayerOpacity } = useMap();
+  const [downloadFormat, setDownloadFormat] = useState<'geojson' | 'csv'>(
+    'geojson'
+  );
+  const [downloadLayers, setDownloadLayers] = useState({
+    perimeter: true,
+    fireline: false,
+    firepixels: false,
+  });
+  const { featuresApiEndpoint } = useEnv();
+  const [downloading, setDownloading] = useState(false);
+
+  const [showDownloadMenu, setShowDownloadMenu] = useState(false);
+  const downloadRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (
+        downloadRef.current &&
+        !downloadRef.current.contains(e.target as Node)
+      ) {
+        setShowDownloadMenu(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const selectedEvent = useMemo(() => {
     if (!selectedEventId || !firePerimeters?.features?.length) return null;
-    return firePerimeters.features[firePerimeters.features.length - 1] as MVTFeature;
+    return firePerimeters.features[
+      firePerimeters.features.length - 1
+    ] as MVTFeature;
   }, [selectedEventId, firePerimeters]);
 
   const eventProperties = useMemo(() => {
@@ -32,7 +70,9 @@ const EventDetails: React.FC<EventDetailsProps> = ({ onBack }) => {
     return (
       <div className="padding-2 display-flex flex-column flex-align-center flex-justify-center">
         <Loader2 size={16} className="spin margin-bottom-1" />
-        <p className="font-sans-3xs text-base-dark">Loading event details, please wait…</p>
+        <p className="font-sans-3xs text-base-dark">
+          Loading event details, please wait…
+        </p>
       </div>
     );
   }
@@ -53,20 +93,31 @@ const EventDetails: React.FC<EventDetailsProps> = ({ onBack }) => {
   const eventName = eventProperties.name || `Fire Event ${fireId}`;
 
   const endDate = eventProperties.t ? new Date(eventProperties.t) : null;
-  const startDate = endDate && eventProperties.duration ?
-    new Date(endDate.getTime() - (eventProperties.duration * 24 * 60 * 60 * 1000)) :
-    null;
+  const startDate =
+    endDate && eventProperties.duration
+      ? new Date(
+          endDate.getTime() - eventProperties.duration * 24 * 60 * 60 * 1000
+        )
+      : null;
 
   const formatDate = (date: Date | null) => {
     if (!date) return 'Unknown';
     return format(date, 'MMM d, yyyy');
   };
 
-  const area = eventProperties.farea ? Number(eventProperties.farea).toFixed(2) : '0.00';
+  const area = eventProperties.farea
+    ? Number(eventProperties.farea).toFixed(2)
+    : '0.00';
   const durationDays = eventProperties.duration ? eventProperties.duration : 0;
-  const meanFRP = eventProperties.meanfrp ? Number(eventProperties.meanfrp).toFixed(2) : '0.00';
-  const perimeter = eventProperties.fperim ? Number(eventProperties.fperim).toFixed(2) : '0.00';
-  const pixelDensity = eventProperties.pixden ? Number(eventProperties.pixden).toFixed(2) : '0.00';
+  const meanFRP = eventProperties.meanfrp
+    ? Number(eventProperties.meanfrp).toFixed(2)
+    : '0.00';
+  const perimeter = eventProperties.fperim
+    ? Number(eventProperties.fperim).toFixed(2)
+    : '0.00';
+  const pixelDensity = eventProperties.pixden
+    ? Number(eventProperties.pixden).toFixed(2)
+    : '0.00';
   const newPixels = eventProperties.n_newpixels || 0;
   const totalPixels = eventProperties.n_pixels || 0;
 
@@ -77,18 +128,52 @@ const EventDetails: React.FC<EventDetailsProps> = ({ onBack }) => {
           className="usa-button usa-button--unstyled text-base-dark display-flex flex-align-center"
           onClick={onBack}
         >
-          <svg className="margin-right-1" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M20 11H7.83L13.42 5.41L12 4L4 12L12 20L13.41 18.59L7.83 13H20V11Z" fill="currentColor"/>
+          <svg
+            className="margin-right-1"
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M20 11H7.83L13.42 5.41L12 4L4 12L12 20L13.41 18.59L7.83 13H20V11Z"
+              fill="currentColor"
+            />
           </svg>
-          <span className="font-body font-weight-regular font-sans-3xs text-underline">Back to all fire events</span>
+          <span className="font-body font-weight-regular font-sans-3xs text-underline">
+            Back to all fire events
+          </span>
         </button>
       </div>
 
       <div className="padding-x-3 padding-y-2 overflow-auto flex-fill">
-        <div className="display-flex flex-align-center margin-bottom-1">
-          <h1 className={`font-body font-weight-700 font-sans-lg margin-0 ${isActive ? 'text-error' : 'text-base-ink'}`}>
+        <div className="display-flex flex-justify flex-align-center margin-bottom-1">
+          <h1
+            className={`font-body font-weight-700 font-sans-lg margin-0 ${
+              isActive ? 'text-error' : 'text-base-ink'
+            }`}
+          >
             {eventName}
           </h1>
+
+          <div className="position-relative margin-left-2" ref={downloadRef}>
+            <button
+              className="usa-button usa-button--unstyled"
+              aria-label="Download fire event data"
+              onClick={() => setShowDownloadMenu((prev) => !prev)}
+            >
+              <Icon.FileDownload size={3} color="#71767A" />
+            </button>
+
+            {showDownloadMenu && (
+              <DownloadMenu
+                fireId={fireId}
+                featuresApiEndpoint={featuresApiEndpoint}
+                onClose={() => setShowDownloadMenu(false)}
+              />
+            )}
+          </div>
         </div>
 
         <div className="margin-bottom-2">
@@ -99,16 +184,21 @@ const EventDetails: React.FC<EventDetailsProps> = ({ onBack }) => {
 
         <div className="display-flex flex-row margin-bottom-2 grid-gap-3">
           <div className="border-1px border-base-lighter radius-md padding-y-1 padding-x-2 flex-fill margin-right-2">
-            <h3 className="margin-0 margin-bottom-1 font-body font-weight-bold font-sans-3xs text-base">Area</h3>
+            <h3 className="margin-0 margin-bottom-1 font-body font-weight-bold font-sans-3xs text-base">
+              Area
+            </h3>
             <div className="margin-0 font-body font-weight-bold font-sans-lg text-base-ink">
               <span>{area}</span> <span className="font-sans-xs">km²</span>
             </div>
           </div>
 
           <div className="border-1px border-base-lighter radius-md padding-y-1 padding-x-2 flex-fill">
-            <h3 className="margin-0 margin-bottom-1 font-body font-weight-bold font-sans-3xs text-base">Duration</h3>
+            <h3 className="margin-0 margin-bottom-1 font-body font-weight-bold font-sans-3xs text-base">
+              Duration
+            </h3>
             <div className="margin-0 font-body font-weight-bold font-sans-lg text-base-ink">
-              <span>{durationDays}</span> <span className="font-sans-xs">days</span>
+              <span>{durationDays}</span>{' '}
+              <span className="font-sans-xs">days</span>
             </div>
           </div>
         </div>
@@ -118,9 +208,14 @@ const EventDetails: React.FC<EventDetailsProps> = ({ onBack }) => {
             <h3 className="margin-0 margin-bottom-1 font-body font-weight-bold font-sans-3xs text-base display-flex flex-align-center">
               Mean FRP
               <span className="margin-left-1 text-base">
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-                  <path d="M8 0C3.6 0 0 3.6 0 8s3.6 8 8 8 8-3.6 8-8-3.6-8-8-8zm0 14c-3.3 0-6-2.7-6-6s2.7-6 6-6 6 2.7 6 6-2.7 6-6 6z"/>
-                  <path d="M9 4H7v5h2V4zm0 6H7v2h2v-2z"/>
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 16 16"
+                  fill="currentColor"
+                >
+                  <path d="M8 0C3.6 0 0 3.6 0 8s3.6 8 8 8 8-3.6 8-8-3.6-8-8-8zm0 14c-3.3 0-6-2.7-6-6s2.7-6 6-6 6 2.7 6 6-2.7 6-6 6z" />
+                  <path d="M9 4H7v5h2V4zm0 6H7v2h2v-2z" />
                 </svg>
               </span>
             </h3>
@@ -130,7 +225,9 @@ const EventDetails: React.FC<EventDetailsProps> = ({ onBack }) => {
           </div>
 
           <div className="border-1px border-base-lighter radius-md padding-y-1 padding-x-2 flex-fill">
-            <h3 className="margin-0 margin-bottom-1 font-body font-weight-bold font-sans-3xs text-base">Perimeter</h3>
+            <h3 className="margin-0 margin-bottom-1 font-body font-weight-bold font-sans-3xs text-base">
+              Perimeter
+            </h3>
             <div className="margin-0 font-body font-weight-bold font-sans-lg text-base-ink">
               <span>{perimeter}</span> <span className="font-sans-xs">km</span>
             </div>
@@ -141,44 +238,75 @@ const EventDetails: React.FC<EventDetailsProps> = ({ onBack }) => {
           <table className="usa-table usa-table--borderless width-full margin-bottom-0 border-base-darker">
             <tbody>
               <tr className="border-base-darker">
-                <th scope="row" className="font-body font-weight-regular font-sans-3xs text-base-ink padding-y-2 padding-x-0 border-base-darker border-top-0">Pixel density</th>
-                <td className="font-body font-weight-regular font-sans-3xs text-base-ink text-right padding-y-2 padding-x-0 border-base-darker border-top-0">{pixelDensity} px/km²</td>
+                <th
+                  scope="row"
+                  className="font-body font-weight-regular font-sans-3xs text-base-ink padding-y-2 padding-x-0 border-base-darker border-top-0"
+                >
+                  Pixel density
+                </th>
+                <td className="font-body font-weight-regular font-sans-3xs text-base-ink text-right padding-y-2 padding-x-0 border-base-darker border-top-0">
+                  {pixelDensity} px/km²
+                </td>
               </tr>
               <tr className="border-base-darker">
-                <th scope="row" className="font-body font-weight-regular font-sans-3xs text-base-ink padding-y-2 padding-x-0 border-base-darker">New pixels</th>
-                <td className="font-body font-weight-regular font-sans-3xs text-base-ink text-right padding-y-2 padding-x-0 border-base-darker">{newPixels}</td>
+                <th
+                  scope="row"
+                  className="font-body font-weight-regular font-sans-3xs text-base-ink padding-y-2 padding-x-0 border-base-darker"
+                >
+                  New pixels
+                </th>
+                <td className="font-body font-weight-regular font-sans-3xs text-base-ink text-right padding-y-2 padding-x-0 border-base-darker">
+                  {newPixels}
+                </td>
               </tr>
               <tr className="border-base-darker">
-                <th scope="row" className="font-body font-weight-regular font-sans-3xs text-base-ink padding-y-2 padding-x-0 border-base-darker">Total pixels</th>
-                <td className="font-body font-weight-regular font-sans-3xs text-base-ink text-right padding-y-2 padding-x-0 border-base-darker">{totalPixels}</td>
+                <th
+                  scope="row"
+                  className="font-body font-weight-regular font-sans-3xs text-base-ink padding-y-2 padding-x-0 border-base-darker"
+                >
+                  Total pixels
+                </th>
+                <td className="font-body font-weight-regular font-sans-3xs text-base-ink text-right padding-y-2 padding-x-0 border-base-darker">
+                  {totalPixels}
+                </td>
               </tr>
             </tbody>
           </table>
         </div>
 
         <div className="margin-top-0 margin-bottom-1 border-bottom-1px border-base-lighter padding-y-2">
-          <h3 className="margin-top-0 margin-bottom-1 font-weight-700 font-sans-2xs text-base-dark">Fire spread</h3>
+          <h3 className="margin-top-0 margin-bottom-1 font-weight-700 font-sans-2xs text-base-dark">
+            Fire spread
+          </h3>
 
           <div className="wildfire-explorer__legend display-flex flex-wrap">
             <div className="wildfire-explorer__legend-item display-flex flex-align-center margin-right-4 margin-bottom-0">
               <div className="width-3 height-3 bg-base-dark margin-right-1"></div>
-              <span className="font-body font-weight-regular font-sans-3xs text-base-dark">Previous</span>
+              <span className="font-body font-weight-regular font-sans-3xs text-base-dark">
+                Previous
+              </span>
             </div>
 
             <div className="wildfire-explorer__legend-item display-flex flex-align-center margin-right-4 margin-bottom-0">
               <div className="width-3 height-3 bg-error margin-right-1"></div>
-              <span className="font-body font-weight-regular font-sans-3xs text-base-dark">Current</span>
+              <span className="font-body font-weight-regular font-sans-3xs text-base-dark">
+                Current
+              </span>
             </div>
 
             <div className="wildfire-explorer__legend-item display-flex flex-align-center margin-bottom-0">
               <div className="width-3 height-3 bg-warning margin-right-1"></div>
-              <span className="font-body font-weight-regular font-sans-3xs text-base-dark">Perimeter</span>
+              <span className="font-body font-weight-regular font-sans-3xs text-base-dark">
+                Perimeter
+              </span>
             </div>
           </div>
 
           <div className="margin-top-2">
             <div className="display-flex flex-align-center">
-              <label className="font-body font-weight-bold font-sans-3xs text-base-ink margin-right-2">Opacity</label>
+              <label className="font-body font-weight-bold font-sans-3xs text-base-ink margin-right-2">
+                Opacity
+              </label>
               <div className="display-flex flex-align-center flex-fill">
                 <ReactSlider
                   className="opacity-slider flex-fill"
@@ -206,7 +334,9 @@ const EventDetails: React.FC<EventDetailsProps> = ({ onBack }) => {
                     className="usa-checkbox__input"
                     type="checkbox"
                     checked={windLayerType !== null}
-                    onChange={(e) => setWindLayerType(e.target.checked ? 'wind' : null)}
+                    onChange={(e) =>
+                      setWindLayerType(e.target.checked ? 'wind' : null)
+                    }
                   />
                   <span className="usa-checkbox__label font-ui font-sans-2xs text-base-ink margin-top-0">
                     Wind direction
@@ -223,7 +353,9 @@ const EventDetails: React.FC<EventDetailsProps> = ({ onBack }) => {
                   <ToggleSlider
                     key={windLayerType === null ? 'off' : windLayerType}
                     active={windLayerType === 'wind'}
-                    onToggle={(state) => setWindLayerType(state ? 'wind' : 'grid')}
+                    onToggle={(state) =>
+                      setWindLayerType(state ? 'wind' : 'grid')
+                    }
                     barHeight={20}
                     barWidth={40}
                     handleSize={16}
@@ -249,7 +381,9 @@ const EventDetails: React.FC<EventDetailsProps> = ({ onBack }) => {
                 checked={show3DMap}
                 onChange={toggle3DMap}
               />
-              <span className="usa-checkbox__label font-ui font-weight-regular font-sans-2xs text-base-ink">3D map</span>
+              <span className="usa-checkbox__label font-ui font-weight-regular font-sans-2xs text-base-ink">
+                3D map
+              </span>
             </label>
           </div>
         </div>

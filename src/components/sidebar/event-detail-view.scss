@@ -34,3 +34,51 @@
   .slider-value {
     font-size: 12px;
   }
+
+  .download-menu {
+  min-width: 260px;
+  padding: 1rem;
+  border-radius: 0.5rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  background-color: #fff;
+  z-index: 100;
+}
+
+.download-menu fieldset {
+  border: 1px solid #dfe1e2;
+  border-radius: 4px;
+  padding: 0.5rem 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.download-menu legend {
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.download-menu .usa-checkbox {
+  margin-bottom: 0.25rem;
+}
+
+.download-menu .usa-checkbox__label {
+  font-size: 1rem;
+  margin-top: 0.75rem;
+}
+
+.download-menu .usa-checkbox__label::before,
+.download-menu .usa-checkbox__label::after {
+  width: 1rem;
+  height: 1rem;
+  top: 0.1rem;
+}
+
+.download-menu .usa-select {
+  font-size: 0.875rem;
+  padding: 0.25rem 0.5rem;
+}
+
+.download-menu .usa-button {
+  font-size: 0.875rem;
+  padding: 0.5rem 1rem;
+  margin-top: 0.75rem;
+}
