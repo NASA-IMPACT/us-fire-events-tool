@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import { useFilters } from '../../contexts/FiltersContext';
 import ReactSlider from 'react-slider';
 
+import './advanced-filters.scss';
+
 const AdvancedFilters: React.FC = () => {
   const {
     fireArea,
