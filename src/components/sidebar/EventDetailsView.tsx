@@ -27,17 +27,7 @@ const EventDetails: React.FC<EventDetailsProps> = ({ onBack }) => {
   const { windLayerType, setWindLayerType, show3DMap, toggle3DMap } =
     useAppState();
   const { layerOpacity, setLayerOpacity } = useMap();
-  const [downloadFormat, setDownloadFormat] = useState<'geojson' | 'csv'>(
-    'geojson'
-  );
-  const [downloadLayers, setDownloadLayers] = useState({
-    perimeter: true,
-    fireline: false,
-    firepixels: false,
-  });
   const { featuresApiEndpoint } = useEnv();
-  const [downloading, setDownloading] = useState(false);
-
   const [showDownloadMenu, setShowDownloadMenu] = useState(false);
   const downloadRef = useRef<HTMLDivElement>(null);
 
@@ -157,7 +147,10 @@ const EventDetails: React.FC<EventDetailsProps> = ({ onBack }) => {
             {eventName}
           </h1>
 
-          <div className="position-relative margin-left-2" ref={downloadRef}>
+          <div
+            className="display-flex position-relative margin-left-2"
+            ref={downloadRef}
+          >
             <button
               className="usa-button usa-button--unstyled"
               aria-label="Download fire event data"
