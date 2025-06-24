@@ -1,5 +1,8 @@
 import { useAppState } from '../contexts/AppStateContext';
 import { Eye, EyeOff, Loader2, X } from 'lucide-react';
+import { Button } from '@trussworks/react-uswds';
+import React from 'react';
+import './layer-switcher.scss';
 
 type LayerSwitcherProps = {
   onClose: () => void;
@@ -10,9 +13,65 @@ type LayerSwitcherProps = {
   };
 };
 
+const LayerItem: React.FC<{
+  label: string;
+  visible: boolean;
+  toggle: () => void;
+  isLoading?: boolean;
+  disabled?: boolean;
+  isLast?: boolean;
+}> = ({
+  label,
+  visible,
+  toggle,
+  isLoading = false,
+  disabled = false,
+  isLast = false,
+}) => (
+  <div
+    onClick={toggle}
+    className={`layer-item display-flex flex-justify align-items-center ${
+      isLast ? '' : 'margin-bottom-1'
+    }`}
+    style={{ cursor: 'pointer' }}
+  >
+    <div className="display-flex align-items-center">
+      <span
+        className={`font-sans-3xs ${
+          !visible || disabled ? 'text-base-lighter' : 'text-base-dark'
+        }`}
+      >
+        {label}
+      </span>
+
+      {visible && isLoading && (
+        <div className="margin-left-1">
+          <Loader2
+            size={12}
+            className="spin text-blue-500"
+            aria-label="Loading tiles"
+          />
+        </div>
+      )}
+    </div>
+
+    <Button
+      type="button"
+      unstyled
+      className={`margin-left-1 visibility-hidden group-hover:visibility-visible ${
+        !visible || disabled ? 'text-base-lighter' : 'text-base-dark'
+      }`}
+      disabled={disabled}
+      aria-label={`Toggle ${label}`}
+    >
+      {visible ? <Eye size={14} /> : <EyeOff size={14} />}
+    </Button>
+  </div>
+);
+
 const LayerSwitcher: React.FC<LayerSwitcherProps> = ({
   onClose,
-  loadingStates = {}
+  loadingStates = {},
 }) => {
   const {
     showPerimeterNrt,
@@ -20,90 +79,43 @@ const LayerSwitcher: React.FC<LayerSwitcherProps> = ({
     showNewFirepix,
     setShowPerimeterNrt,
     setShowFireline,
-    setShowNewFirepix
+    setShowNewFirepix,
   } = useAppState();
 
-  const layerItem = (
-    label: string,
-    visible: boolean,
-    toggle: () => void,
-    isLoading = false,
-    disabled = false,
-    isLast = false
-  ) => (
-    <div
-      onClick={toggle}
-      className={`group display-flex flex-justify align-items-center ${
-        isLast ? '' : 'margin-bottom-1'
-      }`}
-      style={{ cursor: 'pointer' }}
-    >
-      <div className="display-flex align-items-center">
-        <span
-          className={`font-sans-3xs ${
-            !visible || disabled ? 'text-base-lighter' : 'text-base-dark'
-          }`}
-        >
-          {label}
-        </span>
-
-        {visible && isLoading && (
-          <div className="margin-left-1">
-            <Loader2
-              size={12}
-              className="spin text-blue-500"
-              aria-label="Loading tiles"
-            />
-          </div>
-        )}
-      </div>
-
-      <button
-        className={`bg-transparent border-0 cursor-pointer margin-left-1 visibility-hidden group-hover:visibility-visible ${
-          !visible || disabled ? 'text-base-lighter' : 'text-base-dark'
-        }`}
-        disabled={disabled}
-        aria-label={`Toggle ${label}`}
-      >
-        {visible ? <Eye size={14} /> : <EyeOff size={14} />}
-      </button>
-    </div>
-  );
-
   return (
-    <div className="z-top bg-white padding-x-1 padding-y-1 radius-md shadow-2 border-1px border-base-lighter text-3xs">
+    <div className="layer-switcher z-top bg-white padding-x-1 padding-y-1 radius-md shadow-2 border-1px border-base-lighter text-3xs">
       <div className="display-flex flex-justify align-items-center margin-bottom-1">
         <h4 className="margin-0 text-base font-sans-3xs">Available layers</h4>
-        <div
-          className="bg-transparent border-0 cursor-pointer text-base-dark"
-          style={{ marginRight: '5px'}}
+        <Button
+          type="button"
+          unstyled
+          className="margin-right-05 text-base-dark"
           onClick={onClose}
           aria-label="Collapse layer switcher"
         >
           <X size={16} />
-        </div>
+        </Button>
       </div>
 
-      {layerItem(
-        'Fire Perimeters',
-        showPerimeterNrt,
-        () => setShowPerimeterNrt(!showPerimeterNrt),
-        loadingStates.perimeterNrt
-      )}
-      {layerItem(
-        'Active Fire Fronts',
-        showFireline,
-        () => setShowFireline(!showFireline),
-        loadingStates.fireline
-      )}
-      {layerItem(
-        'Fire Detections',
-        showNewFirepix,
-        () => setShowNewFirepix(!showNewFirepix),
-        loadingStates.newfirepix,
-        false,
-        true
-      )}
+      <LayerItem
+        label="Fire Perimeters"
+        visible={showPerimeterNrt}
+        toggle={() => setShowPerimeterNrt(!showPerimeterNrt)}
+        isLoading={loadingStates.perimeterNrt}
+      />
+      <LayerItem
+        label="Active Fire Fronts"
+        visible={showFireline}
+        toggle={() => setShowFireline(!showFireline)}
+        isLoading={loadingStates.fireline}
+      />
+      <LayerItem
+        label="Fire Detections"
+        visible={showNewFirepix}
+        toggle={() => setShowNewFirepix(!showNewFirepix)}
+        isLoading={loadingStates.newfirepix}
+        isLast
+      />
     </div>
   );
 };

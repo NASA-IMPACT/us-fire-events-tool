@@ -2,50 +2,6 @@ import { useState, useEffect } from 'react';
 import { useFilters } from '../../contexts/FiltersContext';
 import ReactSlider from 'react-slider';
 
-const sliderStyles = `
-  .horizontal-slider {
-    width: 100%;
-    height: 20px;
-    position: relative;
-  }
-
-  .horizontal-slider .track {
-    top: 8px;
-    height: 4px;
-    background: #d9d9d9;
-    border-radius: 2px;
-  }
-
-  .horizontal-slider .track-1 {
-    background: #1a6baa;
-  }
-
-  .horizontal-slider .thumb {
-    width: 16px;
-    height: 16px;
-    cursor: pointer;
-    background: #fff;
-    border-radius: 50%;
-    border: 2px solid #1a6baa;
-    top: 2px;
-    outline: none;
-    box-shadow: 0 1px 2px rgba(0,0,0,0.2);
-  }
-
-  .horizontal-slider .thumb:hover {
-    box-shadow: 0 0 0 2px rgba(26, 107, 170, 0.3);
-  }
-
-  .horizontal-slider .thumb:active {
-    box-shadow: 0 0 0 2px rgba(26, 107, 170, 0.5);
-  }
-
-  .slider-value {
-    font-weight: 400;
-    font-size: 12px;
-  }
-`;
-
 const AdvancedFilters: React.FC = () => {
   const {
     fireArea,
@@ -58,16 +14,13 @@ const AdvancedFilters: React.FC = () => {
 
   const [localFireArea, setLocalFireArea] = useState([
     fireArea.min,
-    fireArea.max
+    fireArea.max,
   ]);
   const [localDuration, setLocalDuration] = useState([
     duration.min,
-    duration.max
+    duration.max,
   ]);
-  const [localMeanFrp, setLocalMeanFrp] = useState([
-    meanFrp.min,
-    meanFrp.max
-  ]);
+  const [localMeanFrp, setLocalMeanFrp] = useState([meanFrp.min, meanFrp.max]);
 
   useEffect(() => {
     setLocalFireArea([fireArea.min, fireArea.max]);
@@ -92,10 +45,12 @@ const AdvancedFilters: React.FC = () => {
 
   return (
     <>
-      <style>{sliderStyles}</style>
       <div className="padding-y-2  grid-row grid-gap">
-      <div className="grid-col-4">
-      <label className="font-body text-bold font-sans-3xs margin-bottom-1 display-block" htmlFor="fire-area-slider">
+        <div className="grid-col-4">
+          <label
+            className="font-body text-bold font-sans-3xs margin-bottom-1 display-block"
+            htmlFor="fire-area-slider"
+          >
             Fire area (km<sup>2</sup>)
           </label>
           <div className="display-flex flex-align-center">
@@ -114,7 +69,7 @@ const AdvancedFilters: React.FC = () => {
                 min={0}
                 max={1000}
                 ariaLabel={['Minimum fire area', 'Maximum fire area']}
-                ariaValuetext={state => `${state} km²`}
+                ariaValuetext={(state) => `${state} km²`}
                 pearling
                 minDistance={10}
               />
@@ -127,7 +82,10 @@ const AdvancedFilters: React.FC = () => {
         </div>
 
         <div className="grid-col-4">
-        <label className="font-body text-bold font-sans-3xs margin-bottom-1 display-block" htmlFor="duration-slider">
+          <label
+            className="font-body text-bold font-sans-3xs margin-bottom-1 display-block"
+            htmlFor="duration-slider"
+          >
             Duration (days)
           </label>
           <div className="display-flex flex-align-center">
@@ -146,7 +104,7 @@ const AdvancedFilters: React.FC = () => {
                 min={0}
                 max={30}
                 ariaLabel={['Minimum duration', 'Maximum duration']}
-                ariaValuetext={state => `${state} days`}
+                ariaValuetext={(state) => `${state} days`}
                 pearling
                 minDistance={1}
               />
@@ -159,7 +117,10 @@ const AdvancedFilters: React.FC = () => {
         </div>
 
         <div className="grid-col-4">
-        <label className="font-body text-bold font-sans-3xs margin-bottom-1 display-block" htmlFor="mean-frp-slider">
+          <label
+            className="font-body text-bold font-sans-3xs margin-bottom-1 display-block"
+            htmlFor="mean-frp-slider"
+          >
             Mean FRP (MW)
           </label>
           <div className="display-flex flex-align-center">
@@ -178,7 +139,7 @@ const AdvancedFilters: React.FC = () => {
                 min={0}
                 max={1000}
                 ariaLabel={['Minimum FRP', 'Maximum FRP']}
-                ariaValuetext={state => `${state} MW`}
+                ariaValuetext={(state) => `${state} MW`}
                 pearling
                 minDistance={10}
               />
