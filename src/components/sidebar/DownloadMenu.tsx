@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Checkbox } from '@trussworks/react-uswds';
+import { Button, Select, Checkbox } from '@trussworks/react-uswds';
 import { Loader2 } from 'lucide-react';
 import { saveAs } from 'file-saver';
 import JSZip from 'jszip';
@@ -124,19 +124,23 @@ const DownloadMenu: React.FC<DownloadMenuProps> = ({
       <label className="font-sans-3xs text-base-dark margin-bottom-05 display-block">
         Format
       </label>
-      <select
-        className="usa-select width-full"
+      <Select
+        id="download-format"
+        name="download-format"
+        className="width-full"
         value={downloadFormat}
         onChange={(e) => setDownloadFormat(e.target.value as 'geojson' | 'csv')}
       >
         <option value="geojson">GeoJSON</option>
         <option value="csv">CSV</option>
-      </select>
+      </Select>
 
-      <button
-        className="usa-button width-full"
+      <Button
+        type="button"
+        className="width-full margin-top-2"
         disabled={downloading}
         onClick={handleDownload}
+        title="Download event layers"
       >
         {downloading ? (
           <span className="display-flex flex-align-center flex-justify-center">
@@ -145,7 +149,7 @@ const DownloadMenu: React.FC<DownloadMenuProps> = ({
         ) : (
           'Download'
         )}
-      </button>
+      </Button>
     </div>
   );
 };
