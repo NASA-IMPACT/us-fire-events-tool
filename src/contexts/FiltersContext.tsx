@@ -18,7 +18,7 @@ export interface FiltersState {
 export const DEFAULT_RANGES = {
   fireArea: { min: 0, max: 100 },
   duration: { min: 0, max: 30 },
-  meanFrp: { min: 0, max: 1000 }
+  meanFrp: { min: 0, max: 1000 },
 };
 
 interface FiltersContextValue extends FiltersState {
@@ -29,12 +29,11 @@ interface FiltersContextValue extends FiltersState {
   setRegion: (region: string | null) => void;
   setIsActive: (isActive: boolean | null) => void;
   toggleAdvancedFilters: () => void;
-  resetFilters: () => void;
-  availableRegions: string[];
-  isLoadingRegions: boolean;
 }
 
-const FiltersContext = createContext<FiltersContextValue | undefined>(undefined);
+const FiltersContext = createContext<FiltersContextValue | undefined>(
+  undefined
+);
 
 const defaultFilters: FiltersState = {
   fireArea: DEFAULT_RANGES.fireArea,
@@ -43,45 +42,41 @@ const defaultFilters: FiltersState = {
   searchTerm: '',
   region: null,
   isActive: null,
-  showAdvancedFilters: false
+  showAdvancedFilters: false,
 };
 
 export const FiltersProvider = ({ children }: { children: ReactNode }) => {
   const [filters, setFilters] = useState<FiltersState>(defaultFilters);
 
   const setFireAreaRange = (range: FilterRange) => {
-    setFilters(prev => ({ ...prev, fireArea: range }));
+    setFilters((prev) => ({ ...prev, fireArea: range }));
   };
 
   const setDurationRange = (range: FilterRange) => {
-    setFilters(prev => ({ ...prev, duration: range }));
+    setFilters((prev) => ({ ...prev, duration: range }));
   };
 
   const setMeanFrpRange = (range: FilterRange) => {
-    setFilters(prev => ({ ...prev, meanFrp: range }));
+    setFilters((prev) => ({ ...prev, meanFrp: range }));
   };
 
   const setSearchTerm = (term: string) => {
-    setFilters(prev => ({ ...prev, searchTerm: term }));
+    setFilters((prev) => ({ ...prev, searchTerm: term }));
   };
 
   const setRegion = (region: string | null) => {
-    setFilters(prev => ({ ...prev, region }));
+    setFilters((prev) => ({ ...prev, region }));
   };
 
   const setIsActive = (isActive: boolean | null) => {
-    setFilters(prev => ({ ...prev, isActive }));
+    setFilters((prev) => ({ ...prev, isActive }));
   };
 
   const toggleAdvancedFilters = () => {
-    setFilters(prev => ({ ...prev, showAdvancedFilters: !prev.showAdvancedFilters }));
-  };
-
-  const resetFilters = () => {
-    setFilters({
-      ...defaultFilters,
-      showAdvancedFilters: filters.showAdvancedFilters
-    });
+    setFilters((prev) => ({
+      ...prev,
+      showAdvancedFilters: !prev.showAdvancedFilters,
+    }));
   };
 
   const value: FiltersContextValue = {
@@ -93,13 +88,10 @@ export const FiltersProvider = ({ children }: { children: ReactNode }) => {
     setRegion,
     setIsActive,
     toggleAdvancedFilters,
-    resetFilters,
   };
 
   return (
-    <FiltersContext.Provider value={value}>
-      {children}
-    </FiltersContext.Provider>
+    <FiltersContext.Provider value={value}>{children}</FiltersContext.Provider>
   );
 };
 

@@ -13,23 +13,20 @@ import { _TerrainExtension as TerrainExtension } from '@deck.gl/extensions';
  * @param {number} options.opacity - Layer opacity (0-100)
  * @return {Promise<ParticleLayer>} Configured particle layer
  */
-export const createGridLayer = async ({
-  timeRangeEnd,
-  particleCount = 2000,
-  speedFactor = 10,
-  opacity = 92
-}) => {
+export const createGridLayer = async ({ timeRangeEnd, opacity = 92 }) => {
   try {
     const hr = timeRangeEnd.getUTCHours();
     const cycleHour = Math.floor(hr / 6) * 6;
     const runHourStr = cycleHour.toString().padStart(2, '0');
 
-    const runDate = new Date(Date.UTC(
-      timeRangeEnd.getUTCFullYear(),
-      timeRangeEnd.getUTCMonth(),
-      timeRangeEnd.getUTCDate(),
-      cycleHour
-    ));
+    const runDate = new Date(
+      Date.UTC(
+        timeRangeEnd.getUTCFullYear(),
+        timeRangeEnd.getUTCMonth(),
+        timeRangeEnd.getUTCDate(),
+        cycleHour
+      )
+    );
 
     const runDateStr = runDate.toISOString().split('T')[0].replace(/-/g, '');
 
@@ -48,21 +45,20 @@ export const createGridLayer = async ({
     }
 
     return new WeatherLayers.GridLayer({
-        id: 'grid-particles',
-        image,
-        imageType: 'VECTOR',
-        imageUnscale: [-127, 128],
-        bounds: [-130, 20, -60, 55],
-        density: -1,
-        extensions: [new ClipExtension(), new TerrainExtension()],
-        clipBounds: USA_BBOX,
-        style: WeatherLayers.GridStyle.ARROW,
-        iconBounds: [0, 30],
-        iconSize: [8, 24],
-        iconColor: [97, 173, 234, 255],
-        opacity: opacity / 100,
-      });
-
+      id: 'grid-particles',
+      image,
+      imageType: 'VECTOR',
+      imageUnscale: [-127, 128],
+      bounds: [-130, 20, -60, 55],
+      density: -1,
+      extensions: [new ClipExtension(), new TerrainExtension()],
+      clipBounds: USA_BBOX,
+      style: WeatherLayers.GridStyle.ARROW,
+      iconBounds: [0, 30],
+      iconSize: [8, 24],
+      iconColor: [97, 173, 234, 255],
+      opacity: opacity / 100,
+    });
   } catch (error) {
     console.error('Error initializing wind layer:', error);
     return null;
