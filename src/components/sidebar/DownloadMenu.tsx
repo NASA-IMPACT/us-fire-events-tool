@@ -62,7 +62,7 @@ const DownloadMenu: React.FC<DownloadMenuProps> = ({
 
     for (const layer of layers) {
       const namePart = nameMap[layer];
-      const url = `${base}/${layer}/items?filter=fireid%3D${fireId}&limit=500&sortby=-t&f=${downloadFormat}`;
+      const url = `${base}/${layer}/items?filter=fireid%3D${fireId}&limit=5000&sortby=-t&f=${downloadFormat}`;
       try {
         const res = await fetch(url);
         const blob = await res.blob();
