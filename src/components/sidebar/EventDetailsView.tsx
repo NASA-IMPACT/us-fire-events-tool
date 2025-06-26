@@ -6,6 +6,7 @@ import {
   getFeatureProperties,
   getFireId,
   MVTFeature,
+  getSelectedFireObservationTime,
 } from '../../contexts/EventsContext';
 import ReactSlider from 'react-slider';
 import { useMap } from '../../contexts/MapContext';
@@ -79,16 +80,12 @@ const EventDetails: React.FC<EventDetailsProps> = ({ onBack }) => {
   }
 
   const fireId = getFireId(selectedEvent);
+  const fireLatestObservationTimestamp =
+    getSelectedFireObservationTime(selectedEvent);
   const isActive = eventProperties.isactive === 1;
   const eventName = eventProperties.name || `Fire Event ${fireId}`;
 
   const endDate = eventProperties.t ? new Date(eventProperties.t) : null;
-  const startDate =
-    endDate && eventProperties.duration
-      ? new Date(
-          endDate.getTime() - eventProperties.duration * 24 * 60 * 60 * 1000
-        )
-      : null;
 
   const formatDate = (date: Date | null) => {
     if (!date) return 'Unknown';
@@ -162,6 +159,7 @@ const EventDetails: React.FC<EventDetailsProps> = ({ onBack }) => {
             {showDownloadMenu && (
               <DownloadMenu
                 fireId={fireId}
+                fireLatestObservationTimestamp={fireLatestObservationTimestamp}
                 featuresApiEndpoint={featuresApiEndpoint}
                 onClose={() => setShowDownloadMenu(false)}
               />

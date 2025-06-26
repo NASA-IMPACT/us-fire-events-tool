@@ -12,9 +12,11 @@ interface DownloadMenuProps {
 
 const DownloadMenu: React.FC<DownloadMenuProps> = ({
   fireId,
+  fireLatestObservationTimestamp,
   featuresApiEndpoint,
   onClose,
 }) => {
+  console.log(fireLatestObservationTimestamp);
   const [downloadFormat, setDownloadFormat] = useState<'geojson' | 'csv'>(
     'geojson'
   );
@@ -25,6 +27,9 @@ const DownloadMenu: React.FC<DownloadMenuProps> = ({
   });
   const [downloading, setDownloading] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
+
+  const isDownloadDisabled =
+    downloading || !Object.values(downloadLayers).some(Boolean);
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -53,13 +58,18 @@ const DownloadMenu: React.FC<DownloadMenuProps> = ({
 
     const zip = new JSZip();
 
+    const safeTs = fireLatestObservationTimestamp.replace(/[:\/]/g, '_');
+
     for (const layer of layers) {
       const namePart = nameMap[layer];
       const url = `${base}/${layer}/items?filter=fireid%3D${fireId}&limit=500&sortby=-t&f=${downloadFormat}`;
       try {
         const res = await fetch(url);
         const blob = await res.blob();
-        zip.file(`fire-${fireId}-${namePart}.${downloadFormat}`, blob);
+        zip.file(
+          `fire-${fireId}-${namePart}-${safeTs}.${downloadFormat}`,
+          blob
+        );
       } catch (e) {
         console.error(`Failed to download ${layer}`, e);
       }
@@ -67,7 +77,7 @@ const DownloadMenu: React.FC<DownloadMenuProps> = ({
 
     try {
       const content = await zip.generateAsync({ type: 'blob' });
-      saveAs(content, `fire-${fireId}-data.zip`);
+      saveAs(content, `fire-${fireId}-${safeTs}-data.zip`);
     } catch (e) {
       console.error('ZIP generation failed', e);
     }
@@ -138,7 +148,7 @@ const DownloadMenu: React.FC<DownloadMenuProps> = ({
       <Button
         type="button"
         className="width-full margin-top-2"
-        disabled={downloading}
+        disabled={isDownloadDisabled}
         onClick={handleDownload}
         title="Download event layers"
       >

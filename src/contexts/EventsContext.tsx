@@ -1,4 +1,13 @@
-import { createContext, useContext, useReducer, useEffect, ReactNode, useMemo, useCallback, useRef } from 'react';
+import {
+  createContext,
+  useContext,
+  useReducer,
+  useEffect,
+  ReactNode,
+  useMemo,
+  useCallback,
+  useRef,
+} from 'react';
 import { useAppState } from './AppStateContext';
 import { useEnv } from './EnvContext';
 
@@ -85,16 +94,26 @@ interface EventsContextValue extends Omit<EventsState, 'filters'> {
 
 export const getFeatureProperties = (feature: MVTFeature | null) => {
   if (!feature) return {};
-  return feature.properties || (feature.object && feature.object.properties) || {};
+  return (
+    feature.properties || (feature.object && feature.object.properties) || {}
+  );
 };
 
 export const getFeatureGeometry = (feature: MVTFeature) => {
-  return feature.geometry || (feature.object && feature.object.geometry) || { type: 'Polygon' };
+  return (
+    feature.geometry ||
+    (feature.object && feature.object.geometry) || { type: 'Polygon' }
+  );
 };
 
 export const getFireId = (feature: MVTFeature) => {
   const props = getFeatureProperties(feature);
   return props.fireid?.toString() || '';
+};
+
+export const getSelectedFireObservationTime = (feature: MVTFeature) => {
+  const props = getFeatureProperties(feature);
+  return props.t?.toString() || '';
 };
 
 export const isFeatureActive = (feature: MVTFeature) => {
@@ -107,7 +126,10 @@ export const getFeatureArea = (feature: MVTFeature) => {
   return props.farea || 0;
 };
 
-const areFeatureArraysEqual = (prevFeatures: MVTFeature[], nextFeatures: MVTFeature[]) => {
+const areFeatureArraysEqual = (
+  prevFeatures: MVTFeature[],
+  nextFeatures: MVTFeature[]
+) => {
   if (prevFeatures.length !== nextFeatures.length) return false;
   return true;
 };
@@ -118,61 +140,71 @@ export const fetchFirePerimeters = async (fireId: string, baseUrl: string) => {
   try {
     const response = await fetch(url);
     if (!response.ok) {
-      throw new Error(`Failed to fetch fire perimeters: ${response.statusText}`);
+      throw new Error(
+        `Failed to fetch fire perimeters: ${response.statusText}`
+      );
     }
     return await response.json();
   } catch (error) {
-    console.error("Error fetching fire perimeters:", error);
+    console.error('Error fetching fire perimeters:', error);
     return null;
   }
 };
 
-export const fetchAlternativeFirePerimeters = async (fireId: string, baseUrl: string) => {
+export const fetchAlternativeFirePerimeters = async (
+  fireId: string,
+  baseUrl: string
+) => {
   const url = `${baseUrl}/collections/public.eis_fire_snapshot_perimeter_nrt/items?filter=fireid%3D${fireId}&limit=500&f=geojson`;
 
   try {
     const response = await fetch(url);
     if (!response.ok) {
-      throw new Error(`Failed to fetch alternative fire perimeters: ${response.statusText}`);
+      throw new Error(
+        `Failed to fetch alternative fire perimeters: ${response.statusText}`
+      );
     }
     return await response.json();
   } catch (error) {
-    console.error("Error fetching alternative fire perimeters:", error);
+    console.error('Error fetching alternative fire perimeters:', error);
     return null;
   }
 };
 
 const EventsContext = createContext<EventsContextValue | undefined>(undefined);
 
-const eventsReducer = (state: EventsState, action: EventsAction): EventsState => {
+const eventsReducer = (
+  state: EventsState,
+  action: EventsAction
+): EventsState => {
   switch (action.type) {
     case 'SET_EVENTS':
       return {
         ...state,
-        events: action.payload
+        events: action.payload,
       };
     case 'APPLY_FILTERS':
       return {
         ...state,
         filters: {
           ...state.filters,
-          ...action.payload
-        }
+          ...action.payload,
+        },
       };
     case 'SELECT_EVENT':
       return {
         ...state,
-        selectedEventId: action.payload
+        selectedEventId: action.payload,
       };
     case 'SET_FIRE_PERIMETERS':
       return {
         ...state,
-        firePerimeters: action.payload
+        firePerimeters: action.payload,
       };
     case 'SET_FIRE_PERIMETERS_LOADING':
       return {
         ...state,
-        firePerimetersLoading: action.payload
+        firePerimetersLoading: action.payload,
       };
     default:
       return state;
@@ -186,10 +218,10 @@ export const EventsProvider = ({ children }: { children: ReactNode }) => {
   const initialState: EventsState = {
     events: [],
     filters: {
-      dateRange: [timeRange.start, timeRange.end]
+      dateRange: [timeRange.start, timeRange.end],
     },
     selectedEventId: null,
-    firePerimeters: null
+    firePerimeters: null,
   };
 
   const [state, dispatch] = useReducer(eventsReducer, initialState);
@@ -201,13 +233,13 @@ export const EventsProvider = ({ children }: { children: ReactNode }) => {
     dispatch({
       type: 'APPLY_FILTERS',
       payload: {
-        dateRange: [timeRange.start, timeRange.end]
-      }
+        dateRange: [timeRange.start, timeRange.end],
+      },
     });
   }, [timeRange]);
 
   const updateEvents = useCallback((mvtFeatures: MVTFeature[]) => {
-    const validFeatures = mvtFeatures.filter(feature => {
+    const validFeatures = mvtFeatures.filter((feature) => {
       const props = getFeatureProperties(feature);
       return !!props.fireid;
     });
@@ -221,7 +253,10 @@ export const EventsProvider = ({ children }: { children: ReactNode }) => {
     updateTimeoutRef.current = window.setTimeout(() => {
       const newFeatures = pendingFeaturesRef.current;
 
-      if (newFeatures && !areFeatureArraysEqual(prevFeaturesRef.current, newFeatures)) {
+      if (
+        newFeatures &&
+        !areFeatureArraysEqual(prevFeaturesRef.current, newFeatures)
+      ) {
         dispatch({ type: 'SET_EVENTS', payload: newFeatures });
         prevFeaturesRef.current = newFeatures;
       }
@@ -251,8 +286,15 @@ export const EventsProvider = ({ children }: { children: ReactNode }) => {
 
       let perimeters = await fetchFirePerimeters(eventId, featuresApiEndpoint);
 
-      if (!perimeters || !perimeters.features || perimeters.features.length === 0) {
-        perimeters = await fetchAlternativeFirePerimeters(eventId, featuresApiEndpoint);
+      if (
+        !perimeters ||
+        !perimeters.features ||
+        perimeters.features.length === 0
+      ) {
+        perimeters = await fetchAlternativeFirePerimeters(
+          eventId,
+          featuresApiEndpoint
+        );
       }
 
       dispatch({ type: 'SET_FIRE_PERIMETERS', payload: perimeters });
@@ -262,13 +304,16 @@ export const EventsProvider = ({ children }: { children: ReactNode }) => {
     }
   }, []);
 
-  const getFilteredEvents = useCallback((start: Date, end: Date) => {
-    return state.events.filter(event => {
-      const props = getFeatureProperties(event);
-      const eventTime = new Date(props.t).getTime();
-      return eventTime >= start.getTime() && eventTime <= end.getTime();
-    });
-  }, [state.events]);
+  const getFilteredEvents = useCallback(
+    (start: Date, end: Date) => {
+      return state.events.filter((event) => {
+        const props = getFeatureProperties(event);
+        const eventTime = new Date(props.t).getTime();
+        return eventTime >= start.getTime() && eventTime <= end.getTime();
+      });
+    },
+    [state.events]
+  );
 
   const groupedEvents = useMemo<GroupedEvents>(() => {
     return state.events.reduce((groups, event) => {
@@ -282,14 +327,18 @@ export const EventsProvider = ({ children }: { children: ReactNode }) => {
           events: [],
           totalArea: 0,
           maxArea: 0,
-          isActive: false
+          isActive: false,
         };
       }
 
       groups[fireId].events.push(event);
       groups[fireId].totalArea += props.farea || 0;
-      groups[fireId].maxArea = Math.max(groups[fireId].maxArea, props.farea || 0);
-      groups[fireId].isActive = groups[fireId].isActive || Number(props.isactive) === 1;
+      groups[fireId].maxArea = Math.max(
+        groups[fireId].maxArea,
+        props.farea || 0
+      );
+      groups[fireId].isActive =
+        groups[fireId].isActive || Number(props.isactive) === 1;
 
       return groups;
     }, {} as GroupedEvents);
@@ -297,9 +346,14 @@ export const EventsProvider = ({ children }: { children: ReactNode }) => {
 
   const metrics = useMemo(() => {
     const totalEvents = state.events.length;
-    const activeEvents = state.events.filter(event => Number(getFeatureProperties(event).isactive) === 1).length;
+    const activeEvents = state.events.filter(
+      (event) => Number(getFeatureProperties(event).isactive) === 1
+    ).length;
     const inactiveEvents = totalEvents - activeEvents;
-    const totalArea = state.events.reduce((sum, event) => sum + (getFeatureProperties(event).farea || 0), 0);
+    const totalArea = state.events.reduce(
+      (sum, event) => sum + (getFeatureProperties(event).farea || 0),
+      0
+    );
 
     return { totalEvents, activeEvents, inactiveEvents, totalArea };
   }, [state.events]);
@@ -318,13 +372,11 @@ export const EventsProvider = ({ children }: { children: ReactNode }) => {
     selectEvent,
     getFilteredEvents,
     firePerimeters: state.firePerimeters,
-    firePerimetersLoading: state.firePerimetersLoading
+    firePerimetersLoading: state.firePerimetersLoading,
   };
 
   return (
-    <EventsContext.Provider value={value}>
-      {children}
-    </EventsContext.Provider>
+    <EventsContext.Provider value={value}>{children}</EventsContext.Provider>
   );
 };
 
