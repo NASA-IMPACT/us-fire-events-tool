@@ -270,15 +270,15 @@ const EventDetails: React.FC<EventDetailsProps> = ({ onBack }) => {
             Fire spread
           </h3>
 
-          <div className="wildfire-explorer__legend display-flex flex-wrap">
-            <div className="wildfire-explorer__legend-item display-flex flex-align-center margin-right-4 margin-bottom-0">
+          <div className="wildfire-explorer__legend display-flex flex-justify flex-wrap">
+            <div className="wildfire-explorer__legend-item display-flex flex-align-center margin-bottom-0">
               <div className="width-3 height-3 bg-base-dark margin-right-1"></div>
               <span className="font-body font-weight-regular font-sans-3xs text-base-dark">
                 Previous
               </span>
             </div>
 
-            <div className="wildfire-explorer__legend-item display-flex flex-align-center margin-right-4 margin-bottom-0">
+            <div className="wildfire-explorer__legend-item display-flex flex-align-center margin-bottom-0">
               <div className="width-3 height-3 bg-error margin-right-1"></div>
               <span className="font-body font-weight-regular font-sans-3xs text-base-dark">
                 Current
@@ -349,7 +349,7 @@ const EventDetails: React.FC<EventDetailsProps> = ({ onBack }) => {
                     }
                     barHeight={20}
                     barWidth={40}
-                    handleSize={16}
+                    handleSize={12}
                     barBackgroundColor="#e0e0e0"
                     barBackgroundColorActive="#1a6baa"
                     handleBackgroundColor="#ffffff"
