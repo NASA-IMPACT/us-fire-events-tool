@@ -72,7 +72,7 @@ const DownloadMenu: React.FC<DownloadMenuProps> = ({
 
       // -----  PERIMETERS: first ask for numberMatched, then page  -----
       if (layer === "public.eis_fire_lf_perimeter_nrt") {
-        const headUrl = `${base}/${layer}/items?filter=fireid%3D${fireId}&limit=1&sortby=-t&f=json`;
+        const headUrl = `${base}/${layer}/items?filter=fireid%3D${fireId}&limit=2&sortby=-t&f=geojson`;
 
         let headJson: any;
         try {
@@ -91,8 +91,8 @@ const DownloadMenu: React.FC<DownloadMenuProps> = ({
         mergeCollections(perimeterColl, headJson); // keep first feature if present
 
         // Fetch remaining pages
-        for (let start = pageSize; start < total; start += pageSize) {
-          const pageUrl = `${base}/${layer}/items?filter=fireid%3D${fireId}&limit=${pageSize}&startindex=${start}&sortby=-t&f=json`;
+        for (let start = 1; start < total; start += pageSize) {
+          const pageUrl = `${base}/${layer}/items?filter=fireid%3D${fireId}&limit=${pageSize}&offset=${start}&sortby=-t&f=geojson`;
           try {
             const pageResp = await fetch(pageUrl);
             const pageJson: any = await pageResp.json();
