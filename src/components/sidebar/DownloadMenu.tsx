@@ -43,43 +43,92 @@ const DownloadMenu: React.FC<DownloadMenuProps> = ({
 
   const handleDownload = async () => {
     setDownloading(true);
+
     const base = `${featuresApiEndpoint}/collections`;
     const layers = [
-      downloadLayers.perimeter && 'public.eis_fire_lf_perimeter_nrt',
-      downloadLayers.fireline && 'public.eis_fire_lf_fireline_nrt',
-      downloadLayers.firepixels && 'public.eis_fire_lf_newfirepix_nrt',
+      downloadLayers.perimeter && "public.eis_fire_lf_perimeter_nrt",
+      downloadLayers.fireline && "public.eis_fire_lf_fireline_nrt",
+      downloadLayers.firepixels && "public.eis_fire_lf_newfirepix_nrt",
     ].filter(Boolean) as string[];
 
     const nameMap: Record<string, string> = {
-      'public.eis_fire_lf_perimeter_nrt': 'fire-perimeters',
-      'public.eis_fire_lf_fireline_nrt': 'active-fire-fronts',
-      'public.eis_fire_lf_newfirepix_nrt': 'fire-detections',
+      "public.eis_fire_lf_perimeter_nrt": "fire-perimeters",
+      "public.eis_fire_lf_fireline_nrt": "active-fire-fronts",
+      "public.eis_fire_lf_newfirepix_nrt": "fire-detections",
     };
 
     const zip = new JSZip();
+    const safeTs = fireLatestObservationTimestamp.replace(/[:\/]/g, "_");
 
-    const safeTs = fireLatestObservationTimestamp.replace(/[:\/]/g, '_');
+    // Simple merge helper that assumes each page has a `features` array.
+    const mergeCollections = (target: any, extra: any) => {
+      if (Array.isArray(extra?.features) && extra.features.length) {
+        target.features.push(...extra.features);
+      }
+    };
 
     for (const layer of layers) {
       const namePart = nameMap[layer];
+
+      // -----  PERIMETERS: first ask for numberMatched, then page  -----
+      if (layer === "public.eis_fire_lf_perimeter_nrt") {
+        const headUrl = `${base}/${layer}/items?filter=fireid%3D${fireId}&limit=1&sortby=-t&f=json`;
+
+        let headJson: any;
+        try {
+          const headResp = await fetch(headUrl);
+          headJson = await headResp.json();
+        } catch (e) {
+          console.error("Initial perimeter count request failed", e);
+          continue;
+        }
+
+        const total = headJson?.numberMatched ?? 0;
+        const pageSize = 30;
+
+        // Start an empty FeatureCollection-like object
+        const perimeterColl: any = { ...headJson, features: [] };
+        mergeCollections(perimeterColl, headJson); // keep first feature if present
+
+        // Fetch remaining pages
+        for (let start = pageSize; start < total; start += pageSize) {
+          const pageUrl = `${base}/${layer}/items?filter=fireid%3D${fireId}&limit=${pageSize}&startindex=${start}&sortby=-t&f=json`;
+          try {
+            const pageResp = await fetch(pageUrl);
+            const pageJson: any = await pageResp.json();
+            mergeCollections(perimeterColl, pageJson);
+          } catch (e) {
+            console.error(`Failed to fetch perimeter page starting ${start}`, e);
+          }
+        }
+
+        // Add the combined perimeter collection to the ZIP
+        zip.file(
+          `fire-${fireId}-${namePart}-${safeTs}.geojson`,
+          new Blob([JSON.stringify(perimeterColl)], {
+            type: "application/geo+json",
+          })
+        );
+        continue; // go to next layer
+      }
+
+      // -----  ALL OTHER LAYERS: single request (original behaviour)  -----
       const url = `${base}/${layer}/items?filter=fireid%3D${fireId}&limit=5000&sortby=-t&f=${downloadFormat}`;
       try {
         const res = await fetch(url);
         const blob = await res.blob();
-        zip.file(
-          `fire-${fireId}-${namePart}-${safeTs}.${downloadFormat}`,
-          blob
-        );
+        zip.file(`fire-${fireId}-${namePart}-${safeTs}.${downloadFormat}`, blob);
       } catch (e) {
         console.error(`Failed to download ${layer}`, e);
       }
     }
 
+    // -----  Create archive and hand it to the browser  -----
     try {
-      const content = await zip.generateAsync({ type: 'blob' });
+      const content = await zip.generateAsync({ type: "blob" });
       saveAs(content, `fire-${fireId}-${safeTs}-data.zip`);
     } catch (e) {
-      console.error('ZIP generation failed', e);
+      console.error("ZIP generation failed", e);
     }
 
     setDownloading(false);
