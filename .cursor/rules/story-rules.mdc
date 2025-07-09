@@ -1,0 +1,83 @@
+# Requirements Management Rules
+
+## User Story Management Guidelines
+
+- **File Organization**
+  - Storage directory: `stories/`
+  - File extension: `.story.md`
+  - Organize subdirectories by business module
+  - Naming format: `[module]-[function].story.md`
+
+- **Story Document Structure**
+  ```markdown
+  # [Story Title]
+
+  ## As a
+  [Role]
+
+  ## I want
+  [Desired functionality]
+
+  ## So that
+  [Business value achieved]
+
+  ## Acceptance Criteria
+  - [ ] [Acceptance item 1]
+  - [ ] [Acceptance item 2]
+
+  ## Additional Information
+  - Business rules:
+    * [Rule 1]
+    * [Rule 2]
+  - Technical requirements:
+    * [Requirement 1]
+    * [Requirement 2]
+
+  ## Related Files
+  - Feature: [path]
+  - API documentation: [path]
+  - Prototype design: [path]
+  ```
+
+- **Story Development Process**
+  * Strictly follow the sequence below:
+    1. Create the user story document
+    2. Wait for confirmation of the user story and acceptance criteria
+    3. Only start writing the Feature file when explicitly requested by the user
+    4. Continue with subsequent development steps
+  * Do not write the Feature file before the user story is confirmed
+  * Do not start writing the Feature file without explicit user request
+  * Feature file creation must wait for explicit user instruction
+
+- **Requirement and Feature Association**
+  - Each requirement document corresponds to one or more feature files
+  - Record the associated feature file path in the requirement document
+  - Add a comment in the feature file header referencing the associated requirement document
+
+- **Version Management**
+  - Version file naming: `[original file name].v[version number].story.md`
+  - Each version file must include:
+    * Change description
+    * Reason for change
+    * Scope of impact
+    * Updates to related files
+
+## Best Practices
+
+- **Story Writing**
+  - Each story should focus on a complete business value
+  - Stories should be small enough to be completed within one iteration
+  - Acceptance criteria should be specific and testable
+  - Avoid technical implementation details
+
+- **Story Review**
+  - Business and development personnel should review together
+  - Ensure the story description is clear and complete
+  - Validate the reasonableness of the acceptance criteria
+  - Assess technical feasibility
+  - Only proceed to the next step after the story review is approved
+
+- **Association Management**
+  - Update related files in a timely manner
+  - Maintain consistency between documents
+  - Regularly check the validity of associations

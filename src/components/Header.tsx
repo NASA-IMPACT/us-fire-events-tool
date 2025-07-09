@@ -7,12 +7,14 @@ import {
 } from '@trussworks/react-uswds';
 
 import './header.scss';
+import { useTheme } from '../contexts/ThemeContext';
 
 const Header: React.FC = () => {
   const modalRef = useRef<ModalRef>(null);
   const [showModal, setShowModal] = useState(() => {
     return localStorage.getItem('hideFireModal') !== 'true';
   });
+  const { theme, toggleTheme } = useTheme();
 
   useEffect(() => {
     if (showModal) {
@@ -87,6 +89,14 @@ const Header: React.FC = () => {
           />
         </svg>
       </ModalToggleButton>
+
+      <button
+        data-testid="dark-mode-toggle"
+        onClick={toggleTheme}
+        aria-label="Toggle dark mode"
+      >
+        {theme === 'dark' ? '🌙 Dark' : '☀️ Light'}
+      </button>
 
       <Modal
         id="fire-modal"
