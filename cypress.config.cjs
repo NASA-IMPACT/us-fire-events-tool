@@ -13,6 +13,9 @@ module.exports = defineConfig({
         'file:preprocessor',
         require('@cypress/webpack-preprocessor')({
           webpackOptions: {
+            resolve: {
+              extensions: ['.ts', '.tsx', '.js', '.jsx'],
+            },
             module: {
               rules: [
                 {
@@ -23,6 +26,16 @@ module.exports = defineConfig({
                       options: config,
                     },
                   ],
+                },
+                {
+                  test: /\.ts$/,
+                  exclude: /node_modules/,
+                  use: {
+                    loader: 'ts-loader',
+                    options: {
+                      transpileOnly: true,
+                    },
+                  },
                 },
               ],
             },
