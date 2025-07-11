@@ -1,4 +1,10 @@
-import { createContext, useContext, useReducer, useCallback, ReactNode } from 'react';
+import {
+  createContext,
+  useContext,
+  useReducer,
+  useCallback,
+  ReactNode,
+} from 'react';
 
 export type ViewMode = 'explorer' | 'detail';
 
@@ -29,7 +35,6 @@ type AppAction =
   | { type: 'TOGGLE_WIND_LAYER' }
   | { type: 'TOGGLE_3D_MAP' }
   | { type: 'TOGGLE_SATELLITE_IMAGERY' }
-  | { type: 'RESET_VIEW' }
   | { type: 'SET_MAP_BOUNDS'; payload: [number, number, number, number] }
   | { type: 'SET_SHOW_PERIMETER_NRT'; payload: boolean }
   | { type: 'SET_WIND_LAYER_TYPE'; payload: 'grid' | 'wind' | null }
@@ -46,7 +51,10 @@ const areDatesEqual = (date1: Date, date2: Date): boolean => {
   return date1.getTime() === date2.getTime();
 };
 
-const areTimeRangesEqual = (range1: AppState['timeRange'], range2: AppState['timeRange']): boolean => {
+const areTimeRangesEqual = (
+  range1: AppState['timeRange'],
+  range2: AppState['timeRange']
+): boolean => {
   return (
     areDatesEqual(range1.start, range2.start) &&
     areDatesEqual(range1.end, range2.end)
@@ -68,7 +76,7 @@ const initialState: AppState = {
   showFireline: false,
   showNewFirepix: false,
   showSatelliteImagery: false,
-  mapBounds: null
+  mapBounds: null,
 };
 
 const appReducer = (state: AppState, action: AppAction): AppState => {
@@ -82,7 +90,7 @@ const appReducer = (state: AppState, action: AppAction): AppState => {
       return {
         ...state,
         selectedEventId: action.payload,
-        viewMode: action.payload ? 'detail' : 'explorer'
+        viewMode: action.payload ? 'detail' : 'explorer',
       };
 
     case 'SET_TIME_RANGE':
@@ -100,13 +108,6 @@ const appReducer = (state: AppState, action: AppAction): AppState => {
 
     case 'TOGGLE_SATELLITE_IMAGERY':
       return { ...state, showSatelliteImagery: !state.showSatelliteImagery };
-
-    case 'RESET_VIEW':
-      return {
-        ...state,
-        timeRange: initialState.timeRange,
-        isPlaying: false
-      };
 
     case 'SET_MAP_BOUNDS':
       return { ...state, mapBounds: action.payload };
@@ -135,8 +136,6 @@ interface AppContextValue extends AppState {
   togglePlay: () => void;
   setPlaybackSpeed: (speed: number) => void;
   toggle3DMap: () => void;
-  toggleSatelliteImagery: () => void;
-  resetView: () => void;
   setMapBounds: (bounds: [number, number, number, number]) => void;
   windLayerType: 'grid' | 'wind' | null;
   setShowPerimeterNrt: (enabled: boolean) => void;
@@ -174,17 +173,12 @@ export const AppStateProvider = ({ children }: { children: ReactNode }) => {
     dispatch({ type: 'TOGGLE_3D_MAP' });
   }, []);
 
-  const toggleSatelliteImagery = useCallback(() => {
-    dispatch({ type: 'TOGGLE_SATELLITE_IMAGERY' });
-  }, []);
-
-  const resetView = useCallback(() => {
-    dispatch({ type: 'RESET_VIEW' });
-  }, []);
-
-  const setMapBounds = useCallback((bounds: [number, number, number, number]) => {
-    dispatch({ type: 'SET_MAP_BOUNDS', payload: bounds });
-  }, []);
+  const setMapBounds = useCallback(
+    (bounds: [number, number, number, number]) => {
+      dispatch({ type: 'SET_MAP_BOUNDS', payload: bounds });
+    },
+    []
+  );
 
   const setWindLayerType = useCallback((type) => {
     dispatch({ type: 'SET_WIND_LAYER_TYPE', payload: type });
@@ -210,14 +204,12 @@ export const AppStateProvider = ({ children }: { children: ReactNode }) => {
     togglePlay,
     setPlaybackSpeed,
     toggle3DMap,
-    toggleSatelliteImagery,
-    resetView,
     setMapBounds,
     setWindLayerType,
     setShowPerimeterNrt,
     setShowFireline,
     setShowNewFirepix,
-    windLayerType: state.windLayerType
+    windLayerType: state.windLayerType,
   };
 
   return (

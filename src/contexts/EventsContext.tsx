@@ -58,7 +58,6 @@ export interface EventFilterParams {
   meanFrpRange?: [number, number];
   isActive?: boolean;
   region?: string;
-  searchTerm?: string;
   limit?: number;
   zoom?: number;
   useHistorical?: boolean;
@@ -86,7 +85,6 @@ interface EventsContextValue extends Omit<EventsState, 'filters'> {
   activeEvents: number;
   inactiveEvents: number;
   totalArea: number;
-  applyFilters: (filters: EventFilterParams) => void;
   currentFilters: EventFilterParams;
   selectEvent: (eventId: string | null) => void;
   getFilteredEvents: (start: Date, end: Date) => MVTFeature[];
@@ -99,13 +97,6 @@ export const getFeatureProperties = (feature: MVTFeature | null) => {
   );
 };
 
-export const getFeatureGeometry = (feature: MVTFeature) => {
-  return (
-    feature.geometry ||
-    (feature.object && feature.object.geometry) || { type: 'Polygon' }
-  );
-};
-
 export const getFireId = (feature: MVTFeature) => {
   const props = getFeatureProperties(feature);
   return props.fireid?.toString() || '';
@@ -114,16 +105,6 @@ export const getFireId = (feature: MVTFeature) => {
 export const getSelectedFireObservationTime = (feature: MVTFeature) => {
   const props = getFeatureProperties(feature);
   return props.t?.toString() || '';
-};
-
-export const isFeatureActive = (feature: MVTFeature) => {
-  const props = getFeatureProperties(feature);
-  return Number(props.isactive) === 1;
-};
-
-export const getFeatureArea = (feature: MVTFeature) => {
-  const props = getFeatureProperties(feature);
-  return props.farea || 0;
 };
 
 const areFeatureArraysEqual = (
@@ -274,10 +255,6 @@ export const EventsProvider = ({ children }: { children: ReactNode }) => {
     };
   }, []);
 
-  const applyFilters = useCallback((newFilters: EventFilterParams) => {
-    dispatch({ type: 'APPLY_FILTERS', payload: newFilters });
-  }, []);
-
   const selectEvent = useCallback(async (eventId: string | null) => {
     dispatch({ type: 'SELECT_EVENT', payload: eventId });
 
@@ -366,7 +343,6 @@ export const EventsProvider = ({ children }: { children: ReactNode }) => {
     activeEvents: metrics.activeEvents,
     inactiveEvents: metrics.inactiveEvents,
     totalArea: metrics.totalArea,
-    applyFilters,
     currentFilters: state.filters,
     selectedEventId: state.selectedEventId,
     selectEvent,

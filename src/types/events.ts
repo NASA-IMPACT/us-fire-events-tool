@@ -45,7 +45,6 @@ export interface EventFilter {
   meanFrpRange?: [number, number];
   region?: string;
   isActive?: boolean;
-  searchTerm?: string;
 }
 
 export interface GroupedEvent {

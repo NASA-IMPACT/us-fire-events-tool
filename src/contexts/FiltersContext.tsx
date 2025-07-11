@@ -9,7 +9,6 @@ export interface FiltersState {
   fireArea: FilterRange;
   duration: FilterRange;
   meanFrp: FilterRange;
-  searchTerm: string;
   region: string | null;
   isActive: boolean | null;
   showAdvancedFilters: boolean;
@@ -25,7 +24,6 @@ interface FiltersContextValue extends FiltersState {
   setFireAreaRange: (range: FilterRange) => void;
   setDurationRange: (range: FilterRange) => void;
   setMeanFrpRange: (range: FilterRange) => void;
-  setSearchTerm: (term: string) => void;
   setRegion: (region: string | null) => void;
   setIsActive: (isActive: boolean | null) => void;
   toggleAdvancedFilters: () => void;
@@ -39,7 +37,6 @@ const defaultFilters: FiltersState = {
   fireArea: DEFAULT_RANGES.fireArea,
   duration: DEFAULT_RANGES.duration,
   meanFrp: DEFAULT_RANGES.meanFrp,
-  searchTerm: '',
   region: null,
   isActive: null,
   showAdvancedFilters: false,
@@ -58,10 +55,6 @@ export const FiltersProvider = ({ children }: { children: ReactNode }) => {
 
   const setMeanFrpRange = (range: FilterRange) => {
     setFilters((prev) => ({ ...prev, meanFrp: range }));
-  };
-
-  const setSearchTerm = (term: string) => {
-    setFilters((prev) => ({ ...prev, searchTerm: term }));
   };
 
   const setRegion = (region: string | null) => {
@@ -84,7 +77,6 @@ export const FiltersProvider = ({ children }: { children: ReactNode }) => {
     setFireAreaRange,
     setDurationRange,
     setMeanFrpRange,
-    setSearchTerm,
     setRegion,
     setIsActive,
     toggleAdvancedFilters,
