@@ -1,4 +1,4 @@
-import { useAppState } from '../contexts/AppStateContext';
+import { useFireExplorerStore } from '@/state/useFireExplorerStore';
 import { Eye, EyeOff, Loader2, X } from 'lucide-react';
 import { Button } from '@trussworks/react-uswds';
 import React from 'react';
@@ -73,14 +73,13 @@ const LayerSwitcher: React.FC<LayerSwitcherProps> = ({
   onClose,
   loadingStates = {},
 }) => {
-  const {
-    showPerimeterNrt,
-    showFireline,
-    showNewFirepix,
-    setShowPerimeterNrt,
-    setShowFireline,
-    setShowNewFirepix,
-  } = useAppState();
+  const showPerimeterNrt = useFireExplorerStore.use.showPerimeterNrt();
+  const showFireline = useFireExplorerStore.use.showFireline();
+  const showNewFirepix = useFireExplorerStore.use.showNewFirepix();
+
+  const setShowPerimeterNrt = useFireExplorerStore.use.setShowPerimeterNrt();
+  const setShowFireline = useFireExplorerStore.use.setShowFireline();
+  const setShowNewFirepix = useFireExplorerStore.use.setShowNewFirepix();
 
   return (
     <div className="layer-switcher z-top bg-white padding-x-1 padding-y-1 radius-md shadow-2 border-1px border-base-lighter text-3xs">
