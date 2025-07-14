@@ -24,7 +24,6 @@ export interface UIState {
   showPerimeterNrt: boolean;
   showFireline: boolean;
   showNewFirepix: boolean;
-  showSatelliteImagery: boolean;
   timeRange: { start: Date; end: Date };
 }
 
@@ -38,7 +37,6 @@ export interface UIActions {
   setShowPerimeterNrt: (enabled: boolean) => void;
   setShowFireline: (enabled: boolean) => void;
   setShowNewFirepix: (enabled: boolean) => void;
-  setSatelliteImagery: (enabled: boolean) => void;
 }
 
 export type UISlice = UIState & UIActions;
@@ -52,7 +50,6 @@ export const createUISlice: StateCreator<UISlice> = (set) => ({
   showPerimeterNrt: true,
   showFireline: false,
   showNewFirepix: false,
-  showSatelliteImagery: false,
   timeRange: {
     start: getCurrentYearStart(),
     end: getToday(),
@@ -66,5 +63,4 @@ export const createUISlice: StateCreator<UISlice> = (set) => ({
   setShowPerimeterNrt: (enabled) => set({ showPerimeterNrt: enabled }),
   setShowFireline: (enabled) => set({ showFireline: enabled }),
   setShowNewFirepix: (enabled) => set({ showNewFirepix: enabled }),
-  setSatelliteImagery: (enabled) => set({ showSatelliteImagery: enabled }),
 });
