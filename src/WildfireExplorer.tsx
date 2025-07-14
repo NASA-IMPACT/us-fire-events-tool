@@ -1,19 +1,17 @@
+import { useEffect } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { AppStateProvider } from './contexts/AppStateContext';
-import { FiltersProvider } from './contexts/FiltersContext';
-import { EventsProvider } from './contexts/EventsContext';
-import { MapProvider } from './contexts/MapContext';
-import { EnvProvider } from './contexts/EnvContext';
+import { useFireExplorerStore } from './state/useFireExplorerStore';
 import Explorer from './views/Explorer';
+
 import './App.scss';
 
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       refetchOnWindowFocus: false,
-      retry: 1
-    }
-  }
+      retry: 1,
+    },
+  },
 });
 
 type Props = {
@@ -21,20 +19,32 @@ type Props = {
   featuresApiEndpoint: string;
 };
 
-export default function WildfireExplorer({ mapboxAccessToken, featuresApiEndpoint }: Props) {
+const ExplorerWithConfig = ({
+  mapboxAccessToken,
+  featuresApiEndpoint,
+}: Props) => {
+  const setEnvConfig = useFireExplorerStore.use.setEnvConfig();
+
+  useEffect(() => {
+    setEnvConfig({
+      mapboxAccessToken,
+      featuresApiEndpoint,
+    });
+  }, [setEnvConfig, mapboxAccessToken, featuresApiEndpoint]);
+
+  return <Explorer />;
+};
+
+export default function WildfireExplorer({
+  mapboxAccessToken,
+  featuresApiEndpoint,
+}: Props) {
   return (
-    <EnvProvider mapboxAccessToken={mapboxAccessToken} featuresApiEndpoint={featuresApiEndpoint}>
-      <QueryClientProvider client={queryClient}>
-        <AppStateProvider>
-          <FiltersProvider>
-            <EventsProvider>
-              <MapProvider>
-                <Explorer />
-              </MapProvider>
-            </EventsProvider>
-          </FiltersProvider>
-        </AppStateProvider>
-      </QueryClientProvider>
-    </EnvProvider>
+    <QueryClientProvider client={queryClient}>
+      <ExplorerWithConfig
+        mapboxAccessToken={mapboxAccessToken}
+        featuresApiEndpoint={featuresApiEndpoint}
+      />
+    </QueryClientProvider>
   );
 }
