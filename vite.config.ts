@@ -10,16 +10,23 @@ export default defineConfig({
   resolve: {
     alias: {
       '~uswds': path.resolve(__dirname, 'node_modules/@uswds/uswds'),
-      '@deck.gl/react/typed': path.resolve(__dirname, 'node_modules/@deck.gl/react/dist/index.js'),
-      '@deck.gl/mapbox/typed': path.resolve(__dirname, 'node_modules/@deck.gl/mapbox/dist/index.js')
-    }
+      '@deck.gl/react/typed': path.resolve(
+        __dirname,
+        'node_modules/@deck.gl/react/dist/index.js'
+      ),
+      '@deck.gl/mapbox/typed': path.resolve(
+        __dirname,
+        'node_modules/@deck.gl/mapbox/dist/index.js'
+      ),
+      '@': path.resolve(__dirname, './src'),
+    },
   },
   css: {
     preprocessorOptions: {
       scss: {
         api: 'legacy',
-        includePaths: ['node_modules/@uswds/uswds/packages']
-      }
-    }
-  }
+        includePaths: ['node_modules/@uswds/uswds/packages'],
+      },
+    },
+  },
 });
