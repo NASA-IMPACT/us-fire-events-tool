@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
-import { useAppState } from '../contexts/AppStateContext';
-import { useEvents } from '../contexts/EventsContext';
+import { useFireExplorerStore } from '@/state/useFireExplorerStore';
 import MapView from '../components/MapView';
 import EventDetails from '../components/sidebar/EventDetailsView';
 import TimeRangeSlider from '../components/timeline/RangeSliderChart';
@@ -25,19 +24,17 @@ const Explorer: React.FC = () => {
     newfirepix: false,
   });
 
-  const {
-    viewMode,
-    setViewMode,
-    toggle3DMap,
-    show3DMap,
-    windLayerType,
-    setWindLayerType,
-    showPerimeterNrt,
-    showFireline,
-    showNewFirepix,
-  } = useAppState();
-
-  const { selectEvent, selectedEventId } = useEvents();
+  const viewMode = useFireExplorerStore.use.viewMode();
+  const setViewMode = useFireExplorerStore.use.setViewMode();
+  const toggle3DMap = useFireExplorerStore.use.toggle3DMap();
+  const show3DMap = useFireExplorerStore.use.show3DMap();
+  const windLayerType = useFireExplorerStore.use.windLayerType();
+  const setWindLayerType = useFireExplorerStore.use.setWindLayerType();
+  const showPerimeterNrt = useFireExplorerStore.use.showPerimeterNrt();
+  const showFireline = useFireExplorerStore.use.showFireline();
+  const showNewFirepix = useFireExplorerStore.use.showNewFirepix();
+  const selectedEventId = useFireExplorerStore.use.selectedEventId();
+  const selectEvent = useFireExplorerStore.use.selectEvent();
 
   const handleBackToList = () => {
     selectEvent(null);
