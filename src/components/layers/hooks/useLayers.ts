@@ -1,17 +1,10 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { useMap } from '../../../contexts/MapContext';
-import { getFireId, useEvents } from '../../../contexts/EventsContext';
-import { useAppState } from '../../../contexts/AppStateContext';
-import { useFilters } from '../../../contexts/FiltersContext';
+import { useFireExplorerStore } from '@/state/useFireExplorerStore';
 import { LAYER_TYPES } from '../config/constants';
 import { createLayers } from '../LayerFactory';
 import _ from 'lodash';
-import { useEnv } from '../../../contexts/EnvContext';
 
-export type MVTLayerId =
-  | 'perimeterNrt'
-  | 'fireline'
-  | 'newfirepix';
+export type MVTLayerId = 'perimeterNrt' | 'fireline' | 'newfirepix';
 
 type UseLayersProps = {
   collectVisibleFeatures: () => void;
@@ -29,7 +22,7 @@ type LoadingStates = {
 /**
  * Custom hook that returns an array of deck.gl layers based on application state.
  * It dynamically configures and filters MVT, GeoJSON, Terrain and wind/grid layers based on user-selected options,
- * time range, and filter settings from multiple contexts (AppState, Events, Filters, and Map).
+ * time range, and filter settings from the Zustand store.
  *
  * Layer visibility is controlled by boolean flags such as `showPerimeterNrt`, `showFireline`, etc.
  * Fire features are filtered based on advanced filter options like area, duration, FRP, region, and activity status.
@@ -49,14 +42,15 @@ export const useLayers = ({
   collectVisibleFeatures,
   isInteracting,
   viewState,
-  setViewMode
+  setViewMode,
 }: UseLayersProps) => {
-  const { mapboxAccessToken, featuresApiEndpoint: baseUrl } = useEnv();
+  const mapboxAccessToken = useFireExplorerStore.use.mapboxAccessToken();
+  const baseUrl = useFireExplorerStore.use.featuresApiEndpoint();
 
   const MVT_URLS: Record<MVTLayerId, string> = {
     perimeterNrt: `${baseUrl}/collections/pg_temp.eis_fire_lf_perimeter_nrt_latest/tiles/WebMercatorQuad/{z}/{x}/{y}?bbox=-165.0,24.5,-66.0,69.5&properties=duration,farea,meanfrp,fperim,n_pixels,n_newpixels,pixden,fireid,primarykey,t,region`,
     fireline: `${baseUrl}/collections/public.eis_fire_lf_fireline_nrt/tiles/WebMercatorQuad/{z}/{x}/{y}?bbox=-165.0,24.5,-66.0,69.5&properties=duration,farea,meanfrp,fperim,n_pixels,n_newpixels,pixden,fireid,primarykey,t,region`,
-    newfirepix: `${baseUrl}/collections/public.eis_fire_lf_newfirepix_nrt/tiles/WebMercatorQuad/{z}/{x}/{y}?bbox=-165.0,24.5,-66.0,69.5&properties=duration,farea,meanfrp,fperim,n_pixels,n_newpixels,pixden,fireid,primarykey,t,region`
+    newfirepix: `${baseUrl}/collections/public.eis_fire_lf_newfirepix_nrt/tiles/WebMercatorQuad/{z}/{x}/{y}?bbox=-165.0,24.5,-66.0,69.5&properties=duration,farea,meanfrp,fperim,n_pixels,n_newpixels,pixden,fireid,primarykey,t,region`,
   };
 
   const [layers, setLayers] = useState([]);
@@ -64,32 +58,45 @@ export const useLayers = ({
   const [loadingStates, setLoadingStates] = useState<LoadingStates>({
     perimeterNrt: false,
     fireline: false,
-    newfirepix: false
+    newfirepix: false,
   });
 
   const debouncedTimeUpdate = useRef(null);
   const layerRefs = useRef<Record<string, any>>({});
 
-  const { windLayerType, show3DMap, timeRange, showPerimeterNrt, showFireline, showNewFirepix  } = useAppState();
-  const { firePerimeters, selectEvent } = useEvents();
-  const { layerOpacity } = useMap();
-  const {
-    fireArea,
-    duration,
-    meanFrp,
-    region,
-    isActive,
-    showAdvancedFilters
-  } = useFilters();
+  const windLayerType = useFireExplorerStore.use.windLayerType();
+  const show3DMap = useFireExplorerStore.use.show3DMap();
+  const timeRange = useFireExplorerStore.use.timeRange();
+  const showPerimeterNrt = useFireExplorerStore.use.showPerimeterNrt();
+  const showFireline = useFireExplorerStore.use.showFireline();
+  const showNewFirepix = useFireExplorerStore.use.showNewFirepix();
+  const layerOpacity = useFireExplorerStore.use.layerOpacity();
+  const firePerimeters = useFireExplorerStore.use.firePerimeters();
+  const selectEvent = useFireExplorerStore.use.selectEvent();
+
+  const fireArea = useFireExplorerStore.use.fireArea();
+  const duration = useFireExplorerStore.use.duration();
+  const meanFrp = useFireExplorerStore.use.meanFrp();
+  const region = useFireExplorerStore.use.region();
+  const isActive = useFireExplorerStore.use.isActive();
+  const showAdvancedFilters = useFireExplorerStore.use.showAdvancedFilters();
+
+  const getFireId = (feature: any): string | null => {
+    if (!feature?.properties) return null;
+    return feature.properties.fireid || feature.properties.primarykey || null;
+  };
 
   useEffect(() => {
     const checkLoadingStates = () => {
       const newLoadingStates = { ...loadingStates };
       let hasChanges = false;
 
-      Object.keys(layerRefs.current).forEach(layerId => {
+      Object.keys(layerRefs.current).forEach((layerId) => {
         const layer = layerRefs.current[layerId];
-        const layerKey = layerId.replace('perimeter-nrt', 'perimeterNrt') as keyof LoadingStates;
+        const layerKey = layerId.replace(
+          'perimeter-nrt',
+          'perimeterNrt'
+        ) as keyof LoadingStates;
 
         if (layer && typeof layer.isLoaded === 'boolean') {
           const wasLoading = loadingStates[layerKey];
@@ -116,41 +123,46 @@ export const useLayers = ({
     return () => clearInterval(interval);
   }, [loadingStates, isInteracting, collectVisibleFeatures]);
 
-  const featurePassesFilters = useCallback((feature) => {
-    if (!feature?.properties) return false;
+  const featurePassesFilters = useCallback(
+    (feature) => {
+      if (!feature?.properties) return false;
 
-    const featureTime = new Date(feature.properties.t).getTime();
-    const isInTimeRange =
-      featureTime >= timeRange.start.getTime() &&
-      featureTime <= timeRange.end.getTime();
+      const featureTime = new Date(feature.properties.t).getTime();
+      const isInTimeRange =
+        featureTime >= timeRange.start.getTime() &&
+        featureTime <= timeRange.end.getTime();
 
-    if (!isInTimeRange) return false;
+      if (!isInTimeRange) return false;
 
-    if (showAdvancedFilters) {
-      const area = feature.properties.farea || 0;
-      if (area < fireArea.min || area > fireArea.max) return false;
+      if (showAdvancedFilters) {
+        const area = feature.properties.farea || 0;
+        if (area < fireArea.min || area > fireArea.max) return false;
 
-      const durationInDays = feature.properties.duration || 0;
-      if (durationInDays < duration.min || durationInDays > duration.max) return false;
+        const durationInDays = feature.properties.duration || 0;
+        if (durationInDays < duration.min || durationInDays > duration.max)
+          return false;
 
-      const frp = feature.properties.meanfrp || 0;
-      if (frp < meanFrp.min || frp > meanFrp.max) return false;
+        const frp = feature.properties.meanfrp || 0;
+        if (frp < meanFrp.min || frp > meanFrp.max) return false;
 
-      if (region && feature.properties.region !== region) return false;
+        if (region && feature.properties.region !== region) return false;
 
-      if (isActive !== null && feature.properties.isactive !== isActive) return false;
-    }
+        if (isActive !== null && feature.properties.isactive !== isActive)
+          return false;
+      }
 
-    return true;
-  }, [
-    timeRange,
-    showAdvancedFilters,
-    fireArea,
-    duration,
-    meanFrp,
-    region,
-    isActive,
-  ]);
+      return true;
+    },
+    [
+      timeRange,
+      showAdvancedFilters,
+      fireArea,
+      duration,
+      meanFrp,
+      region,
+      isActive,
+    ]
+  );
 
   const zoomToFeature = useCallback((feature) => {
     if (!feature?.geometry) return null;
@@ -161,22 +173,25 @@ export const useLayers = ({
       if (feature.geometry.type === 'Polygon') {
         coordinates = feature.geometry.coordinates[0];
       } else if (feature.geometry.type === 'MultiPolygon') {
-        feature.geometry.coordinates.forEach(polygon => {
+        feature.geometry.coordinates.forEach((polygon) => {
           coordinates = [...coordinates, ...polygon[0]];
         });
       } else if (feature.geometry.type === 'Point') {
         const [lon, lat] = feature.geometry.coordinates;
 
         return {
-          bounds: [[lon - 0.05, lat - 0.05], [lon + 0.05, lat + 0.05]],
-          padding: 40
+          bounds: [
+            [lon - 0.05, lat - 0.05],
+            [lon + 0.05, lat + 0.05],
+          ],
+          padding: 40,
         };
       }
 
       if (coordinates.length === 0) return null;
 
-      const lons = coordinates.map(c => c[0]);
-      const lats = coordinates.map(c => c[1]);
+      const lons = coordinates.map((c) => c[0]);
+      const lats = coordinates.map((c) => c[1]);
       const minLon = Math.min(...lons);
       const maxLon = Math.max(...lons);
       const minLat = Math.min(...lats);
@@ -185,8 +200,11 @@ export const useLayers = ({
       const padding = 40;
 
       return {
-        bounds: [[minLon, minLat], [maxLon, maxLat]],
-        padding
+        bounds: [
+          [minLon, minLat],
+          [maxLon, maxLat],
+        ],
+        padding,
       };
     } catch (error) {
       console.error('Error calculating bounds:', error);
@@ -194,32 +212,36 @@ export const useLayers = ({
     }
   }, []);
 
-  const handleClick = useCallback((info) => {
-    const { object } = info;
-    if (!object) return;
+  const handleClick = useCallback(
+    (info) => {
+      const { object } = info;
+      if (!object) return;
 
-    const fireId = getFireId(object);
-    if (!fireId) {
-      console.error("No fire ID found for the selected feature");
-      return;
-    }
+      const fireId = getFireId(object);
+      if (!fireId) {
+        console.error('No fire ID found for the selected feature');
+        return;
+      }
 
-    selectEvent(fireId);
+      selectEvent(fireId, baseUrl);
 
-    const bounds = zoomToFeature(object);
-    if (bounds) {
-      const fitBoundsEvent = new CustomEvent('fitbounds', {
-        detail: bounds
-      });
-      window.dispatchEvent(fitBoundsEvent);
-    }
+      const bounds = zoomToFeature(object);
+      if (bounds) {
+        const fitBoundsEvent = new CustomEvent('fitbounds', {
+          detail: bounds,
+        });
+        window.dispatchEvent(fitBoundsEvent);
+      }
 
-    setViewMode('detail');
-  }, [featurePassesFilters, zoomToFeature, selectEvent, setViewMode]);
+      if (setViewMode) {
+        setViewMode('detail');
+      }
+    },
+    [zoomToFeature, selectEvent, setViewMode, baseUrl]
+  );
 
-  const createTileLoadHandler = useCallback((layerId: keyof LoadingStates) => {
+  const createTileLoadHandler = useCallback(() => {
     return (tile) => {
-
       if (!isInteracting && tile?.data?.length) {
         collectVisibleFeatures();
       }
@@ -264,7 +286,7 @@ export const useLayers = ({
       }
 
       if (showPerimeterNrt) {
-        setLoadingStates(prev => ({ ...prev, perimeterNrt: true }));
+        setLoadingStates((prev) => ({ ...prev, perimeterNrt: true }));
 
         layerConfigs.push({
           type: LAYER_TYPES.MVT,
@@ -276,14 +298,30 @@ export const useLayers = ({
           onTileError: createTileErrorHandler('perimeterNrt'),
           onClick: handleClick,
           updateTriggers: {
-            getFillColor: [timeRange, showAdvancedFilters, fireArea, duration, meanFrp, region, isActive],
-            getLineColor: [timeRange, showAdvancedFilters, fireArea, duration, meanFrp, region, isActive],
-          }
+            getFillColor: [
+              timeRange,
+              showAdvancedFilters,
+              fireArea,
+              duration,
+              meanFrp,
+              region,
+              isActive,
+            ],
+            getLineColor: [
+              timeRange,
+              showAdvancedFilters,
+              fireArea,
+              duration,
+              meanFrp,
+              region,
+              isActive,
+            ],
+          },
         });
       }
 
       if (showFireline) {
-        setLoadingStates(prev => ({ ...prev, fireline: true }));
+        setLoadingStates((prev) => ({ ...prev, fireline: true }));
 
         layerConfigs.push({
           type: LAYER_TYPES.MVT,
@@ -295,14 +333,30 @@ export const useLayers = ({
           onTileError: createTileErrorHandler('fireline'),
           onClick: handleClick,
           updateTriggers: {
-            getFillColor: [timeRange, showAdvancedFilters, fireArea, duration, meanFrp, region, isActive],
-            getLineColor: [timeRange, showAdvancedFilters, fireArea, duration, meanFrp, region, isActive],
-          }
+            getFillColor: [
+              timeRange,
+              showAdvancedFilters,
+              fireArea,
+              duration,
+              meanFrp,
+              region,
+              isActive,
+            ],
+            getLineColor: [
+              timeRange,
+              showAdvancedFilters,
+              fireArea,
+              duration,
+              meanFrp,
+              region,
+              isActive,
+            ],
+          },
         });
       }
 
       if (showNewFirepix) {
-        setLoadingStates(prev => ({ ...prev, newfirepix: true }));
+        setLoadingStates((prev) => ({ ...prev, newfirepix: true }));
 
         layerConfigs.push({
           type: LAYER_TYPES.MVT,
@@ -315,9 +369,25 @@ export const useLayers = ({
           onTileError: createTileErrorHandler('newfirepix'),
           onClick: handleClick,
           updateTriggers: {
-            getFillColor: [timeRange, showAdvancedFilters, fireArea, duration, meanFrp, region, isActive],
-            getLineColor: [timeRange, showAdvancedFilters, fireArea, duration, meanFrp, region, isActive],
-          }
+            getFillColor: [
+              timeRange,
+              showAdvancedFilters,
+              fireArea,
+              duration,
+              meanFrp,
+              region,
+              isActive,
+            ],
+            getLineColor: [
+              timeRange,
+              showAdvancedFilters,
+              fireArea,
+              duration,
+              meanFrp,
+              region,
+              isActive,
+            ],
+          },
         });
       }
 
@@ -328,13 +398,29 @@ export const useLayers = ({
           filterFunction: featurePassesFilters,
           opacity: layerOpacity,
           updateTriggers: {
-            getFillColor: [timeRange, showAdvancedFilters, fireArea, duration, meanFrp, region, isActive],
-            getLineColor: [timeRange, showAdvancedFilters, fireArea, duration, meanFrp, region, isActive],
+            getFillColor: [
+              timeRange,
+              showAdvancedFilters,
+              fireArea,
+              duration,
+              meanFrp,
+              region,
+              isActive,
+            ],
+            getLineColor: [
+              timeRange,
+              showAdvancedFilters,
+              fireArea,
+              duration,
+              meanFrp,
+              region,
+              isActive,
+            ],
             getLineWidth: [timeRange],
-            getDashArray: [timeRange]
+            getDashArray: [timeRange],
           },
           onClick: handleClick,
-          timeRange
+          timeRange,
         });
       }
 
@@ -342,7 +428,7 @@ export const useLayers = ({
         layerConfigs.push({
           type: LAYER_TYPES.WIND,
           timeRangeEnd: lastTimeRangeEnd,
-          opacity: layerOpacity
+          opacity: layerOpacity,
         });
       }
 
@@ -350,14 +436,14 @@ export const useLayers = ({
         layerConfigs.push({
           type: LAYER_TYPES.GRID,
           timeRangeEnd: lastTimeRangeEnd,
-          opacity: layerOpacity
+          opacity: layerOpacity,
         });
       }
 
       const newLayers = await createLayers(layerConfigs);
 
       layerRefs.current = {};
-      newLayers.forEach(layer => {
+      newLayers.forEach((layer) => {
         if (layer && layer.id) {
           layerRefs.current[layer.id] = layer;
         }
@@ -390,7 +476,7 @@ export const useLayers = ({
     showNewFirepix,
     showPerimeterNrt,
     createTileLoadHandler,
-    createTileErrorHandler
+    createTileErrorHandler,
   ]);
 
   return { layers, loadingStates, featurePassesFilters };
