@@ -3,23 +3,23 @@ import { format } from 'date-fns';
 import { Calendar as CalendarIcon } from 'lucide-react';
 import Calendar from 'react-calendar';
 import ReactSlider from 'react-slider';
-import { useEvents } from '../../contexts/EventsContext';
-import { useAppState } from '../../contexts/AppStateContext';
+import { useFireExplorerStore } from '@/state/useFireExplorerStore';
 import { BarChart, Bar, ResponsiveContainer, XAxis, YAxis } from 'recharts';
 import AdvancedFilters from '../filters/AdvancedFilters';
-import { useFilters } from '../../contexts/FiltersContext';
 import { Button } from '@trussworks/react-uswds';
 
 import 'react-calendar/dist/Calendar.css';
 import './rangeslider.scss';
 
 const TimeRangeSlider = () => {
-  const { timeRange, setTimeRange } = useAppState();
-  const { toggleAdvancedFilters } = useFilters();
-  const { events } = useEvents();
+  const timeRange = useFireExplorerStore.use.timeRange();
+  const setTimeRange = useFireExplorerStore.use.setTimeRange();
+  const events = useFireExplorerStore.use.events();
+  const showAdvancedFilters = useFireExplorerStore.use.showAdvancedFilters();
+  const toggleAdvancedFilters =
+    useFireExplorerStore.use.toggleAdvancedFilters();
 
   const [showCalendar, setShowCalendar] = useState(false);
-  const [showSearchFilters, setShowSearchFilters] = useState(false);
   const [highlightedArea, setHighlightedArea] = useState({ left: 0, width: 0 });
   const chartRef = useRef(null);
 
@@ -201,11 +201,8 @@ const TimeRangeSlider = () => {
         </div>
         <Button
           type="button"
-          onClick={() => {
-            setShowSearchFilters((prev) => !prev);
-            toggleAdvancedFilters();
-          }}
-          typeStyle="unstyled"
+          onClick={toggleAdvancedFilters}
+          unstyled
           className="text-underline margin-left-auto font-sans-3xs usa-button--unstyled"
         >
           <svg
@@ -222,7 +219,7 @@ const TimeRangeSlider = () => {
               fill="#005EA2"
             />
           </svg>
-          {showSearchFilters
+          {showAdvancedFilters
             ? 'Hide advanced filters'
             : 'Show advanced filters'}
         </Button>
@@ -306,7 +303,7 @@ const TimeRangeSlider = () => {
         minDistance={5}
       />
 
-      {showSearchFilters && (
+      {showAdvancedFilters && (
         <div className="margin-top-2">
           <AdvancedFilters />
         </div>

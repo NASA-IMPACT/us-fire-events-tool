@@ -1,8 +1,7 @@
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { format } from 'date-fns';
 import ReactSlider from 'react-slider';
-import { useEvents } from '../../contexts/EventsContext';
-import { useAppState } from '../../contexts/AppStateContext';
+import { useFireExplorerStore } from '@/state/useFireExplorerStore';
 import {
   YAxis,
   CartesianGrid,
@@ -23,14 +22,13 @@ import {
 const yAxisOptions = ['Fire area (km²)', 'Mean FRP', 'Duration (days)'];
 
 const DetailedTimeChart = () => {
-  const { selectedEventId, firePerimeters } = useEvents();
-  const {
-    windLayerType,
-    setWindLayerType,
-    setTimeRange,
-    show3DMap,
-    toggle3DMap,
-  } = useAppState();
+  const selectedEventId = useFireExplorerStore.use.selectedEventId();
+  const firePerimeters = useFireExplorerStore.use.firePerimeters();
+  const windLayerType = useFireExplorerStore.use.windLayerType();
+  const setWindLayerType = useFireExplorerStore.use.setWindLayerType();
+  const setTimeRange = useFireExplorerStore.use.setTimeRange();
+  const show3DMap = useFireExplorerStore.use.show3DMap();
+  const toggle3DMap = useFireExplorerStore.use.toggle3DMap();
 
   const [sliderValue, setSliderValue] = useState(0);
   const [currentPerimeter, setCurrentPerimeter] = useState(null);
