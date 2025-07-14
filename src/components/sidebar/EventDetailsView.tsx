@@ -1,36 +1,44 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { format } from 'date-fns';
-import { useAppState } from '../../contexts/AppStateContext';
-import {
-  useEvents,
-  getFeatureProperties,
-  getFireId,
-  MVTFeature,
-  getSelectedFireObservationTime,
-} from '../../contexts/EventsContext';
+import { useFireExplorerStore } from '@/state/useFireExplorerStore';
 import ReactSlider from 'react-slider';
-import { useMap } from '../../contexts/MapContext';
 import { ToggleSlider } from 'react-toggle-slider';
 
 import './event-detail-view.scss';
 import { Loader2 } from 'lucide-react';
 import { Icon } from '@trussworks/react-uswds';
-import { useEnv } from '../../contexts/EnvContext';
 import DownloadMenu from './DownloadMenu';
+import {
+  getFeatureProperties,
+  getFireId,
+  getSelectedFireObservationTime,
+  MVTFeature,
+} from '@/utils/fireUtils';
 
 interface EventDetailsProps {
   onBack: () => void;
 }
 
 const EventDetails: React.FC<EventDetailsProps> = ({ onBack }) => {
-  const { selectedEventId, firePerimeters, firePerimetersLoading } =
-    useEvents();
-  const { windLayerType, setWindLayerType, show3DMap, toggle3DMap } =
-    useAppState();
-  const { layerOpacity, setLayerOpacity } = useMap();
-  const { featuresApiEndpoint } = useEnv();
+  const selectedEventId = useFireExplorerStore.use.selectedEventId();
+  const firePerimeters = useFireExplorerStore.use.firePerimeters();
+  const firePerimetersLoading =
+    useFireExplorerStore.use.firePerimetersLoading();
+  const windLayerType = useFireExplorerStore.use.windLayerType();
+  const setWindLayerType = useFireExplorerStore.use.setWindLayerType();
+  const show3DMap = useFireExplorerStore.use.show3DMap();
+  const toggle3DMap = useFireExplorerStore.use.toggle3DMap();
+  const layerOpacity = useFireExplorerStore.use.layerOpacity();
+  const featuresApiEndpoint = useFireExplorerStore.use.featuresApiEndpoint();
+
   const [showDownloadMenu, setShowDownloadMenu] = useState(false);
   const downloadRef = useRef<HTMLDivElement>(null);
+
+  const setMapState = useFireExplorerStore((state) => state.setMapState);
+
+  const setLayerOpacity = (opacity: number) => {
+    setMapState({ layerOpacity: opacity });
+  };
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
