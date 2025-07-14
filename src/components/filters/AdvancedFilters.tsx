@@ -1,18 +1,16 @@
 import { useState, useEffect } from 'react';
-import { useFilters } from '../../contexts/FiltersContext';
+import { useFireExplorerStore } from '@/state/useFireExplorerStore';
 import ReactSlider from 'react-slider';
 
 import './advanced-filters.scss';
 
 const AdvancedFilters: React.FC = () => {
-  const {
-    fireArea,
-    duration,
-    meanFrp,
-    setFireAreaRange,
-    setDurationRange,
-    setMeanFrpRange,
-  } = useFilters();
+  const fireArea = useFireExplorerStore.use.fireArea();
+  const duration = useFireExplorerStore.use.duration();
+  const meanFrp = useFireExplorerStore.use.meanFrp();
+  const setFireAreaRange = useFireExplorerStore.use.setFireAreaRange();
+  const setDurationRange = useFireExplorerStore.use.setDurationRange();
+  const setMeanFrpRange = useFireExplorerStore.use.setMeanFrpRange();
 
   const [localFireArea, setLocalFireArea] = useState([
     fireArea.min,
