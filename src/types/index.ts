@@ -30,3 +30,34 @@ export interface ApiResponse<T> {
   success: boolean;
   error?: ApiError;
 }
+
+export interface MVTFeature {
+  geometry: {
+    type: string;
+    coordinates?: unknown;
+  };
+  properties: {
+    fireid?: number;
+    farea?: number;
+    isactive?: number;
+    duration?: number;
+    flinelen?: number;
+    fperim?: number;
+    geom_counts?: string;
+    layerName?: string;
+    low_confidence_grouping?: number;
+    meanfrp?: number;
+    n_newpixels?: number;
+    n_pixels?: number;
+    pixden?: number;
+    primarykey?: string;
+    region?: string;
+    t?: string;
+    [key: string]: unknown;
+  };
+  object?: {
+    properties?: unknown;
+    geometry?: unknown;
+  };
+  type?: string;
+}
