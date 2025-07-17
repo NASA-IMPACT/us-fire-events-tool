@@ -7,6 +7,7 @@ import { useFireExplorerStore } from '@/state/useFireExplorerStore';
 import { BarChart, Bar, ResponsiveContainer, XAxis, YAxis } from 'recharts';
 import AdvancedFilters from '../filters/AdvancedFilters';
 import { Button } from '@trussworks/react-uswds';
+import { getDefaultTimeRange, getTodayEndOfDay } from '../../utils/dateUtils';
 
 import 'react-calendar/dist/Calendar.css';
 import './rangeslider.scss';
@@ -24,10 +25,7 @@ const TimeRangeSlider = () => {
   const chartRef = useRef(null);
 
   const { minDate, maxDate, totalRange } = useMemo(() => {
-    const now = new Date();
-    now.setDate(now.getDate());
-    now.setHours(23, 59, 59, 999);
-
+    const now = getTodayEndOfDay();
     const fixedStartDate = new Date(now.getFullYear(), 0, 1);
     fixedStartDate.setHours(0, 0, 0, 0);
 
@@ -35,7 +33,6 @@ const TimeRangeSlider = () => {
       minDate: fixedStartDate,
       maxDate: now,
       totalRange: now.getTime() - fixedStartDate.getTime(),
-      months: [],
     };
   }, []);
 
@@ -67,41 +64,46 @@ const TimeRangeSlider = () => {
       timestamp: minDate.getTime() + index * binSize,
       date: new Date(minDate.getTime() + index * binSize),
       count,
-      isHighlighted: false,
     }));
   }, [events, minDate, maxDate, totalRange, FIXED_BINS]);
 
-  const [sliderValues, setSliderValues] = useState([50, 100]);
-
-  useEffect(() => {
-    const twoMonthsAgo = new Date(maxDate);
-    twoMonthsAgo.setMonth(twoMonthsAgo.getMonth() - 2);
-    twoMonthsAgo.setHours(0, 0, 0, 0);
+  const sliderValues = useMemo(() => {
+    if (!timeRange || !timeRange.start || !timeRange.end) {
+      const defaultRange = getDefaultTimeRange(maxDate);
+      const startPercent =
+        ((defaultRange.start.getTime() - minDate.getTime()) / totalRange) * 100;
+      return [startPercent, 100];
+    }
 
     const startPercent =
-      ((twoMonthsAgo.getTime() - minDate.getTime()) / totalRange) * 100;
-    const endPercent = 100;
+      ((timeRange.start.getTime() - minDate.getTime()) / totalRange) * 100;
+    const endPercent =
+      ((timeRange.end.getTime() - minDate.getTime()) / totalRange) * 100;
 
-    setSliderValues([startPercent, endPercent]);
-  }, [minDate, maxDate, totalRange]);
+    return [
+      Math.max(0, Math.min(100, startPercent)),
+      Math.max(0, Math.min(100, endPercent)),
+    ];
+  }, [timeRange, minDate, maxDate, totalRange]);
 
-  useEffect(() => {
+  const handleSliderChange = (newValues) => {
     const getDateFromPercent = (percent) => {
       const milliseconds = minDate.getTime() + totalRange * (percent / 100);
       return new Date(milliseconds);
     };
 
-    const filteredStart = getDateFromPercent(sliderValues[0]);
-    const filteredEnd = getDateFromPercent(sliderValues[1]);
+    const filteredStart = getDateFromPercent(newValues[0]);
+    const filteredEnd = getDateFromPercent(newValues[1]);
 
-    if (
-      !timeRange ||
-      Math.abs(timeRange.start.getTime() - filteredStart.getTime()) > 1000 ||
-      Math.abs(timeRange.end.getTime() - filteredEnd.getTime()) > 1000
-    ) {
-      setTimeRange({ start: filteredStart, end: filteredEnd });
+    setTimeRange({ start: filteredStart, end: filteredEnd });
+  };
+
+  useEffect(() => {
+    if (!timeRange) {
+      const defaultRange = getDefaultTimeRange(maxDate);
+      setTimeRange(defaultRange);
     }
-  }, [sliderValues, minDate, totalRange, setTimeRange]);
+  }, [timeRange, maxDate, setTimeRange]);
 
   useEffect(() => {
     if (chartRef.current) {
@@ -137,8 +139,7 @@ const TimeRangeSlider = () => {
       .filter((_, idx) => idx % step === 0)
       .map((d) => d.date.getTime());
 
-    const today = new Date();
-    today.setHours(23, 59, 59, 999);
+    const today = getTodayEndOfDay();
     const todayTs = today.getTime();
 
     if (!ticks.includes(todayTs)) {
@@ -147,6 +148,13 @@ const TimeRangeSlider = () => {
 
     return ticks;
   }, [chartData]);
+
+  const handleCalendarChange = (range) => {
+    if (Array.isArray(range) && range[0] && range[1]) {
+      setTimeRange({ start: range[0], end: range[1] });
+      setShowCalendar(false);
+    }
+  };
 
   return (
     <div
@@ -165,8 +173,8 @@ const TimeRangeSlider = () => {
             Time period:
           </span>
           <div className="display-flex flex-align-center border-1px border-base-light padding-y-05 padding-x-1 radius-sm font-ui font-weight-regular font-sans-3xs text-base bg-white date-picker">
-            {format(timeRange.start, 'MMM d, yyyy')} -{' '}
-            {format(timeRange.end, 'MMM d, yyyy')}
+            {timeRange && format(timeRange.start, 'MMM d, yyyy')} -{' '}
+            {timeRange && format(timeRange.end, 'MMM d, yyyy')}
             <button
               className="border-0 bg-transparent padding-1 margin-left-1"
               onClick={() => setShowCalendar((prev) => !prev)}
@@ -177,23 +185,10 @@ const TimeRangeSlider = () => {
               <div style={{ position: 'absolute', zIndex: 10, top: '-240px' }}>
                 <Calendar
                   selectRange
-                  onChange={(range) => {
-                    if (Array.isArray(range) && range[0] && range[1]) {
-                      const startPercent =
-                        ((range[0].getTime() - minDate.getTime()) /
-                          totalRange) *
-                        100;
-                      const endPercent =
-                        ((range[1].getTime() - minDate.getTime()) /
-                          totalRange) *
-                        100;
-                      setSliderValues([startPercent, endPercent]);
-                      setShowCalendar(false);
-                    }
-                  }}
+                  onChange={handleCalendarChange}
                   minDate={minDate}
                   maxDate={maxDate}
-                  value={[timeRange.start, timeRange.end]}
+                  value={timeRange ? [timeRange.start, timeRange.end] : null}
                 />
               </div>
             )}
@@ -295,7 +290,7 @@ const TimeRangeSlider = () => {
         thumbClassName="thumb"
         trackClassName="track"
         value={sliderValues}
-        onChange={setSliderValues}
+        onChange={handleSliderChange}
         min={0}
         max={100}
         ariaLabel={['Minimum date', 'Maximum date']}

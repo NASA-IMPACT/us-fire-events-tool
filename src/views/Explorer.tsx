@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useFireExplorerStore } from '@/state/useFireExplorerStore';
+import { getDefaultTimeRange } from '../utils/dateUtils';
 import MapView from '../components/MapView';
 import EventDetails from '../components/sidebar/EventDetailsView';
 import TimeRangeSlider from '../components/timeline/RangeSliderChart';
@@ -35,16 +36,22 @@ const Explorer: React.FC = () => {
   const showNewFirepix = useFireExplorerStore.use.showNewFirepix();
   const selectedEventId = useFireExplorerStore.use.selectedEventId();
   const selectEvent = useFireExplorerStore.use.selectEvent();
+  const setTimeRange = useFireExplorerStore.use.setTimeRange();
 
   const handleBackToList = () => {
     selectEvent(null);
     setViewMode('explorer');
+
     if (show3DMap) {
       toggle3DMap();
     }
+
     if (windLayerType !== null) {
       setWindLayerType(null);
     }
+
+    const defaultRange = getDefaultTimeRange();
+    setTimeRange(defaultRange);
   };
 
   const handleLoadingStatesChange = (newLoadingStates: LoadingStates) => {

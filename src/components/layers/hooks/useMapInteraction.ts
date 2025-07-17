@@ -1,6 +1,9 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { WebMercatorViewport } from '@deck.gl/core';
-import { FEATURES_COLLECTION_DEBOUNCE, INTERACTION_TIMEOUT } from '../config/constants';
+import {
+  FEATURES_COLLECTION_DEBOUNCE,
+  INTERACTION_TIMEOUT,
+} from '../config/constants';
 
 import _ from 'lodash';
 
@@ -18,7 +21,7 @@ export const useMapInteraction = ({
   initialViewState,
   setMapBounds,
   updateEvents,
-  show3DMap
+  show3DMap,
 }) => {
   const [viewState, setViewState] = useState(initialViewState);
   const [isInteracting, setIsInteracting] = useState(false);
@@ -28,15 +31,18 @@ export const useMapInteraction = ({
   const lastBoundsRef = useRef(null);
   const collectVisibleFeaturesRef = useRef(null);
 
-  const updateBounds = useCallback((newViewState) => {
-    const viewport = new WebMercatorViewport(newViewState);
-    const bounds = viewport.getBounds();
-    lastBoundsRef.current = bounds;
+  const updateBounds = useCallback(
+    (newViewState) => {
+      const viewport = new WebMercatorViewport(newViewState);
+      const bounds = viewport.getBounds();
+      lastBoundsRef.current = bounds;
 
-    if (!isInteracting) {
-      setMapBounds(bounds);
-    }
-  }, [setMapBounds, isInteracting]);
+      if (!isInteracting) {
+        setMapBounds(bounds);
+      }
+    },
+    [setMapBounds, isInteracting]
+  );
 
   const updateContextAfterInteraction = useCallback(() => {
     if (!lastBoundsRef.current || !deckRef.current) return;
@@ -44,10 +50,12 @@ export const useMapInteraction = ({
     setMapBounds(lastBoundsRef.current);
 
     const { width, height, layerManager } = deckRef.current.deck;
-    const availableLayerIds = layerManager.layers.map(l => l.id);
+    const availableLayerIds = layerManager.layers.map((l) => l.id);
 
     const priorityLayers = ['perimeter-nrt', 'fireline', 'newfirepix'];
-    const targetLayerId = priorityLayers.find(id => availableLayerIds.includes(id));
+    const targetLayerId = priorityLayers.find((id) =>
+      availableLayerIds.includes(id)
+    );
     if (!targetLayerId) return;
 
     const features = deckRef.current.pickObjects({
@@ -56,7 +64,7 @@ export const useMapInteraction = ({
       width,
       height,
       layerIds: [targetLayerId],
-      ignoreVisibility: true
+      ignoreVisibility: true,
     });
 
     updateEvents(features);
@@ -82,37 +90,44 @@ export const useMapInteraction = ({
     }
   }, []);
 
-  const handleInteractionStateChange = useCallback(({ isDragging, isPanning, isRotating, isZooming }) => {
-    const isCurrentlyInteracting = isDragging || isPanning || isRotating || isZooming;
+  const handleInteractionStateChange = useCallback(
+    ({ isDragging, isPanning, isRotating, isZooming }) => {
+      const isCurrentlyInteracting =
+        isDragging || isPanning || isRotating || isZooming;
 
-    if (interactionTimeoutRef.current !== null) {
-      window.clearTimeout(interactionTimeoutRef.current);
-      interactionTimeoutRef.current = null;
-    }
+      if (interactionTimeoutRef.current !== null) {
+        window.clearTimeout(interactionTimeoutRef.current);
+        interactionTimeoutRef.current = null;
+      }
 
-    setIsInteracting(isCurrentlyInteracting);
+      setIsInteracting(isCurrentlyInteracting);
 
-    if (!isCurrentlyInteracting) {
-      interactionTimeoutRef.current = window.setTimeout(() => {
-        updateContextAfterInteraction();
-      }, INTERACTION_TIMEOUT);
-    }
-  }, [updateContextAfterInteraction]);
+      if (!isCurrentlyInteracting) {
+        interactionTimeoutRef.current = setTimeout(() => {
+          updateContextAfterInteraction();
+        }, INTERACTION_TIMEOUT);
+      }
+    },
+    [updateContextAfterInteraction]
+  );
 
-  const handleViewStateChange = useCallback(({ viewState: newViewState }) => {
-    setViewState(newViewState);
-    updateBounds(newViewState);
-  }, [updateBounds]);
+  const handleViewStateChange = useCallback(
+    ({ viewState: newViewState }) => {
+      setViewState(newViewState);
+      updateBounds(newViewState);
+    },
+    [updateBounds]
+  );
 
   useEffect(() => {
     if (show3DMap) {
-      setViewState(prev => ({
+      setViewState((prev) => ({
         ...prev,
         pitch: 45,
         transitionDuration: 300,
       }));
     } else {
-      setViewState(prev => ({
+      setViewState((prev) => ({
         ...prev,
         pitch: 0,
         transitionDuration: 300,
@@ -120,40 +135,45 @@ export const useMapInteraction = ({
     }
   }, [show3DMap]);
 
-  const fitBounds = useCallback((bounds, { padding = 40 } = {}) => {
-    if (!bounds || bounds.length !== 2) {
-      console.warn('Invalid bounds provided to fitBounds', bounds);
-      return;
-    }
-
-    try {
-      const [[minLng, minLat], [maxLng, maxLat]] = bounds;
-
-      if (
-        typeof minLng !== 'number' ||
-        typeof minLat !== 'number' ||
-        typeof maxLng !== 'number' ||
-        typeof maxLat !== 'number'
-      ) {
-        console.warn('Invalid coordinate values in bounds', bounds);
+  const fitBounds = useCallback(
+    (bounds, { padding = 40 } = {}) => {
+      if (!bounds || bounds.length !== 2) {
+        console.warn('Invalid bounds provided to fitBounds', bounds);
         return;
       }
 
-      const newViewport = new WebMercatorViewport(viewState)
-        .fitBounds(bounds, { padding });
+      try {
+        const [[minLng, minLat], [maxLng, maxLat]] = bounds;
 
-      setViewState({
-        ...viewState,
-        longitude: newViewport.longitude,
-        latitude: newViewport.latitude,
-        zoom: newViewport.zoom,
-        transitionDuration: 500,
-        transitionInterpolator: null
-      });
-    } catch (error) {
-      console.error('Error in fitBounds:', error);
-    }
-  }, [viewState]);
+        if (
+          typeof minLng !== 'number' ||
+          typeof minLat !== 'number' ||
+          typeof maxLng !== 'number' ||
+          typeof maxLat !== 'number'
+        ) {
+          console.warn('Invalid coordinate values in bounds', bounds);
+          return;
+        }
+
+        const newViewport = new WebMercatorViewport(viewState).fitBounds(
+          bounds,
+          { padding }
+        );
+
+        setViewState({
+          ...viewState,
+          longitude: newViewport.longitude,
+          latitude: newViewport.latitude,
+          zoom: newViewport.zoom,
+          transitionDuration: 500,
+          transitionInterpolator: null,
+        });
+      } catch (error) {
+        console.error('Error in fitBounds:', error);
+      }
+    },
+    [viewState]
+  );
 
   return {
     viewState,
@@ -163,6 +183,6 @@ export const useMapInteraction = ({
     handleInteractionStateChange,
     handleViewStateChange,
     collectVisibleFeatures,
-    fitBounds
+    fitBounds,
   };
 };

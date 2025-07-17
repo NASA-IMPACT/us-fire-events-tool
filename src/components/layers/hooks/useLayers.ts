@@ -1,17 +1,11 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useFireExplorerStore } from '@/state/useFireExplorerStore';
 import { LAYER_TYPES } from '../config/constants';
 import { createLayers } from '../LayerFactory';
 import _ from 'lodash';
+import { fitMapToBounds } from '@/utils/fireUtils';
 
 export type MVTLayerId = 'perimeterNrt' | 'fireline' | 'newfirepix';
-
-type UseLayersProps = {
-  collectVisibleFeatures: () => void;
-  isInteracting: boolean;
-  viewState: Record<string, any>;
-  setViewMode: (mode: 'detail' | 'default' | string) => void;
-};
 
 type LoadingStates = {
   perimeterNrt: boolean;
@@ -19,72 +13,136 @@ type LoadingStates = {
   newfirepix: boolean;
 };
 
-/**
- * Custom hook that returns an array of deck.gl layers based on application state.
- * It dynamically configures and filters MVT, GeoJSON, Terrain and wind/grid layers based on user-selected options,
- * time range, and filter settings from the Zustand store.
- *
- * Layer visibility is controlled by boolean flags such as `showPerimeterNrt`, `showFireline`, etc.
- * Fire features are filtered based on advanced filter options like area, duration, FRP, region, and activity status.
- *
- * Also manages side effects such as selecting events and fitting bounds on map click,
- * and collects visible features for analysis after tile loading.
- *
- * @param {Object} params
- * @param {Function} params.collectVisibleFeatures - Called after tile load to collect visible features (used for analytics/context updates)
- * @param {boolean} params.isInteracting - Indicates if the user is currently interacting with the map (used to delay certain updates)
- * @param {Object} params.viewState - Current map view state (used for terrain layer configuration)
- * @param {Function} params.setViewMode - Callback to change the view mode (e.g., to "detail" when a feature is selected)
- *
- * @returns {Object} - Object containing layers array and loading states for each layer
- */
-export const useLayers = ({
-  collectVisibleFeatures,
-  isInteracting,
-  viewState,
-  setViewMode,
-}: UseLayersProps) => {
-  const mapboxAccessToken = useFireExplorerStore.use.mapboxAccessToken();
+const useMVTUrls = () => {
   const baseUrl = useFireExplorerStore.use.featuresApiEndpoint();
 
-  const MVT_URLS: Record<MVTLayerId, string> = {
-    perimeterNrt: `${baseUrl}/collections/pg_temp.eis_fire_lf_perimeter_nrt_latest/tiles/WebMercatorQuad/{z}/{x}/{y}?bbox=-165.0,24.5,-66.0,69.5&properties=duration,farea,meanfrp,fperim,n_pixels,n_newpixels,pixden,fireid,primarykey,t,region`,
-    fireline: `${baseUrl}/collections/public.eis_fire_lf_fireline_nrt/tiles/WebMercatorQuad/{z}/{x}/{y}?bbox=-165.0,24.5,-66.0,69.5&properties=duration,farea,meanfrp,fperim,n_pixels,n_newpixels,pixden,fireid,primarykey,t,region`,
-    newfirepix: `${baseUrl}/collections/public.eis_fire_lf_newfirepix_nrt/tiles/WebMercatorQuad/{z}/{x}/{y}?bbox=-165.0,24.5,-66.0,69.5&properties=duration,farea,meanfrp,fperim,n_pixels,n_newpixels,pixden,fireid,primarykey,t,region`,
-  };
+  return useMemo<Record<MVTLayerId, string>>(
+    () => ({
+      perimeterNrt: `${baseUrl}/collections/pg_temp.eis_fire_lf_perimeter_nrt_latest/tiles/WebMercatorQuad/{z}/{x}/{y}?bbox=-165.0,24.5,-66.0,69.5&properties=duration,farea,meanfrp,fperim,n_pixels,n_newpixels,pixden,fireid,primarykey,t,region`,
+      fireline: `${baseUrl}/collections/public.eis_fire_lf_fireline_nrt/tiles/WebMercatorQuad/{z}/{x}/{y}?bbox=-165.0,24.5,-66.0,69.5&properties=duration,farea,meanfrp,fperim,n_pixels,n_newpixels,pixden,fireid,primarykey,t,region`,
+      newfirepix: `${baseUrl}/collections/public.eis_fire_lf_newfirepix_nrt/tiles/WebMercatorQuad/{z}/{x}/{y}?bbox=-165.0,24.5,-66.0,69.5&properties=duration,farea,meanfrp,fperim,n_pixels,n_newpixels,pixden,fireid,primarykey,t,region`,
+    }),
+    [baseUrl]
+  );
+};
 
-  const [layers, setLayers] = useState([]);
-  const [lastTimeRangeEnd, setLastTimeRangeEnd] = useState(null);
+const useFeatureFilters = () => {
+  const timeRange = useFireExplorerStore.use.timeRange();
+  const showAdvancedFilters = useFireExplorerStore.use.showAdvancedFilters();
+  const fireArea = useFireExplorerStore.use.fireArea();
+  const duration = useFireExplorerStore.use.duration();
+  const meanFrp = useFireExplorerStore.use.meanFrp();
+  const region = useFireExplorerStore.use.region();
+  const isActive = useFireExplorerStore.use.isActive();
+
+  return useMemo(() => {
+    return (feature) => {
+      if (!feature?.properties) return false;
+
+      const featureTime = new Date(feature.properties.t).getTime();
+      const isInTimeRange =
+        featureTime >= timeRange.start.getTime() &&
+        featureTime <= timeRange.end.getTime();
+
+      if (!isInTimeRange) return false;
+
+      if (showAdvancedFilters) {
+        const area = feature.properties.farea || 0;
+        if (area < fireArea.min || area > fireArea.max) return false;
+
+        const durationInDays = feature.properties.duration || 0;
+        if (durationInDays < duration.min || durationInDays > duration.max)
+          return false;
+
+        const frp = feature.properties.meanfrp || 0;
+        if (frp < meanFrp.min || frp > meanFrp.max) return false;
+
+        if (region && feature.properties.region !== region) return false;
+
+        if (isActive !== null && feature.properties.isactive !== isActive)
+          return false;
+      }
+
+      return true;
+    };
+  }, [
+    timeRange,
+    showAdvancedFilters,
+    fireArea,
+    duration,
+    meanFrp,
+    region,
+    isActive,
+  ]);
+};
+
+const useLayerHandlers = (setViewMode: (mode: string) => void) => {
+  const selectEvent = useFireExplorerStore.use.selectEvent();
+  const baseUrl = useFireExplorerStore.use.featuresApiEndpoint();
+
+  const getFireId = useCallback((feature: any): string | null => {
+    if (!feature?.properties) return null;
+    return feature.properties.fireid || feature.properties.primarykey || null;
+  }, []);
+
+  const handleClick = useCallback(
+    (info) => {
+      const { object } = info;
+      if (!object) return;
+
+      const fireId = getFireId(object);
+      if (!fireId) {
+        console.error('No fire ID found for the selected feature');
+        return;
+      }
+
+      selectEvent(fireId, baseUrl);
+      fitMapToBounds(object);
+      setViewMode('detail');
+    },
+    [getFireId, selectEvent, baseUrl, setViewMode]
+  );
+
+  return { handleClick };
+};
+
+const useLoadingStates = (
+  layerRefs: React.MutableRefObject<Record<string, any>>,
+  isInteracting: boolean,
+  collectVisibleFeatures: () => void
+) => {
+  const showPerimeterNrt = useFireExplorerStore.use.showPerimeterNrt();
+  const showFireline = useFireExplorerStore.use.showFireline();
+  const showNewFirepix = useFireExplorerStore.use.showNewFirepix();
+
   const [loadingStates, setLoadingStates] = useState<LoadingStates>({
     perimeterNrt: false,
     fireline: false,
     newfirepix: false,
   });
 
-  const debouncedTimeUpdate = useRef(null);
-  const layerRefs = useRef<Record<string, any>>({});
+  const createTileLoadHandler = useCallback(() => {
+    return (tile) => {
+      if (!isInteracting && tile?.data?.length) {
+        collectVisibleFeatures();
+      }
+    };
+  }, [collectVisibleFeatures, isInteracting]);
 
-  const windLayerType = useFireExplorerStore.use.windLayerType();
-  const show3DMap = useFireExplorerStore.use.show3DMap();
-  const timeRange = useFireExplorerStore.use.timeRange();
-  const showPerimeterNrt = useFireExplorerStore.use.showPerimeterNrt();
-  const showFireline = useFireExplorerStore.use.showFireline();
-  const showNewFirepix = useFireExplorerStore.use.showNewFirepix();
-  const layerOpacity = useFireExplorerStore.use.layerOpacity();
-  const firePerimeters = useFireExplorerStore.use.firePerimeters();
-  const selectEvent = useFireExplorerStore.use.selectEvent();
+  const createTileErrorHandler = useCallback((layerId: keyof LoadingStates) => {
+    return (error) => {
+      console.error(`Tile loading error for ${layerId}:`, error);
+    };
+  }, []);
 
-  const fireArea = useFireExplorerStore.use.fireArea();
-  const duration = useFireExplorerStore.use.duration();
-  const meanFrp = useFireExplorerStore.use.meanFrp();
-  const region = useFireExplorerStore.use.region();
-  const isActive = useFireExplorerStore.use.isActive();
-  const showAdvancedFilters = useFireExplorerStore.use.showAdvancedFilters();
-
-  const getFireId = (feature: any): string | null => {
-    if (!feature?.properties) return null;
-    return feature.properties.fireid || feature.properties.primarykey || null;
-  };
+  useEffect(() => {
+    const newLoadingStates = {
+      perimeterNrt: showPerimeterNrt,
+      fireline: showFireline,
+      newfirepix: showNewFirepix,
+    };
+    setLoadingStates(newLoadingStates);
+  }, [showPerimeterNrt, showFireline, showNewFirepix]);
 
   useEffect(() => {
     const checkLoadingStates = () => {
@@ -119,140 +177,17 @@ export const useLayers = ({
     };
 
     const interval = setInterval(checkLoadingStates, 100);
-
     return () => clearInterval(interval);
   }, [loadingStates, isInteracting, collectVisibleFeatures]);
 
-  const featurePassesFilters = useCallback(
-    (feature) => {
-      if (!feature?.properties) return false;
+  return { loadingStates, createTileLoadHandler, createTileErrorHandler };
+};
 
-      const featureTime = new Date(feature.properties.t).getTime();
-      const isInTimeRange =
-        featureTime >= timeRange.start.getTime() &&
-        featureTime <= timeRange.end.getTime();
-
-      if (!isInTimeRange) return false;
-
-      if (showAdvancedFilters) {
-        const area = feature.properties.farea || 0;
-        if (area < fireArea.min || area > fireArea.max) return false;
-
-        const durationInDays = feature.properties.duration || 0;
-        if (durationInDays < duration.min || durationInDays > duration.max)
-          return false;
-
-        const frp = feature.properties.meanfrp || 0;
-        if (frp < meanFrp.min || frp > meanFrp.max) return false;
-
-        if (region && feature.properties.region !== region) return false;
-
-        if (isActive !== null && feature.properties.isactive !== isActive)
-          return false;
-      }
-
-      return true;
-    },
-    [
-      timeRange,
-      showAdvancedFilters,
-      fireArea,
-      duration,
-      meanFrp,
-      region,
-      isActive,
-    ]
-  );
-
-  const zoomToFeature = useCallback((feature) => {
-    if (!feature?.geometry) return null;
-
-    try {
-      let coordinates: number[][] = [];
-
-      if (feature.geometry.type === 'Polygon') {
-        coordinates = feature.geometry.coordinates[0];
-      } else if (feature.geometry.type === 'MultiPolygon') {
-        feature.geometry.coordinates.forEach((polygon) => {
-          coordinates = [...coordinates, ...polygon[0]];
-        });
-      } else if (feature.geometry.type === 'Point') {
-        const [lon, lat] = feature.geometry.coordinates;
-
-        return {
-          bounds: [
-            [lon - 0.05, lat - 0.05],
-            [lon + 0.05, lat + 0.05],
-          ],
-          padding: 40,
-        };
-      }
-
-      if (coordinates.length === 0) return null;
-
-      const lons = coordinates.map((c) => c[0]);
-      const lats = coordinates.map((c) => c[1]);
-      const minLon = Math.min(...lons);
-      const maxLon = Math.max(...lons);
-      const minLat = Math.min(...lats);
-      const maxLat = Math.max(...lats);
-
-      const padding = 40;
-
-      return {
-        bounds: [
-          [minLon, minLat],
-          [maxLon, maxLat],
-        ],
-        padding,
-      };
-    } catch (error) {
-      console.error('Error calculating bounds:', error);
-      return null;
-    }
-  }, []);
-
-  const handleClick = useCallback(
-    (info) => {
-      const { object } = info;
-      if (!object) return;
-
-      const fireId = getFireId(object);
-      if (!fireId) {
-        console.error('No fire ID found for the selected feature');
-        return;
-      }
-
-      selectEvent(fireId, baseUrl);
-
-      const bounds = zoomToFeature(object);
-      if (bounds) {
-        const fitBoundsEvent = new CustomEvent('fitbounds', {
-          detail: bounds,
-        });
-        window.dispatchEvent(fitBoundsEvent);
-      }
-
-      if (setViewMode) {
-        setViewMode('detail');
-      }
-    },
-    [zoomToFeature, selectEvent, setViewMode, baseUrl]
-  );
-
-  const createTileLoadHandler = useCallback(() => {
-    return (tile) => {
-      if (!isInteracting && tile?.data?.length) {
-        collectVisibleFeatures();
-      }
-    };
-  }, [collectVisibleFeatures, isInteracting]);
-
-  const createTileErrorHandler = useCallback((layerId: keyof LoadingStates) => {
-    return (error) => {
-      console.error(`Tile loading error for ${layerId}:`, error);
-    };
-  }, []);
+const useTimeRangeDebounce = () => {
+  const timeRange = useFireExplorerStore.use.timeRange();
+  const windLayerType = useFireExplorerStore.use.windLayerType();
+  const [lastTimeRangeEnd, setLastTimeRangeEnd] = useState(null);
+  const debouncedTimeUpdate = useRef(null);
 
   useEffect(() => {
     debouncedTimeUpdate.current = _.debounce((newTimeEnd) => {
@@ -272,6 +207,102 @@ export const useLayers = ({
     }
   }, [timeRange.end, windLayerType]);
 
+  return lastTimeRangeEnd;
+};
+
+const useUpdateTriggers = () => {
+  const timeRange = useFireExplorerStore.use.timeRange();
+  const showAdvancedFilters = useFireExplorerStore.use.showAdvancedFilters();
+  const fireArea = useFireExplorerStore.use.fireArea();
+  const duration = useFireExplorerStore.use.duration();
+  const meanFrp = useFireExplorerStore.use.meanFrp();
+  const region = useFireExplorerStore.use.region();
+  const isActive = useFireExplorerStore.use.isActive();
+
+  return useMemo(
+    () => ({
+      getFillColor: [
+        timeRange.start.getTime(),
+        timeRange.end.getTime(),
+        showAdvancedFilters,
+        fireArea.min,
+        fireArea.max,
+        duration.min,
+        duration.max,
+        meanFrp.min,
+        meanFrp.max,
+        region,
+        isActive,
+      ],
+      getLineColor: [
+        timeRange.start.getTime(),
+        timeRange.end.getTime(),
+        showAdvancedFilters,
+        fireArea.min,
+        fireArea.max,
+        duration.min,
+        duration.max,
+        meanFrp.min,
+        meanFrp.max,
+        region,
+        isActive,
+      ],
+    }),
+    [
+      timeRange.start,
+      timeRange.end,
+      showAdvancedFilters,
+      fireArea.min,
+      fireArea.max,
+      duration.min,
+      duration.max,
+      meanFrp.min,
+      meanFrp.max,
+      region,
+      isActive,
+    ]
+  );
+};
+
+type UseLayersProps = {
+  collectVisibleFeatures: () => void;
+  isInteracting: boolean;
+  viewState: Record<string, any>;
+  setViewMode: (mode: 'detail' | 'default' | string) => void;
+};
+
+/**
+ * Main hook that orchestrates all layer management.
+ * Deck.gl's layers should be recreated (not mutated) when configuration changes.
+ * This hook serves as an orchestrator for the layer recreation, the filtering logic and tile loading states.
+ */
+export const useLayers = ({
+  collectVisibleFeatures,
+  isInteracting,
+  viewState,
+  setViewMode,
+}: UseLayersProps) => {
+  const [layers, setLayers] = useState([]);
+  const layerRefs = useRef<Record<string, any>>({});
+
+  const MVT_URLS = useMVTUrls();
+  const featurePassesFilters = useFeatureFilters();
+  const { handleClick } = useLayerHandlers(setViewMode);
+  const { loadingStates, createTileLoadHandler, createTileErrorHandler } =
+    useLoadingStates(layerRefs, isInteracting, collectVisibleFeatures);
+  const lastTimeRangeEnd = useTimeRangeDebounce();
+  const updateTriggers = useUpdateTriggers();
+
+  const windLayerType = useFireExplorerStore.use.windLayerType();
+  const show3DMap = useFireExplorerStore.use.show3DMap();
+  const timeRange = useFireExplorerStore.use.timeRange();
+  const showPerimeterNrt = useFireExplorerStore.use.showPerimeterNrt();
+  const showFireline = useFireExplorerStore.use.showFireline();
+  const showNewFirepix = useFireExplorerStore.use.showNewFirepix();
+  const layerOpacity = useFireExplorerStore.use.layerOpacity();
+  const firePerimeters = useFireExplorerStore.use.firePerimeters();
+  const mapboxAccessToken = useFireExplorerStore.use.mapboxAccessToken();
+
   useEffect(() => {
     const initializeLayers = async () => {
       const layerConfigs = [];
@@ -286,78 +317,34 @@ export const useLayers = ({
       }
 
       if (showPerimeterNrt) {
-        setLoadingStates((prev) => ({ ...prev, perimeterNrt: true }));
-
         layerConfigs.push({
           type: LAYER_TYPES.MVT,
           id: 'perimeter-nrt',
           data: MVT_URLS.perimeterNrt,
           filterFunction: featurePassesFilters,
           opacity: layerOpacity,
-          onTileLoad: createTileLoadHandler('perimeterNrt'),
+          onTileLoad: createTileLoadHandler(),
           onTileError: createTileErrorHandler('perimeterNrt'),
           onClick: handleClick,
-          updateTriggers: {
-            getFillColor: [
-              timeRange,
-              showAdvancedFilters,
-              fireArea,
-              duration,
-              meanFrp,
-              region,
-              isActive,
-            ],
-            getLineColor: [
-              timeRange,
-              showAdvancedFilters,
-              fireArea,
-              duration,
-              meanFrp,
-              region,
-              isActive,
-            ],
-          },
+          updateTriggers,
         });
       }
 
       if (showFireline) {
-        setLoadingStates((prev) => ({ ...prev, fireline: true }));
-
         layerConfigs.push({
           type: LAYER_TYPES.MVT,
           id: 'fireline',
           data: MVT_URLS.fireline,
           filterFunction: featurePassesFilters,
           opacity: layerOpacity,
-          onTileLoad: createTileLoadHandler('fireline'),
+          onTileLoad: createTileLoadHandler(),
           onTileError: createTileErrorHandler('fireline'),
           onClick: handleClick,
-          updateTriggers: {
-            getFillColor: [
-              timeRange,
-              showAdvancedFilters,
-              fireArea,
-              duration,
-              meanFrp,
-              region,
-              isActive,
-            ],
-            getLineColor: [
-              timeRange,
-              showAdvancedFilters,
-              fireArea,
-              duration,
-              meanFrp,
-              region,
-              isActive,
-            ],
-          },
+          updateTriggers,
         });
       }
 
       if (showNewFirepix) {
-        setLoadingStates((prev) => ({ ...prev, newfirepix: true }));
-
         layerConfigs.push({
           type: LAYER_TYPES.MVT,
           id: 'newfirepix',
@@ -365,29 +352,10 @@ export const useLayers = ({
           filterFunction: featurePassesFilters,
           opacity: layerOpacity,
           lineWidthMinPixels: 2,
-          onTileLoad: createTileLoadHandler('newfirepix'),
+          onTileLoad: createTileLoadHandler(),
           onTileError: createTileErrorHandler('newfirepix'),
           onClick: handleClick,
-          updateTriggers: {
-            getFillColor: [
-              timeRange,
-              showAdvancedFilters,
-              fireArea,
-              duration,
-              meanFrp,
-              region,
-              isActive,
-            ],
-            getLineColor: [
-              timeRange,
-              showAdvancedFilters,
-              fireArea,
-              duration,
-              meanFrp,
-              region,
-              isActive,
-            ],
-          },
+          updateTriggers,
         });
       }
 
@@ -398,26 +366,9 @@ export const useLayers = ({
           filterFunction: featurePassesFilters,
           opacity: layerOpacity,
           updateTriggers: {
-            getFillColor: [
-              timeRange,
-              showAdvancedFilters,
-              fireArea,
-              duration,
-              meanFrp,
-              region,
-              isActive,
-            ],
-            getLineColor: [
-              timeRange,
-              showAdvancedFilters,
-              fireArea,
-              duration,
-              meanFrp,
-              region,
-              isActive,
-            ],
-            getLineWidth: [timeRange],
-            getDashArray: [timeRange],
+            ...updateTriggers,
+            getLineWidth: [timeRange.start.getTime(), timeRange.end.getTime()],
+            getDashArray: [timeRange.start.getTime(), timeRange.end.getTime()],
           },
           onClick: handleClick,
           timeRange,
@@ -453,30 +404,26 @@ export const useLayers = ({
     };
 
     initializeLayers();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
-    windLayerType,
-    firePerimeters,
-    featurePassesFilters,
-    handleClick,
-    layerOpacity,
-    show3DMap,
-    lastTimeRangeEnd,
-    collectVisibleFeatures,
-    isInteracting,
-    timeRange,
-    showAdvancedFilters,
-    fireArea,
-    duration,
-    meanFrp,
-    region,
-    isActive,
-    viewState,
-    zoomToFeature,
+    showPerimeterNrt,
     showFireline,
     showNewFirepix,
-    showPerimeterNrt,
-    createTileLoadHandler,
-    createTileErrorHandler,
+    show3DMap,
+    windLayerType,
+    MVT_URLS.perimeterNrt,
+    MVT_URLS.fireline,
+    MVT_URLS.newfirepix,
+    firePerimeters,
+    layerOpacity,
+    mapboxAccessToken,
+    lastTimeRangeEnd,
+    featurePassesFilters,
+    handleClick,
+    updateTriggers,
+    timeRange,
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    ...(show3DMap ? [viewState] : []),
   ]);
 
   return { layers, loadingStates, featurePassesFilters };
