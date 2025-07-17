@@ -1,5 +1,4 @@
 import { create } from 'zustand';
-import { subscribeWithSelector } from 'zustand/middleware';
 import { StoreApi, UseBoundStore } from 'zustand';
 import { createUISlice, UISlice } from './slices/uiSlice';
 import { createMapSlice, MapSlice } from './slices/mapSlice';
@@ -36,7 +35,7 @@ type FireExplorerStore = UISlice &
   EnvSlice;
 
 const useFireExplorerStoreBase = create<FireExplorerStore>()(
-  subscribeWithSelector((set, get, ...rest) => {
+  (set, get, ...rest) => {
     const uiSlice = createUISlice(set, get, ...rest);
     const mapSlice = createMapSlice(set, get, ...rest);
     const eventsSlice = createEventsSlice(set, get, ...rest);
@@ -57,37 +56,10 @@ const useFireExplorerStoreBase = create<FireExplorerStore>()(
         await eventsSlice.selectEvent(eventId, featuresApiEndpoint);
       },
     };
-  })
+  }
 );
 
 export const useFireExplorerStore = createSelectors(useFireExplorerStoreBase);
-
-export const subscribeToPlaybackChanges = (
-  callback: (isPlaying: boolean) => void
-) => {
-  return useFireExplorerStoreBase.subscribe(
-    (state) => state.isPlaying,
-    callback
-  );
-};
-
-export const subscribeToSelectedEvent = (
-  callback: (eventId: string | null) => void
-) => {
-  return useFireExplorerStoreBase.subscribe(
-    (state) => state.selectedEventId,
-    callback
-  );
-};
-
-export const subscribeToTimeRange = (
-  callback: (timeRange: { start: Date; end: Date }) => void
-) => {
-  return useFireExplorerStoreBase.subscribe(
-    (state) => state.timeRange,
-    callback
-  );
-};
 
 export type { FilterRange, FireExplorerStore };
 export { DEFAULT_RANGES };

@@ -1,19 +1,5 @@
+import { getCurrentYearStart, getToday } from '@/utils/dateUtils';
 import { StateCreator } from 'zustand';
-
-const createStableDate = (date: Date | string): Date => {
-  const stableDate = new Date(date);
-  stableDate.setHours(0, 0, 0, 0);
-  return stableDate;
-};
-
-const getCurrentYearStart = (): Date => {
-  const now = new Date();
-  return createStableDate(new Date(now.getFullYear(), 0, 1));
-};
-
-const getToday = (): Date => {
-  return createStableDate(new Date());
-};
 
 export interface UIState {
   viewMode: 'explorer' | 'detail';

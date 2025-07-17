@@ -3,6 +3,7 @@ import {
   MVTFeature,
   fetchFirePerimeters,
   fetchAlternativeFirePerimeters,
+  fitMapToBounds,
 } from '../../utils/fireUtils';
 
 export interface EventsState {
@@ -59,6 +60,10 @@ export const createEventsSlice: StateCreator<
           firePerimeters: perimeters,
           firePerimetersLoading: false,
         });
+
+        if (perimeters?.features?.length > 0) {
+          fitMapToBounds(perimeters.features[perimeters.features.length - 1]);
+        }
       } catch (error) {
         console.error('Error fetching fire perimeters:', error);
         set({
