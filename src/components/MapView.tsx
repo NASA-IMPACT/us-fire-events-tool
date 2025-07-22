@@ -3,7 +3,7 @@ import DeckGL from '@deck.gl/react';
 import { Map } from 'react-map-gl/mapbox';
 
 import { useFireExplorerStore } from '@/state/useFireExplorerStore';
-import { INITIAL_VIEW_STATE, MAP_STYLE } from './layers';
+import { MAP_STYLE } from './layers';
 import { useLayers } from './layers/hooks/useLayers';
 import { useMapInteraction } from './layers/hooks/useMapInteraction';
 import { CompassWidget, FullscreenWidget, ZoomWidget } from '@deck.gl/widgets';
@@ -31,10 +31,13 @@ const MapView: React.FC<MapViewProps> = ({ onLoadingStatesChange }) => {
   const setViewMode = useFireExplorerStore.use.setViewMode();
   const setMapBounds = useFireExplorerStore.use.setMapBounds();
 
+  const viewState = useFireExplorerStore.use.viewState();
+  const setViewState = useFireExplorerStore.use.setViewState();
+  const setViewStateForUrl = useFireExplorerStore.use.setViewStateForUrl();
+
   const [hasCollectedInitial, setHasCollectedInitial] = useState(false);
 
   const {
-    viewState,
     deckRef,
     handleInteractionStateChange,
     handleViewStateChange,
@@ -42,10 +45,11 @@ const MapView: React.FC<MapViewProps> = ({ onLoadingStatesChange }) => {
     isInteracting,
     fitBounds,
   } = useMapInteraction({
-    initialViewState: INITIAL_VIEW_STATE,
+    viewState,
+    setViewState,
+    setViewStateForUrl,
     setMapBounds,
     updateEvents,
-    show3DMap,
   });
 
   const { layers, loadingStates, featurePassesFilters } = useLayers({
@@ -54,6 +58,18 @@ const MapView: React.FC<MapViewProps> = ({ onLoadingStatesChange }) => {
     viewState,
     setViewMode,
   });
+
+  useEffect(() => {
+    setViewState(
+      {
+        ...viewState,
+        pitch: show3DMap ? 45 : 0,
+      },
+      {
+        transitionDuration: 300,
+      }
+    );
+  }, [show3DMap]);
 
   const handleAfterRender = useCallback(() => {
     if (!hasCollectedInitial || !isInteracting) {
@@ -99,7 +115,7 @@ const MapView: React.FC<MapViewProps> = ({ onLoadingStatesChange }) => {
   return (
     <DeckGL
       ref={deckRef}
-      initialViewState={viewState}
+      viewState={viewState}
       onViewStateChange={handleViewStateChange}
       onInteractionStateChange={handleInteractionStateChange}
       onAfterRender={handleAfterRender}

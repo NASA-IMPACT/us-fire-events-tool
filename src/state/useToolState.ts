@@ -15,8 +15,7 @@ interface ToolUrlState {
     start: Date;
     end: Date;
   };
-  layerOpacity: number;
-  viewState: ViewState;
+  viewStateForUrl: ViewState;
 }
 
 const useToolState = () => {
@@ -28,8 +27,7 @@ const useToolState = () => {
   const showNewFirepix = useFireExplorerStore.use.showNewFirepix();
   const viewMode = useFireExplorerStore.use.viewMode();
   const timeRange = useFireExplorerStore.use.timeRange();
-  const layerOpacity = useFireExplorerStore.use.layerOpacity();
-  const viewState = useFireExplorerStore.use.viewState();
+  const viewStateForUrl = useFireExplorerStore.use.viewStateForUrl();
 
   const setViewMode = useFireExplorerStore.use.setViewMode();
   const setWindLayerType = useFireExplorerStore.use.setWindLayerType();
@@ -38,19 +36,14 @@ const useToolState = () => {
   const setShowFireline = useFireExplorerStore.use.setShowFireline();
   const setShowNewFirepix = useFireExplorerStore.use.setShowNewFirepix();
   const setTimeRange = useFireExplorerStore.use.setTimeRange();
-  const setLayerOpacity = useFireExplorerStore.use.setLayerOpacity();
-  const setViewState = useFireExplorerStore.use.setViewState();
   const selectEvent = useFireExplorerStore.use.selectEvent();
   const featuresApiEndpoint = useFireExplorerStore.use.featuresApiEndpoint();
+  const setViewStateForUrl = useFireExplorerStore.use.setViewStateForUrl();
+  const setViewState = useFireExplorerStore.use.setViewState();
 
   const debouncedSetTimeRange = useMemo(
     () => debounce(setTimeRange, 300),
     [setTimeRange]
-  );
-
-  const debouncedSetViewState = useMemo(
-    () => debounce(setViewState, 300),
-    [setViewState]
   );
 
   const state: ToolUrlState = useMemo(
@@ -63,8 +56,7 @@ const useToolState = () => {
       showNewFirepix,
       viewMode,
       timeRange,
-      layerOpacity,
-      viewState,
+      viewStateForUrl,
     }),
     [
       selectedEventId,
@@ -75,8 +67,7 @@ const useToolState = () => {
       showNewFirepix,
       viewMode,
       timeRange,
-      layerOpacity,
-      viewState,
+      viewStateForUrl,
     ]
   );
 
@@ -103,9 +94,6 @@ const useToolState = () => {
       if (nextState.showNewFirepix !== undefined) {
         setShowNewFirepix(nextState.showNewFirepix);
       }
-      if (nextState.layerOpacity !== undefined) {
-        setLayerOpacity(nextState.layerOpacity);
-      }
       if (
         nextState.selectedEventId !== undefined &&
         nextState.selectedEventId !== selectedEventId
@@ -117,8 +105,9 @@ const useToolState = () => {
         debouncedSetTimeRange(nextState.timeRange);
       }
 
-      if (nextState.viewState !== undefined) {
-        debouncedSetViewState(nextState.viewState);
+      if (nextState.viewStateForUrl !== undefined) {
+        setViewStateForUrl(nextState.viewStateForUrl);
+        setViewState(nextState.viewStateForUrl);
       }
     },
     [
@@ -128,10 +117,10 @@ const useToolState = () => {
       setShowPerimeterNrt,
       setShowFireline,
       setShowNewFirepix,
-      setLayerOpacity,
       selectEvent,
       debouncedSetTimeRange,
-      debouncedSetViewState,
+      setViewStateForUrl,
+      setViewState,
       show3DMap,
       selectedEventId,
       featuresApiEndpoint,

@@ -19,8 +19,12 @@ export const INITIAL_VIEW_STATE = {
   zoom: 3,
   pitch: 0,
   bearing: 0,
-  maxZoom: 20,
-  minZoom: 0,
+  padding: {
+    top: undefined,
+    bottom: undefined,
+    left: undefined,
+    right: undefined,
+  },
 };
 
 export const MAP_STYLE = 'mapbox://styles/covid-nasa/cmb6kewie00nq01r2b84y3gsj';
