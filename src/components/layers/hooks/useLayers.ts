@@ -160,7 +160,10 @@ const useLoadingStates = (
           const wasLoading = loadingStates[layerKey];
           const isNowLoaded = layer.isLoaded;
 
-          if (wasLoading && isNowLoaded) {
+          if (!wasLoading && !isNowLoaded) {
+            newLoadingStates[layerKey] = true;
+            hasChanges = true;
+          } else if (wasLoading && isNowLoaded) {
             newLoadingStates[layerKey] = false;
             hasChanges = true;
 
