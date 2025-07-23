@@ -15,14 +15,26 @@ type LoadingStates = {
 
 const useMVTUrls = () => {
   const baseUrl = useFireExplorerStore.use.featuresApiEndpoint();
+  const timeRange = useFireExplorerStore.use.timeRange();
+
+  const [debouncedTimeRange, setDebouncedTimeRange] = useState(timeRange);
+  const debounceFn = useRef(_.debounce(setDebouncedTimeRange, 300)).current;
+
+  useEffect(() => {
+    debounceFn(timeRange);
+  }, [timeRange.start.getTime(), timeRange.end.getTime()]);
+
+  const datetimeStart = debouncedTimeRange.start.toISOString();
+  const datetimeEnd = debouncedTimeRange.end.toISOString();
+  const datetimeParam = `&datetime=${datetimeStart}/${datetimeEnd}`;
 
   return useMemo<Record<MVTLayerId, string>>(
     () => ({
-      perimeterNrt: `${baseUrl}/collections/pg_temp.eis_fire_lf_perimeter_nrt_latest/tiles/WebMercatorQuad/{z}/{x}/{y}?bbox=-165.0,24.5,-66.0,69.5&properties=duration,farea,meanfrp,fperim,n_pixels,n_newpixels,pixden,fireid,primarykey,t,region`,
-      fireline: `${baseUrl}/collections/public.eis_fire_lf_fireline_nrt/tiles/WebMercatorQuad/{z}/{x}/{y}?bbox=-165.0,24.5,-66.0,69.5&properties=duration,farea,meanfrp,fperim,n_pixels,n_newpixels,pixden,fireid,primarykey,t,region`,
-      newfirepix: `${baseUrl}/collections/public.eis_fire_lf_newfirepix_nrt/tiles/WebMercatorQuad/{z}/{x}/{y}?bbox=-165.0,24.5,-66.0,69.5&properties=duration,farea,meanfrp,fperim,n_pixels,n_newpixels,pixden,fireid,primarykey,t,region`,
+      perimeterNrt: `${baseUrl}/collections/pg_temp.eis_fire_lf_perimeter_nrt_latest/tiles/WebMercatorQuad/{z}/{x}/{y}?bbox=-165.0,24.5,-66.0,69.5${datetimeParam}&properties=duration,farea,meanfrp,fperim,n_pixels,n_newpixels,pixden,fireid,primarykey,t,region`,
+      fireline: `${baseUrl}/collections/public.eis_fire_lf_fireline_nrt/tiles/WebMercatorQuad/{z}/{x}/{y}?bbox=-165.0,24.5,-66.0,69.5${datetimeParam}&properties=duration,farea,meanfrp,fperim,n_pixels,n_newpixels,pixden,fireid,primarykey,t,region`,
+      newfirepix: `${baseUrl}/collections/public.eis_fire_lf_newfirepix_nrt/tiles/WebMercatorQuad/{z}/{x}/{y}?bbox=-165.0,24.5,-66.0,69.5${datetimeParam}&properties=duration,farea,meanfrp,fperim,n_pixels,n_newpixels,pixden,fireid,primarykey,t,region`,
     }),
-    [baseUrl]
+    [baseUrl, datetimeStart, datetimeEnd]
   );
 };
 

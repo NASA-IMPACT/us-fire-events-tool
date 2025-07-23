@@ -1,4 +1,5 @@
 import { getCurrentYearStart, getToday } from '@/utils/dateUtils';
+import { subMonths } from 'date-fns';
 import { StateCreator } from 'zustand';
 
 export interface UIState {
@@ -37,7 +38,7 @@ export const createUISlice: StateCreator<UISlice> = (set) => ({
   showFireline: false,
   showNewFirepix: false,
   timeRange: {
-    start: getCurrentYearStart(),
+    start: subMonths(getToday(), 1),
     end: getToday(),
   },
   setViewMode: (mode) => set({ viewMode: mode }),
