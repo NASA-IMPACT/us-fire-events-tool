@@ -1,7 +1,6 @@
 import { StateCreator } from 'zustand';
 import {
   MVTFeature,
-  fetchFirePerimeters,
   fetchAlternativeFirePerimeters,
   fitMapToBounds,
   fetchLayerPaginated,
