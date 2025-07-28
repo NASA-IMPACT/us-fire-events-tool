@@ -44,6 +44,7 @@ export const createEventsSlice: StateCreator<
       set({ firePerimetersLoading: true });
 
       try {
+        // NOTE-SANDRA: should naturally throw error here instead
         let perimeters = await fetchFirePerimeters(
           eventId,
           featuresApiEndpoint
