@@ -1,4 +1,4 @@
-import { fetchFirePerimeters } from './utils/fireUtils';
+import { fetchFirePerimeters, fetchLayerPaginated } from './utils/fireUtils';
 
 /**
  * Instructions:
@@ -39,7 +39,8 @@ async function testEndpointPerformance(envEndpoint: Record<string, string>): Pro
   for (const fireId of TEST_FIRE_IDS) {
     const start = performance.now();
     try {
-      const result = await fetchFirePerimeters(fireId, endpoint);
+      // const result = await fetchFirePerimeters(fireId, endpoint);
+      const result = await fetchLayerPaginated(`${endpoint}/collections`, 'public.eis_fire_lf_perimeter_nrt', fireId, 'geojson');
       const end = performance.now();
       testResults.push({
         fireId,

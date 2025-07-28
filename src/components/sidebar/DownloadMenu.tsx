@@ -3,6 +3,7 @@ import { Button, Select, Checkbox } from '@trussworks/react-uswds';
 import { Loader2 } from 'lucide-react';
 import { saveAs } from 'file-saver';
 import JSZip from 'jszip';
+import { fetchLayerPaginated } from '@/utils/fireUtils';
 
 interface DownloadMenuProps {
   fireId: string;
@@ -10,42 +11,6 @@ interface DownloadMenuProps {
   featuresApiEndpoint: string;
   onClose: () => void;
 }
-
-const fetchLayerPaginated = async (
-  base: string,
-  layer: string,
-  fireId: string,
-  format: 'geojson' | 'csv',
-  pageSize = 30
-) => {
-  const metaUrl = `${base}/${layer}/items?filter=fireid%3D${fireId}&sortby=-t&limit=1&f=geojson`;
-  const metaJson = await fetch(metaUrl).then((r) => r.json());
-  const total = metaJson.numberMatched ?? 0;
-
-  if (format === 'geojson') {
-    const coll = { type: 'FeatureCollection', features: [] as any[] };
-
-    for (let offset = 0; offset < total; offset += pageSize) {
-      const page = await fetch(
-        `${base}/${layer}/items?filter=fireid%3D${fireId}&limit=${pageSize}&sortby=-t&offset=${offset}&f=geojson`
-      ).then((r) => r.json());
-
-      if (Array.isArray(page.features)) coll.features.push(...page.features);
-    }
-
-    return new Blob([JSON.stringify(coll)], { type: 'application/geo+json' });
-  }
-
-  let csv = '';
-  for (let offset = 0; offset < total; offset += pageSize) {
-    const txt = await fetch(
-      `${base}/${layer}/items?filter=fireid%3D${fireId}&limit=${pageSize}&sortby=-t&offset=${offset}&f=csv`
-    ).then((r) => r.text());
-
-    csv += offset === 0 ? txt : txt.split('\n').slice(1).join('\n');
-  }
-  return new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-};
 
 const DownloadMenu: React.FC<DownloadMenuProps> = ({
   fireId,

@@ -1,9 +1,9 @@
 import { StateCreator } from 'zustand';
 import {
   MVTFeature,
-  fetchFirePerimeters,
   fetchAlternativeFirePerimeters,
   fitMapToBounds,
+  fetchLayerPaginated,
 } from '../../utils/fireUtils';
 
 export interface EventsState {
@@ -44,11 +44,13 @@ export const createEventsSlice: StateCreator<
       set({ firePerimetersLoading: true });
 
       try {
-        // NOTE-SANDRA: should naturally throw error here instead
-        let perimeters = await fetchFirePerimeters(
+        const perimetersBlob = await fetchLayerPaginated(
+          `${featuresApiEndpoint}/collections`,
+          'public.eis_fire_lf_perimeter_nrt',
           eventId,
-          featuresApiEndpoint
+          'geojson'
         );
+        let perimeters = await perimetersBlob.text().then(JSON.parse);
 
         if (!perimeters?.features?.length) {
           perimeters = await fetchAlternativeFirePerimeters(
@@ -63,7 +65,12 @@ export const createEventsSlice: StateCreator<
         });
 
         if (perimeters?.features?.length > 0) {
-          fitMapToBounds(perimeters.features[perimeters.features.length - 1]);
+          const sorted = [...perimeters.features].sort(
+            (a, b) =>
+              new Date(b.properties.t).getTime() -
+              new Date(a.properties.t).getTime()
+          );
+          fitMapToBounds(sorted[0]);
         }
       } catch (error) {
         console.error('Error fetching fire perimeters:', error);
