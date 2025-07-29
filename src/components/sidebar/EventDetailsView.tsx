@@ -55,9 +55,7 @@ const EventDetails: React.FC<EventDetailsProps> = ({ onBack }) => {
 
   const selectedEvent = useMemo(() => {
     if (!selectedEventId || !firePerimeters?.features?.length) return null;
-    return firePerimeters.features[
-      firePerimeters.features.length - 1
-    ] as MVTFeature;
+    return firePerimeters.features[0] as MVTFeature;
   }, [selectedEventId, firePerimeters]);
 
   const eventProperties = useMemo(() => {
@@ -103,6 +101,7 @@ const EventDetails: React.FC<EventDetailsProps> = ({ onBack }) => {
   const area = eventProperties.farea
     ? Number(eventProperties.farea).toFixed(2)
     : '0.00';
+
   const durationDays = eventProperties.duration ? eventProperties.duration : 0;
   const meanFRP = eventProperties.meanfrp
     ? Number(eventProperties.meanfrp).toFixed(2)
