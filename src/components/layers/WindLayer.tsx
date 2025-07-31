@@ -5,7 +5,7 @@ import { ClipExtension } from '@deck.gl/extensions';
  * Creates a wind particle layer
  *
  * @param {Object} options - Layer configuration options
- * @param {Date} options.timeRangeEnd - End time for fetching weather data
+ * @param {Date} options.timeMarker - Timestamp for fetching weather data
  * @param {number} options.particleCount - Number of particles to render
  * @param {number} options.speedFactor - Particle speed multiplier
  * @param {number} options.opacity - Layer opacity (0-100)
@@ -13,26 +13,28 @@ import { ClipExtension } from '@deck.gl/extensions';
  */
 
 export const createWindLayer = async ({
-  timeRangeEnd,
+  timeMarker,
   particleCount = 2000,
   speedFactor = 10,
-  opacity = 92
+  opacity = 92,
 }) => {
   try {
-    const hr = timeRangeEnd.getUTCHours();
+    const hr = timeMarker.getUTCHours();
     const cycleHour = Math.floor(hr / 6) * 6;
     const runHourStr = cycleHour.toString().padStart(2, '0');
 
-    const runDate = new Date(Date.UTC(
-      timeRangeEnd.getUTCFullYear(),
-      timeRangeEnd.getUTCMonth(),
-      timeRangeEnd.getUTCDate(),
-      cycleHour
-    ));
+    const runDate = new Date(
+      Date.UTC(
+        timeMarker.getUTCFullYear(),
+        timeMarker.getUTCMonth(),
+        timeMarker.getUTCDate(),
+        cycleHour
+      )
+    );
 
     const runDateStr = runDate.toISOString().split('T')[0].replace(/-/g, '');
 
-    const forecastHour = Math.round((timeRangeEnd - runDate) / 3600000)
+    const forecastHour = Math.round((timeMarker - runDate) / 3600000)
       .toString()
       .padStart(2, '0');
 
@@ -60,7 +62,13 @@ export const createWindLayer = async ({
       dropRate: 0.003,
       dropRateBump: 0.01,
       speedFactor,
-      lineWidth: { type: 'exponential', value: 2.0, slope: 0.5, min: 1.0, max: 4.5 },
+      lineWidth: {
+        type: 'exponential',
+        value: 2.0,
+        slope: 0.5,
+        min: 1.0,
+        max: 4.5,
+      },
       maxAge: 15,
       paths: 25,
       iconAtlas: '',
@@ -74,9 +82,16 @@ export const createWindLayer = async ({
         0.1: [50, 50, 50, 255],
         0.4: [30, 30, 30, 255],
         0.7: [0, 0, 0, 255],
-        1.0: [0, 0, 0, 0]
+        1.0: [0, 0, 0, 0],
       },
-      colorScale: { type: 'linear', domain: [0, 30], range: [[50, 50, 50, 50], [0, 0, 0]] }
+      colorScale: {
+        type: 'linear',
+        domain: [0, 30],
+        range: [
+          [50, 50, 50, 50],
+          [0, 0, 0],
+        ],
+      },
     });
   } catch (error) {
     console.error('Error initializing wind layer:', error);

@@ -7,30 +7,30 @@ import { _TerrainExtension as TerrainExtension } from '@deck.gl/extensions';
  * Creates a grid wind layer
  *
  * @param {Object} options - Layer configuration options
- * @param {Date} options.timeRangeEnd - End time for fetching weather data
+ * @param {Date} options.timeMarker - End time for fetching weather data
  * @param {number} options.particleCount - Number of particles to render
  * @param {number} options.speedFactor - Particle speed multiplier
  * @param {number} options.opacity - Layer opacity (0-100)
  * @return {Promise<ParticleLayer>} Configured particle layer
  */
-export const createGridLayer = async ({ timeRangeEnd, opacity = 92 }) => {
+export const createGridLayer = async ({ timeMarker, opacity = 92 }) => {
   try {
-    const hr = timeRangeEnd.getUTCHours();
+    const hr = timeMarker.getUTCHours();
     const cycleHour = Math.floor(hr / 6) * 6;
     const runHourStr = cycleHour.toString().padStart(2, '0');
 
     const runDate = new Date(
       Date.UTC(
-        timeRangeEnd.getUTCFullYear(),
-        timeRangeEnd.getUTCMonth(),
-        timeRangeEnd.getUTCDate(),
+        timeMarker.getUTCFullYear(),
+        timeMarker.getUTCMonth(),
+        timeMarker.getUTCDate(),
         cycleHour
       )
     );
 
     const runDateStr = runDate.toISOString().split('T')[0].replace(/-/g, '');
 
-    const forecastHour = Math.round((timeRangeEnd - runDate) / 3600000)
+    const forecastHour = Math.round((timeMarker - runDate) / 3600000)
       .toString()
       .padStart(2, '0');
 

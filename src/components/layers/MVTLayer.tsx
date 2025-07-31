@@ -1,4 +1,5 @@
 import { MVTLayer } from '@deck.gl/geo-layers';
+import { DataFilterExtension } from '@deck.gl/extensions';
 import { USA_BBOX } from './config/constants';
 
 /**
@@ -22,31 +23,33 @@ export const createMVTLayer = ({
   onTileLoad,
   onClick,
   lineWidthMinPixels = 1,
-  updateTriggers = {}
+  updateTriggers = {},
 }) => {
   return new MVTLayer({
     id,
     data,
     extent: USA_BBOX,
-    getFillColor: (feature) => {
-      const passes = filterFunction ? filterFunction(feature) : true;
-      return passes ? [255, 140, 0, 180] : [255, 140, 0, 0];
-    },
-    getLineColor: (feature) => {
-      const passes = filterFunction ? filterFunction(feature) : true;
-      return passes ? [255, 69, 0, 255] : [255, 69, 0, 0];
-    },
+    getFillColor: [255, 140, 0, 180],
+    getLineColor: [255, 69, 0, 255],
     uniqueIdProperty: 'primarykey',
     lineWidthMinPixels,
     pickable: true,
     opacity: opacity / 100,
-    autoHighlight: false,
+    autoHighlight: true,
+    highlightColor: [255, 100, 50, 220],
     onClick,
     updateTriggers: {
-      getFillColor: [filterFunction, ...(updateTriggers.getFillColor || [])],
-      getLineColor: [filterFunction, ...(updateTriggers.getLineColor || [])]
+      getFilterValue: [
+        filterFunction,
+        ...(updateTriggers.getFilterValue || []),
+      ],
     },
+    getFilterValue: (feature) =>
+      filterFunction ? (filterFunction(feature) ? 1 : 0) : 1,
+    filterRange: [1, 1],
+    filterEnabled: true,
     onTileLoad,
-    maxRequests: 3
+    maxRequests: 3,
+    extensions: [new DataFilterExtension({ filterSize: 1 })],
   });
 };

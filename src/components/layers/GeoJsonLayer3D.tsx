@@ -1,5 +1,8 @@
 import { GeoJsonLayer } from '@deck.gl/layers';
-import { _TerrainExtension as TerrainExtension, PathStyleExtension } from '@deck.gl/extensions';
+import {
+  _TerrainExtension as TerrainExtension,
+  PathStyleExtension,
+} from '@deck.gl/extensions';
 
 /**
  * Creates a GeoJson layer for fire perimeters visualization with 3D terrain support
@@ -12,7 +15,7 @@ import { _TerrainExtension as TerrainExtension, PathStyleExtension } from '@deck
  * @param {number} options.opacity - Layer opacity (0-100)
  * @param {Function} options.onClick - Called when a feature is clicked
  * @param {Object} options.updateTriggers - Update triggers for callbacks
- * @param {Object} options.timeRange - Current time range for visualization
+ * @param {Object} options.timeMarker - Current time range for visualization
  * @return {GeoJsonLayer} Configured GeoJSON layer with terrain extension
  */
 export const createGeoJsonLayer3D = ({
@@ -22,7 +25,7 @@ export const createGeoJsonLayer3D = ({
   opacity = 100,
   onClick,
   updateTriggers = {},
-  timeRange
+  timeMarker,
 }) => {
   const sortedData = Array.isArray(data?.features)
     ? {
@@ -31,7 +34,7 @@ export const createGeoJsonLayer3D = ({
           const timeA = new Date(a.properties.t).getTime();
           const timeB = new Date(b.properties.t).getTime();
           return timeB - timeA;
-        })
+        }),
       }
     : data;
 
@@ -39,7 +42,7 @@ export const createGeoJsonLayer3D = ({
     if (!feature?.properties?.t) return 'current';
 
     const featureTime = new Date(feature.properties.t).getTime();
-    const currentTime = timeRange?.end?.getTime() || Date.now();
+    const currentTime = timeMarker?.getTime() || Date.now();
 
     if (featureTime < currentTime) {
       return 'past';
@@ -106,7 +109,7 @@ export const createGeoJsonLayer3D = ({
     material: {
       ambient: 0.8,
       diffuse: 0.6,
-      shininess: 10
+      shininess: 10,
     },
     opacity: opacity / 100,
     pickable: true,
@@ -114,30 +117,30 @@ export const createGeoJsonLayer3D = ({
     updateTriggers: {
       getFillColor: [
         filterFunction,
-        timeRange?.end?.getTime(),
-        ...(updateTriggers.getFillColor || [])
+        timeMarker?.getTime(),
+        ...(updateTriggers.getFillColor || []),
       ],
       getLineColor: [
         filterFunction,
-        timeRange?.end?.getTime(),
-        ...(updateTriggers.getLineColor || [])
+        timeMarker?.getTime(),
+        ...(updateTriggers.getLineColor || []),
       ],
       getLineWidth: [
-        timeRange?.end?.getTime(),
-        ...(updateTriggers.getLineWidth || [])
+        timeMarker?.getTime(),
+        ...(updateTriggers.getLineWidth || []),
       ],
       getDashArray: [
-        timeRange?.end?.getTime(),
-        ...(updateTriggers.getDashArray || [])
-      ]
+        timeMarker?.getTime(),
+        ...(updateTriggers.getDashArray || []),
+      ],
     },
     extensions: [
       new TerrainExtension(),
-      new PathStyleExtension({ dash: true })
+      new PathStyleExtension({ dash: true }),
     ],
     parameters: {
-      depthTest: false
+      depthTest: false,
     },
-    onClick
+    onClick,
   });
 };
