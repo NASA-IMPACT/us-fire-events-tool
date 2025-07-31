@@ -11,6 +11,7 @@ export interface UIState {
   showFireline: boolean;
   showNewFirepix: boolean;
   timeRange: { start: Date; end: Date };
+  timeMarker: Date;
 }
 
 export interface UIActions {
@@ -23,6 +24,7 @@ export interface UIActions {
   setShowPerimeterNrt: (enabled: boolean) => void;
   setShowFireline: (enabled: boolean) => void;
   setShowNewFirepix: (enabled: boolean) => void;
+  setTimeMarker: (date: Date) => void;
 }
 
 export type UISlice = UIState & UIActions;
@@ -40,6 +42,7 @@ export const createUISlice: StateCreator<UISlice> = (set) => ({
     start: getCurrentYearStart(),
     end: getToday(),
   },
+  timeMarker: new Date(),
   setViewMode: (mode) => set({ viewMode: mode }),
   setTimeRange: (range) => set({ timeRange: range }),
   togglePlay: () => set((state) => ({ isPlaying: !state.isPlaying })),
@@ -49,4 +52,5 @@ export const createUISlice: StateCreator<UISlice> = (set) => ({
   setShowPerimeterNrt: (enabled) => set({ showPerimeterNrt: enabled }),
   setShowFireline: (enabled) => set({ showFireline: enabled }),
   setShowNewFirepix: (enabled) => set({ showNewFirepix: enabled }),
+  setTimeMarker: (date) => set({ timeMarker: date }),
 });

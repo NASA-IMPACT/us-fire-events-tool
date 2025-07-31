@@ -6,8 +6,8 @@ export interface FilterRange {
 }
 
 export const DEFAULT_RANGES = {
-  fireArea: { min: 0, max: 100 },
-  duration: { min: 0, max: 30 },
+  fireArea: { min: 0, max: 10000 },
+  duration: { min: 0, max: 100 },
   meanFrp: { min: 0, max: 1000 },
 } as const;
 

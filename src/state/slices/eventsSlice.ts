@@ -30,7 +30,7 @@ export const createEventsSlice: StateCreator<
   [],
   [],
   EventsSlice
-> = (set, get) => ({
+> = (set) => ({
   selectedEventId: null,
   events: [],
   firePerimeters: null,
