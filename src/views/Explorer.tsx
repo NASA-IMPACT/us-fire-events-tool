@@ -3,8 +3,8 @@ import { useFireExplorerStore } from '@/state/useFireExplorerStore';
 import { getDefaultTimeRange } from '../utils/dateUtils';
 import MapView from '../components/MapView';
 import EventDetails from '../components/sidebar/EventDetailsView';
-import TimeRangeSlider from '../components/timeline/RangeSliderChart';
-import DetailedTimeChart from '../components/timeline/SelectedFireChart';
+import DetailedTimeChart from '../components/timeline/DetailedTimeChart';
+import DateRangeSelector from '@/components/timeline/DateRangeSelector';
 import Header from '../components/Header';
 import LayerSwitcher from '../components/LayerSwitcher';
 import { Layers } from 'lucide-react';
@@ -81,45 +81,45 @@ const Explorer: React.FC = () => {
 
       <div className="display-flex height-viewport">
         <div className="position-relative flex-fill">
-          <div
-            className="display-flex position-absolute z-top bg-white border-0 shadow-2 radius-md cursor-pointer"
-            style={{
-              top: '50px',
-              right:
-                viewMode === 'detail' && selectedEventId ? '380px' : '10px',
-              transition: 'right 0.2s ease',
-              padding: '5px 5px 2px 5px',
-            }}
-            onClick={() => setShowLayerPanel(!showLayerPanel)}
-            aria-label="Toggle layer switcher"
-          >
-            <div className="position-relative">
-              <Layers size={18} />
+          {viewMode !== 'detail' && (
+            <div
+              className="display-flex position-absolute z-top bg-white border-0 shadow-2 radius-md cursor-pointer"
+              style={{
+                top: '50px',
+                right: '10px',
+                transition: 'right 0.2s ease',
+                padding: '5px 5px 2px 5px',
+              }}
+              onClick={() => setShowLayerPanel(!showLayerPanel)}
+              aria-label="Toggle layer switcher"
+            >
+              <div className="position-relative">
+                <Layers size={18} />
 
-              {hasLoadingLayers && (
-                <div
-                  className="position-absolute"
-                  style={{
-                    width: '6px',
-                    height: '6px',
-                    top: '0px',
-                    right: '0px',
-                    backgroundColor: '#3b82f6',
-                    borderRadius: '50%',
-                    animation: 'spin 1.5s ease-in-out infinite',
-                  }}
-                />
-              )}
+                {hasLoadingLayers && (
+                  <div
+                    className="position-absolute"
+                    style={{
+                      width: '6px',
+                      height: '6px',
+                      top: '0px',
+                      right: '0px',
+                      backgroundColor: '#3b82f6',
+                      borderRadius: '50%',
+                      animation: 'spin 1.5s ease-in-out infinite',
+                    }}
+                  />
+                )}
+              </div>
             </div>
-          </div>
+          )}
 
-          {showLayerPanel && (
+          {showLayerPanel && viewMode !== 'detail' && (
             <div
               className="position-absolute z-top"
               style={{
                 top: '50px',
-                right:
-                  viewMode === 'detail' && selectedEventId ? '380px' : '10px',
+                right: '10px',
                 transition: 'right 0.2s ease',
               }}
             >
@@ -147,7 +147,7 @@ const Explorer: React.FC = () => {
               className="position-absolute bottom-0 z-top margin-bottom-2"
               style={{ left: '50%', transform: 'translateX(-50%)' }}
             >
-              <TimeRangeSlider />
+              <DateRangeSelector />
             </div>
           )}
         </div>
@@ -160,7 +160,7 @@ const Explorer: React.FC = () => {
               width: '360px',
               top: '50px',
               right: '10px',
-              height: 'calc(100% - 70px)',
+              height: 'calc(100% - 66px)',
             }}
           >
             <EventDetails onBack={handleBackToList} />
