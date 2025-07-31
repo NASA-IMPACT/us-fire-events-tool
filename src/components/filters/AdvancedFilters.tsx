@@ -60,14 +60,13 @@ const AdvancedFilters: React.FC = () => {
 
             <div className="flex-fill padding-x-2">
               <ReactSlider
-                id="fire-area-slider"
                 className="horizontal-slider"
                 thumbClassName="thumb"
                 trackClassName="track"
                 value={localFireArea}
                 onChange={handleFireAreaChange}
                 min={0}
-                max={1000}
+                max={10000}
                 ariaLabel={['Minimum fire area', 'Maximum fire area']}
                 ariaValuetext={(state) => `${state} km²`}
                 pearling
@@ -95,7 +94,6 @@ const AdvancedFilters: React.FC = () => {
 
             <div className="flex-fill padding-x-2">
               <ReactSlider
-                id="duration-slider"
                 className="horizontal-slider"
                 thumbClassName="thumb"
                 trackClassName="track"
@@ -130,7 +128,6 @@ const AdvancedFilters: React.FC = () => {
 
             <div className="flex-fill padding-x-2">
               <ReactSlider
-                id="mean-frp-slider"
                 className="horizontal-slider"
                 thumbClassName="thumb"
                 trackClassName="track"
