@@ -1,9 +1,6 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { WebMercatorViewport } from '@deck.gl/core';
-import {
-  FEATURES_COLLECTION_DEBOUNCE,
-  INTERACTION_TIMEOUT,
-} from '../config/constants';
+import { INTERACTION_TIMEOUT } from '../config/constants';
 
 import _ from 'lodash';
 
@@ -24,25 +21,18 @@ export const useMapInteraction = ({
   setViewState,
   setViewStateForUrl,
   setMapBounds,
-  updateEvents,
 }) => {
   const [isInteracting, setIsInteracting] = useState(false);
 
   const deckRef = useRef(null);
   const interactionTimeoutRef = useRef(null);
   const lastBoundsRef = useRef(null);
-  const collectVisibleFeaturesRef = useRef(null);
   const isMountedRef = useRef(true);
 
   const cleanup = useCallback(() => {
     if (interactionTimeoutRef.current !== null) {
-      window.clearTimeout(interactionTimeoutRef.current);
+      clearTimeout(interactionTimeoutRef.current);
       interactionTimeoutRef.current = null;
-    }
-
-    if (collectVisibleFeaturesRef.current) {
-      collectVisibleFeaturesRef.current.cancel();
-      collectVisibleFeaturesRef.current = null;
     }
   }, []);
 
@@ -75,83 +65,29 @@ export const useMapInteraction = ({
       if (setViewStateForUrl) {
         setViewStateForUrl(viewState);
       }
-
-      const { width, height, layerManager } = deckRef.current.deck;
-
-      if (!layerManager || !layerManager.layers) {
-        console.warn('LayerManager or layers not available');
-        return;
-      }
-
-      const availableLayerIds = layerManager.layers.map((l) => l.id);
-
-      const priorityLayers = ['perimeter-nrt', 'fireline', 'newfirepix'];
-      const targetLayerId = priorityLayers.find((id) =>
-        availableLayerIds.includes(id)
-      );
-
-      if (!targetLayerId) {
-        console.warn(
-          'No priority layers found in available layers:',
-          availableLayerIds
-        );
-        return;
-      }
-
-      const features = deckRef.current.pickObjects({
-        x: 0,
-        y: 0,
-        width,
-        height,
-        layerIds: [targetLayerId],
-        ignoreVisibility: true,
-      });
-
-      if (isMountedRef.current) {
-        updateEvents(features);
-      }
     } catch (error) {
-      console.error('Error updating context after interaction:', error);
+      console.error('Error updating store after interaction:', error);
     }
-  }, [setMapBounds, updateEvents, setViewStateForUrl, viewState]);
-
-  useEffect(() => {
-    try {
-      collectVisibleFeaturesRef.current = _.debounce(() => {
-        if (!isInteracting) {
-          updateStoreAfterInteraction();
-        }
-      }, FEATURES_COLLECTION_DEBOUNCE);
-    } catch (error) {
-      console.error('Error creating debounced function:', error);
-    }
-
-    return () => {
-      if (collectVisibleFeaturesRef.current) {
-        collectVisibleFeaturesRef.current.cancel();
-        collectVisibleFeaturesRef.current = null;
-      }
-    };
-  }, [isInteracting, updateStoreAfterInteraction]);
-
-  const collectVisibleFeatures = useCallback(() => {
-    try {
-      if (collectVisibleFeaturesRef.current) {
-        collectVisibleFeaturesRef.current();
-      }
-    } catch (error) {
-      console.error('Error collecting visible features:', error);
-    }
-  }, []);
+  }, [setMapBounds, setViewStateForUrl, viewState]);
 
   const handleInteractionStateChange = useCallback(
-    ({ isDragging, isPanning, isRotating, isZooming }) => {
+    ({
+      isDragging,
+      isPanning,
+      isRotating,
+      isZooming,
+    }: {
+      isDragging?: boolean;
+      isPanning?: boolean;
+      isRotating?: boolean;
+      isZooming?: boolean;
+    }) => {
       try {
         const isCurrentlyInteracting =
           isDragging || isPanning || isRotating || isZooming;
 
         if (interactionTimeoutRef.current !== null) {
-          window.clearTimeout(interactionTimeoutRef.current);
+          clearTimeout(interactionTimeoutRef.current);
           interactionTimeoutRef.current = null;
         }
 
@@ -264,7 +200,6 @@ export const useMapInteraction = ({
     deckRef,
     handleInteractionStateChange,
     handleViewStateChange,
-    collectVisibleFeatures,
     fitBounds,
   };
 };

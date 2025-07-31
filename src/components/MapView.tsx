@@ -26,7 +26,6 @@ type MapViewProps = {
 
 const MapView: React.FC<MapViewProps> = ({ onLoadingStatesChange }) => {
   const mapboxAccessToken = useFireExplorerStore.use.mapboxAccessToken();
-  const updateEvents = useFireExplorerStore.use.updateEvents();
   const show3DMap = useFireExplorerStore.use.show3DMap();
   const setViewMode = useFireExplorerStore.use.setViewMode();
   const setMapBounds = useFireExplorerStore.use.setMapBounds();
@@ -35,13 +34,10 @@ const MapView: React.FC<MapViewProps> = ({ onLoadingStatesChange }) => {
   const setViewState = useFireExplorerStore.use.setViewState();
   const setViewStateForUrl = useFireExplorerStore.use.setViewStateForUrl();
 
-  const [hasCollectedInitial, setHasCollectedInitial] = useState(false);
-
   const {
     deckRef,
     handleInteractionStateChange,
     handleViewStateChange,
-    collectVisibleFeatures,
     isInteracting,
     fitBounds,
   } = useMapInteraction({
@@ -49,11 +45,9 @@ const MapView: React.FC<MapViewProps> = ({ onLoadingStatesChange }) => {
     setViewState,
     setViewStateForUrl,
     setMapBounds,
-    updateEvents,
   });
 
   const { layers, loadingStates, featurePassesFilters } = useLayers({
-    collectVisibleFeatures,
     isInteracting,
     viewState,
     setViewMode,
@@ -70,25 +64,6 @@ const MapView: React.FC<MapViewProps> = ({ onLoadingStatesChange }) => {
       }
     );
   }, [show3DMap]);
-
-  const handleAfterRender = useCallback(() => {
-    if (!hasCollectedInitial || !isInteracting) {
-      const hasLoadedLayers = layers.some((layer) => {
-        return (
-          layer.props?.data &&
-          layer.props?.visible !== false &&
-          (Array.isArray(layer.props.data) ? layer.props.data.length > 0 : true)
-        );
-      });
-
-      if (hasLoadedLayers) {
-        collectVisibleFeatures();
-        if (!hasCollectedInitial) {
-          setHasCollectedInitial(true);
-        }
-      }
-    }
-  }, [layers, isInteracting, collectVisibleFeatures, hasCollectedInitial]);
 
   useEffect(() => {
     if (onLoadingStatesChange) {
@@ -118,12 +93,10 @@ const MapView: React.FC<MapViewProps> = ({ onLoadingStatesChange }) => {
       viewState={viewState}
       onViewStateChange={handleViewStateChange}
       onInteractionStateChange={handleInteractionStateChange}
-      onAfterRender={handleAfterRender}
       layers={layers}
       controller={{ doubleClickZoom: false }}
       getCursor={({ isDragging }) => (isDragging ? 'grabbing' : 'grab')}
       pickingRadius={10}
-      useDevicePixels={false}
       getTooltip={({ object }) =>
         getMapTooltip({ object, featurePassesFilters })
       }
