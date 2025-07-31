@@ -15,14 +15,21 @@ type LoadingStates = {
 
 const useMVTUrls = () => {
   const baseUrl = useFireExplorerStore.use.featuresApiEndpoint();
+  const timeRange = useFireExplorerStore.use.timeRange();
+
+  const datetimeParam = useMemo(() => {
+    const start = new Date(timeRange.start).toISOString();
+    const end = new Date(timeRange.end).toISOString();
+    return `${start}/${end}`;
+  }, [timeRange]);
 
   return useMemo<Record<MVTLayerId, string>>(
     () => ({
-      perimeterNrt: `${baseUrl}/collections/pg_temp.eis_fire_lf_perimeter_nrt_latest/tiles/WebMercatorQuad/{z}/{x}/{y}?bbox=-165.0,24.5,-66.0,69.5&properties=duration,farea,meanfrp,fperim,n_pixels,n_newpixels,pixden,fireid,primarykey,t,region`,
-      fireline: `${baseUrl}/collections/public.eis_fire_lf_fireline_nrt/tiles/WebMercatorQuad/{z}/{x}/{y}?bbox=-165.0,24.5,-66.0,69.5&properties=duration,farea,meanfrp,fperim,n_pixels,n_newpixels,pixden,fireid,primarykey,t,region`,
-      newfirepix: `${baseUrl}/collections/public.eis_fire_lf_newfirepix_nrt/tiles/WebMercatorQuad/{z}/{x}/{y}?bbox=-165.0,24.5,-66.0,69.5&properties=duration,farea,meanfrp,fperim,n_pixels,n_newpixels,pixden,fireid,primarykey,t,region`,
+      perimeterNrt: `${baseUrl}/collections/pg_temp.eis_fire_lf_perimeter_nrt_latest/tiles/WebMercatorQuad/{z}/{x}/{y}?datetime=${datetimeParam}&bbox=-165.0,24.5,-66.0,69.5&properties=duration,farea,meanfrp,fperim,n_pixels,n_newpixels,pixden,fireid,primarykey,t,region`,
+      fireline: `${baseUrl}/collections/public.eis_fire_lf_fireline_nrt/tiles/WebMercatorQuad/{z}/{x}/{y}?datetime=${datetimeParam}&bbox=-165.0,24.5,-66.0,69.5&properties=duration,farea,meanfrp,fperim,n_pixels,n_newpixels,pixden,fireid,primarykey,t,region`,
+      newfirepix: `${baseUrl}/collections/public.eis_fire_lf_newfirepix_nrt/tiles/WebMercatorQuad/{z}/{x}/{y}?datetime=${datetimeParam}&bbox=-165.0,24.5,-66.0,69.5&properties=duration,farea,meanfrp,fperim,n_pixels,n_newpixels,pixden,fireid,primarykey,t,region`,
     }),
-    [baseUrl]
+    [baseUrl, datetimeParam]
   );
 };
 
@@ -108,8 +115,7 @@ const useLayerHandlers = (setViewMode: (mode: string) => void) => {
 
 const useLoadingStates = (
   layerRefs: React.MutableRefObject<Record<string, any>>,
-  isInteracting: boolean,
-  collectVisibleFeatures: () => void
+  isInteracting: boolean
 ) => {
   const showPerimeterNrt = useFireExplorerStore.use.showPerimeterNrt();
   const showFireline = useFireExplorerStore.use.showFireline();
@@ -122,12 +128,8 @@ const useLoadingStates = (
   });
 
   const createTileLoadHandler = useCallback(() => {
-    return (tile) => {
-      if (!isInteracting && tile?.data?.length) {
-        collectVisibleFeatures();
-      }
-    };
-  }, [collectVisibleFeatures, isInteracting]);
+    return () => {};
+  }, []);
 
   const createTileErrorHandler = useCallback((layerId: keyof LoadingStates) => {
     return (error) => {
@@ -166,10 +168,6 @@ const useLoadingStates = (
           } else if (wasLoading && isNowLoaded) {
             newLoadingStates[layerKey] = false;
             hasChanges = true;
-
-            if (!isInteracting) {
-              collectVisibleFeatures();
-            }
           }
         }
       });
@@ -181,40 +179,14 @@ const useLoadingStates = (
 
     const interval = setInterval(checkLoadingStates, 100);
     return () => clearInterval(interval);
-  }, [loadingStates, isInteracting, collectVisibleFeatures]);
+  }, [loadingStates, isInteracting]);
 
   return { loadingStates, createTileLoadHandler, createTileErrorHandler };
 };
 
-const useTimeRangeDebounce = () => {
-  const timeRange = useFireExplorerStore.use.timeRange();
-  const windLayerType = useFireExplorerStore.use.windLayerType();
-  const [lastTimeRangeEnd, setLastTimeRangeEnd] = useState(null);
-  const debouncedTimeUpdate = useRef(null);
-
-  useEffect(() => {
-    debouncedTimeUpdate.current = _.debounce((newTimeEnd) => {
-      setLastTimeRangeEnd(newTimeEnd);
-    }, 500);
-
-    return () => {
-      if (debouncedTimeUpdate.current) {
-        debouncedTimeUpdate.current.cancel();
-      }
-    };
-  }, []);
-
-  useEffect(() => {
-    if (windLayerType && debouncedTimeUpdate.current) {
-      debouncedTimeUpdate.current(timeRange.end);
-    }
-  }, [timeRange.end, windLayerType]);
-
-  return lastTimeRangeEnd;
-};
-
 const useUpdateTriggers = () => {
   const timeRange = useFireExplorerStore.use.timeRange();
+  const timeMarker = useFireExplorerStore.use.timeMarker();
   const showAdvancedFilters = useFireExplorerStore.use.showAdvancedFilters();
   const fireArea = useFireExplorerStore.use.fireArea();
   const duration = useFireExplorerStore.use.duration();
@@ -227,6 +199,7 @@ const useUpdateTriggers = () => {
       getFillColor: [
         timeRange.start.getTime(),
         timeRange.end.getTime(),
+        timeMarker.getTime(),
         showAdvancedFilters,
         fireArea.min,
         fireArea.max,
@@ -240,6 +213,7 @@ const useUpdateTriggers = () => {
       getLineColor: [
         timeRange.start.getTime(),
         timeRange.end.getTime(),
+        timeMarker.getTime(),
         showAdvancedFilters,
         fireArea.min,
         fireArea.max,
@@ -254,6 +228,7 @@ const useUpdateTriggers = () => {
     [
       timeRange.start,
       timeRange.end,
+      timeMarker,
       showAdvancedFilters,
       fireArea.min,
       fireArea.max,
@@ -268,7 +243,6 @@ const useUpdateTriggers = () => {
 };
 
 type UseLayersProps = {
-  collectVisibleFeatures: () => void;
   isInteracting: boolean;
   viewState: Record<string, any>;
   setViewMode: (mode: 'detail' | 'default' | string) => void;
@@ -280,7 +254,6 @@ type UseLayersProps = {
  * This hook serves as an orchestrator for the layer recreation, the filtering logic and tile loading states.
  */
 export const useLayers = ({
-  collectVisibleFeatures,
   isInteracting,
   viewState,
   setViewMode,
@@ -292,19 +265,31 @@ export const useLayers = ({
   const featurePassesFilters = useFeatureFilters();
   const { handleClick } = useLayerHandlers(setViewMode);
   const { loadingStates, createTileLoadHandler, createTileErrorHandler } =
-    useLoadingStates(layerRefs, isInteracting, collectVisibleFeatures);
-  const lastTimeRangeEnd = useTimeRangeDebounce();
+    useLoadingStates(layerRefs, isInteracting);
   const updateTriggers = useUpdateTriggers();
 
   const windLayerType = useFireExplorerStore.use.windLayerType();
   const show3DMap = useFireExplorerStore.use.show3DMap();
   const timeRange = useFireExplorerStore.use.timeRange();
+  const timeMarker = useFireExplorerStore.use.timeMarker();
   const showPerimeterNrt = useFireExplorerStore.use.showPerimeterNrt();
   const showFireline = useFireExplorerStore.use.showFireline();
   const showNewFirepix = useFireExplorerStore.use.showNewFirepix();
   const layerOpacity = useFireExplorerStore.use.layerOpacity();
   const firePerimeters = useFireExplorerStore.use.firePerimeters();
   const mapboxAccessToken = useFireExplorerStore.use.mapboxAccessToken();
+  const viewMode = useFireExplorerStore.use.viewMode();
+
+  const [debouncedTimeMarker, setDebouncedTimeMarker] = useState(timeMarker);
+
+  const debounceSetTimeMarker = useMemo(
+    () => _.debounce((val: Date) => setDebouncedTimeMarker(val), 300),
+    []
+  );
+
+  useEffect(() => {
+    debounceSetTimeMarker(timeMarker);
+  }, [timeMarker, debounceSetTimeMarker]);
 
   useEffect(() => {
     const initializeLayers = async () => {
@@ -319,7 +304,7 @@ export const useLayers = ({
         });
       }
 
-      if (showPerimeterNrt) {
+      if (showPerimeterNrt && viewMode !== 'detail') {
         layerConfigs.push({
           type: LAYER_TYPES.MVT,
           id: 'perimeter-nrt',
@@ -333,7 +318,7 @@ export const useLayers = ({
         });
       }
 
-      if (showFireline) {
+      if (showFireline && viewMode !== 'detail') {
         layerConfigs.push({
           type: LAYER_TYPES.MVT,
           id: 'fireline',
@@ -347,7 +332,7 @@ export const useLayers = ({
         });
       }
 
-      if (showNewFirepix) {
+      if (showNewFirepix && viewMode !== 'detail') {
         layerConfigs.push({
           type: LAYER_TYPES.MVT,
           id: 'newfirepix',
@@ -374,22 +359,22 @@ export const useLayers = ({
             getDashArray: [timeRange.start.getTime(), timeRange.end.getTime()],
           },
           onClick: handleClick,
-          timeRange,
+          timeMarker,
         });
       }
 
-      if (windLayerType === 'wind' && lastTimeRangeEnd) {
+      if (windLayerType === 'wind') {
         layerConfigs.push({
           type: LAYER_TYPES.WIND,
-          timeRangeEnd: lastTimeRangeEnd,
+          timeMarker: debouncedTimeMarker,
           opacity: layerOpacity,
         });
       }
 
-      if (windLayerType === 'grid' && lastTimeRangeEnd) {
+      if (windLayerType === 'grid') {
         layerConfigs.push({
           type: LAYER_TYPES.GRID,
-          timeRangeEnd: lastTimeRangeEnd,
+          timeMarker: debouncedTimeMarker,
           opacity: layerOpacity,
         });
       }
@@ -420,7 +405,7 @@ export const useLayers = ({
     firePerimeters,
     layerOpacity,
     mapboxAccessToken,
-    lastTimeRangeEnd,
+    debouncedTimeMarker,
     featurePassesFilters,
     handleClick,
     updateTriggers,
