@@ -92,7 +92,6 @@ const Header: React.FC = () => {
         id="fire-modal"
         className="wildfire-explorer__modal usa-modal--lg bg-base-lightest shadow-3 padding-5 radius-0"
         ref={modalRef}
-        modalIsOpen={showModal}
         aria-describedby="fire-modal-description"
         aria-labelledby="fire-modal-heading"
       >
