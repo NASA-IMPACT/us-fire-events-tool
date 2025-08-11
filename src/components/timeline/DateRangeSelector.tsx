@@ -2,7 +2,7 @@ import { useState, useMemo, useEffect, useRef } from 'react';
 import { format } from 'date-fns';
 import { Calendar as CalendarIcon } from 'lucide-react';
 import { useFireExplorerStore } from '@/state/useFireExplorerStore';
-import { Button } from '@trussworks/react-uswds';
+import { Button, Icon } from '@trussworks/react-uswds';
 import Calendar from 'react-calendar';
 import { DATE_PRESET_OPTIONS } from '@/constants';
 import AdvancedFilters from '../filters/AdvancedFilters';
@@ -113,7 +113,7 @@ const DateRangeSelector = () => {
               ))}
             </select>
           </div>
-          <div className="display-inline-flex flex-align-center ">
+          <div className="display-inline-flex flex-align-center flex-justify">
             <span className="font-sans-3xs text-base-dark margin-right-2">
               prior to
             </span>
@@ -175,10 +175,11 @@ const DateRangeSelector = () => {
           <Button
             type="button"
             onClick={toggleAdvancedFilters}
-            unstyled
-            className="text-underline font-sans-3xs usa-button--unstyled"
+            className={`text-underline font-sans-3xs mobile-lg:usa-button--unstyled  ${
+              !showAdvancedFilters && 'usa-button--base'
+            } `}
           >
-            <svg
+            {/* <svg
               width="16"
               height="16"
               viewBox="0 0 20 20"
@@ -191,7 +192,8 @@ const DateRangeSelector = () => {
                 d="M3.54157 5.08465C5.2249 7.07696 8.33324 10.7693 8.33324 10.7693V15.3847C8.33324 15.8077 8.70824 16.1539 9.16657 16.1539H10.8332C11.2916 16.1539 11.6666 15.8077 11.6666 15.3847V10.7693C11.6666 10.7693 14.7666 7.07696 16.4499 5.08465C16.8749 4.57696 16.4832 3.84619 15.7916 3.84619H4.1999C3.50824 3.84619 3.11657 4.57696 3.54157 5.08465Z"
                 fill="#005EA2"
               />
-            </svg>
+            </svg> */}
+            <Icon.FilterAlt />
             <p className="mobile-lg:display-inline display-none">
               {showAdvancedFilters
                 ? 'Hide advanced filters'
