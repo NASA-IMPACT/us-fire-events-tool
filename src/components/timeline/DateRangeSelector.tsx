@@ -4,27 +4,10 @@ import { Calendar as CalendarIcon } from 'lucide-react';
 import { useFireExplorerStore } from '@/state/useFireExplorerStore';
 import { Button } from '@trussworks/react-uswds';
 import Calendar from 'react-calendar';
-
+import { DATE_PRESET_OPTIONS } from '@/constants';
 import AdvancedFilters from '../filters/AdvancedFilters';
 
 import 'react-calendar/dist/Calendar.css';
-
-const HOUR = 60 * 60 * 1000;
-const DAY = 24 * HOUR;
-const WEEK = 7 * DAY;
-const MONTH = 30 * DAY;
-const THREE_MONTHS = 90 * DAY;
-const SIX_MONTHS = 180 * DAY;
-const YEAR = 365 * DAY;
-
-const PRESET_OPTIONS = [
-  { label: '12 hours', value: 12 * HOUR },
-  { label: '1 week', value: WEEK },
-  { label: '1 month', value: MONTH },
-  { label: '3 months', value: THREE_MONTHS },
-  { label: '6 months', value: SIX_MONTHS },
-  { label: '12 months', value: YEAR },
-];
 
 const DateRangeSelector = () => {
   const setTimeRange = useFireExplorerStore.use.setTimeRange();
@@ -32,7 +15,8 @@ const DateRangeSelector = () => {
   const toggleAdvancedFilters =
     useFireExplorerStore.use.toggleAdvancedFilters();
 
-  const [selectedDuration, setSelectedDuration] = useState(PRESET_OPTIONS[2]);
+  const selectedDuration = useFireExplorerStore.use.selectedDuration();
+  const setSelectedDuration = useFireExplorerStore.use.setSelectedDuration();
   const [priorToDate, setPriorToDate] = useState(new Date());
   const [showCalendar, setShowCalendar] = useState(false);
   const calendarRef = useRef<HTMLDivElement>(null);
@@ -95,13 +79,13 @@ const DateRangeSelector = () => {
           style={{ minWidth: '120px', height: '2.5rem' }}
           value={selectedDuration.label}
           onChange={(e) => {
-            const newOption = PRESET_OPTIONS.find(
+            const newOption = DATE_PRESET_OPTIONS.find(
               (opt) => opt.label === e.target.value
             );
             if (newOption) setSelectedDuration(newOption);
           }}
         >
-          {PRESET_OPTIONS.map((option) => (
+          {DATE_PRESET_OPTIONS.map((option) => (
             <option key={option.label} value={option.label}>
               {option.label}
             </option>
