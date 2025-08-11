@@ -7,11 +7,27 @@
   $theme-type-scale-md: 8,
   $theme-utility-breakpoints: (
     'mobile-lg': true,
-    'desktop': true
+    'desktop': true,
   ),
   $theme-font-type-sans: 'public-sans',
   $theme-font-type-serif: 'public-sans',
   $theme-font-role-heading: 'sans',
   $theme-font-role-alt: 'sans',
   $theme-font-role-code: 'sans',
+  $flex-direction-settings: (
+    responsive: true,
+  ),
+  $flex-wrap-settings: (
+    responsive: true,
+  ),
+  $align-items-settings: (
+    responsive: true,
+  ),
+  $align-self-settings: (
+    responsive: true,
+  ),
+  $justify-content-settings: (
+    responsive: true,
+  ),
+
 );
