@@ -10,6 +10,7 @@ import AdvancedFilters from '../filters/AdvancedFilters';
 import 'react-calendar/dist/Calendar.css';
 
 const DateRangeSelector = () => {
+  const timeRange = useFireExplorerStore.use.timeRange();
   const setTimeRange = useFireExplorerStore.use.setTimeRange();
   const showAdvancedFilters = useFireExplorerStore.use.showAdvancedFilters();
   const toggleAdvancedFilters =
@@ -17,9 +18,11 @@ const DateRangeSelector = () => {
 
   const selectedDuration = useFireExplorerStore.use.selectedDuration();
   const setSelectedDuration = useFireExplorerStore.use.setSelectedDuration();
-  const [priorToDate, setPriorToDate] = useState(new Date());
+
   const [showCalendar, setShowCalendar] = useState(false);
   const calendarRef = useRef<HTMLDivElement>(null);
+
+  const priorToDate = useMemo(() => new Date(timeRange.end), [timeRange.end]);
 
   const computedTimeRange = useMemo(() => {
     const end = new Date(priorToDate.setHours(23, 59, 59, 999));
@@ -28,8 +31,13 @@ const DateRangeSelector = () => {
   }, [priorToDate, selectedDuration]);
 
   useEffect(() => {
-    setTimeRange(computedTimeRange);
-  }, [computedTimeRange, setTimeRange]);
+    if (
+      timeRange.start.getTime() !== computedTimeRange.start.getTime() ||
+      timeRange.end.getTime() !== computedTimeRange.end.getTime()
+    ) {
+      setTimeRange(computedTimeRange);
+    }
+  }, [computedTimeRange, setTimeRange, timeRange.start, timeRange.end]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -126,7 +134,11 @@ const DateRangeSelector = () => {
               <Calendar
                 onChange={(date) => {
                   if (date instanceof Date) {
-                    setPriorToDate(date);
+                    const end = new Date(date.setHours(23, 59, 59, 999));
+                    const start = new Date(
+                      end.getTime() - selectedDuration.value
+                    );
+                    setTimeRange({ start, end });
                     setShowCalendar(false);
                   }
                 }}
