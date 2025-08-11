@@ -15,6 +15,7 @@ interface ToolUrlState {
     start: Date;
     end: Date;
   };
+  selectedDuration: { label: string; value: number };
   viewStateForUrl: ViewState;
 }
 
@@ -28,6 +29,7 @@ const useToolState = () => {
   const viewMode = useFireExplorerStore.use.viewMode();
   const timeRange = useFireExplorerStore.use.timeRange();
   const viewStateForUrl = useFireExplorerStore.use.viewStateForUrl();
+  const selectedDuration = useFireExplorerStore.use.selectedDuration();
 
   const setViewMode = useFireExplorerStore.use.setViewMode();
   const setWindLayerType = useFireExplorerStore.use.setWindLayerType();
@@ -40,6 +42,7 @@ const useToolState = () => {
   const featuresApiEndpoint = useFireExplorerStore.use.featuresApiEndpoint();
   const setViewStateForUrl = useFireExplorerStore.use.setViewStateForUrl();
   const setViewState = useFireExplorerStore.use.setViewState();
+  const setSelectedDuration = useFireExplorerStore.use.setSelectedDuration();
 
   const debouncedSetTimeRange = useMemo(
     () => debounce(setTimeRange, 300),
@@ -56,6 +59,7 @@ const useToolState = () => {
       showNewFirepix,
       viewMode,
       timeRange,
+      selectedDuration,
       viewStateForUrl,
     }),
     [
@@ -67,6 +71,7 @@ const useToolState = () => {
       showNewFirepix,
       viewMode,
       timeRange,
+      selectedDuration,
       viewStateForUrl,
     ]
   );
@@ -109,8 +114,14 @@ const useToolState = () => {
         setViewStateForUrl(nextState.viewStateForUrl);
         setViewState(nextState.viewStateForUrl);
       }
+
+      if (nextState.selectedDuration !== undefined) {
+        setSelectedDuration(nextState.selectedDuration);
+      }
     },
     [
+      show3DMap,
+      selectedEventId,
       setViewMode,
       setWindLayerType,
       toggle3DMap,
@@ -118,12 +129,11 @@ const useToolState = () => {
       setShowFireline,
       setShowNewFirepix,
       selectEvent,
+      featuresApiEndpoint,
       debouncedSetTimeRange,
       setViewStateForUrl,
       setViewState,
-      show3DMap,
-      selectedEventId,
-      featuresApiEndpoint,
+      setSelectedDuration,
     ]
   );
 
