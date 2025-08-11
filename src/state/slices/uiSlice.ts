@@ -1,3 +1,4 @@
+import { DATE_PRESET_OPTIONS } from '@/constants';
 import { getCurrentYearStart, getToday } from '@/utils/dateUtils';
 import { StateCreator } from 'zustand';
 
@@ -12,6 +13,7 @@ export interface UIState {
   showNewFirepix: boolean;
   timeRange: { start: Date; end: Date };
   timeMarker: Date;
+  selectedDuration: { label: string; value: number };
 }
 
 export interface UIActions {
@@ -25,6 +27,7 @@ export interface UIActions {
   setShowFireline: (enabled: boolean) => void;
   setShowNewFirepix: (enabled: boolean) => void;
   setTimeMarker: (date: Date) => void;
+  setSelectedDuration: (duration: { label: string; value: number }) => void;
 }
 
 export type UISlice = UIState & UIActions;
@@ -43,6 +46,7 @@ export const createUISlice: StateCreator<UISlice> = (set) => ({
     end: getToday(),
   },
   timeMarker: new Date(),
+  selectedDuration: DATE_PRESET_OPTIONS[2],
   setViewMode: (mode) => set({ viewMode: mode }),
   setTimeRange: (range) => set({ timeRange: range }),
   togglePlay: () => set((state) => ({ isPlaying: !state.isPlaying })),
@@ -53,4 +57,5 @@ export const createUISlice: StateCreator<UISlice> = (set) => ({
   setShowFireline: (enabled) => set({ showFireline: enabled }),
   setShowNewFirepix: (enabled) => set({ showNewFirepix: enabled }),
   setTimeMarker: (date) => set({ timeMarker: date }),
+  setSelectedDuration: (duration) => set({ selectedDuration: duration }),
 });
