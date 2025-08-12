@@ -45,8 +45,8 @@ const AdvancedFilters: React.FC = () => {
 
   return (
     <>
-      <div className="padding-y-2  grid-row grid-gap">
-        <div className="grid-col-4">
+      <div className="padding-y-2  grid-row  grid-gap-lg">
+        <div className="grid-row mobile-lg:grid-col-4 display-flex flex-column padding-bottom-2  mobile-lg:padding-bottom-0 ">
           <label
             className="font-body text-bold font-sans-3xs margin-bottom-1 display-block"
             htmlFor="fire-area-slider"
@@ -80,7 +80,7 @@ const AdvancedFilters: React.FC = () => {
           </div>
         </div>
 
-        <div className="grid-col-4">
+        <div className="grid-row mobile-lg:grid-col-4 display-flex  padding-bottom-2 flex-column  mobile-lg:padding-bottom-0">
           <label
             className="font-body text-bold font-sans-3xs margin-bottom-1 display-block"
             htmlFor="duration-slider"
@@ -114,7 +114,7 @@ const AdvancedFilters: React.FC = () => {
           </div>
         </div>
 
-        <div className="grid-col-4">
+        <div className="grid-row mobile-lg:grid-col-4 display-flex flex-column padding-bottom-2 mobile-lg:padding-bottom-0">
           <label
             className="font-body text-bold font-sans-3xs margin-bottom-1 display-block"
             htmlFor="mean-frp-slider"
