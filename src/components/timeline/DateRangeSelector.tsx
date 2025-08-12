@@ -8,6 +8,7 @@ import { DATE_PRESET_OPTIONS } from '@/constants';
 import AdvancedFilters from '../filters/AdvancedFilters';
 
 import 'react-calendar/dist/Calendar.css';
+import './filterbutton.scss';
 
 const DateRangeSelector = () => {
   const timeRange = useFireExplorerStore.use.timeRange();
@@ -59,31 +60,8 @@ const DateRangeSelector = () => {
   }, [showCalendar]);
 
   return (
-    <div
-      className="bg-white radius-md mobile-lg:padding-y-2 padding-y-3 padding-x-3 shadow-2 z-top text-no-wrap"
-      //flex approach
-      // className="bg-white radius-md padding-y-2 padding-x-3 shadow-2 z-top width-full"
-      // style={{
-      //   display: 'flex',
-      //   flexDirection: 'column',
-      //   alignItems: 'flex-start',
-      //   maxWidth: '100%',
-      // }}
-    >
-      <div
-        className="grid-row grid-gap-lg flex-no-wrap  "
-        //flex approach
-
-        // className="display-flex flex-column mobile-lg:flex-row mobile-lg:flex-no-wrap flex-align-center w-full mobile-lg:flex-no-wrap mobile-lg:flex-align-center"
-        // style={{
-        //   // display: 'flex',
-        //   // alignItems: 'center',
-        //   // flexWrap: 'nowrap',
-        //   gap: '0.75rem',
-        //   width: '100%',
-        //   whiteSpace: 'nowrap',
-        // }}
-      >
+    <div className="bg-white radius-md mobile-lg:padding-y-2 padding-y-3 padding-x-3 shadow-2 z-top text-no-wrap">
+      <div className="grid-row grid-gap-lg flex-no-wrap  ">
         <div
           className=" grid-col display-flex flex-column mobile-lg:flex-row  "
           style={{
@@ -175,24 +153,12 @@ const DateRangeSelector = () => {
           <Button
             type="button"
             onClick={toggleAdvancedFilters}
-            className={`text-underline font-sans-3xs mobile-lg:usa-button--unstyled  ${
-              !showAdvancedFilters && 'usa-button--base'
-            } `}
+            className={`text-underline font-sans-3xs  filterButton 
+              `}
           >
-            {/* <svg
-              width="16"
-              height="16"
-              viewBox="0 0 20 20"
-              fill="none"
-              style={{ verticalAlign: 'middle', marginRight: '4px' }}
-            >
-              <path
-                fillRule="evenodd"
-                clipRule="evenodd"
-                d="M3.54157 5.08465C5.2249 7.07696 8.33324 10.7693 8.33324 10.7693V15.3847C8.33324 15.8077 8.70824 16.1539 9.16657 16.1539H10.8332C11.2916 16.1539 11.6666 15.8077 11.6666 15.3847V10.7693C11.6666 10.7693 14.7666 7.07696 16.4499 5.08465C16.8749 4.57696 16.4832 3.84619 15.7916 3.84619H4.1999C3.50824 3.84619 3.11657 4.57696 3.54157 5.08465Z"
-                fill="#005EA2"
-              />
-            </svg> */}
+            {/* ${
+              !showAdvancedFilters && 'usa-button--base'
+            }  */}
             <Icon.FilterAlt />
             <p className="mobile-lg:display-inline display-none">
               {showAdvancedFilters
