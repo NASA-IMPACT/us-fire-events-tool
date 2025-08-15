@@ -82,40 +82,76 @@ const LayerSwitcher: React.FC<LayerSwitcherProps> = ({
   const setShowNewFirepix = useFireExplorerStore.use.setShowNewFirepix();
 
   return (
-    <div className="layer-switcher z-top bg-white padding-x-1 padding-y-1 radius-md shadow-2 border-1px border-base-lighter text-3xs">
-      <div className="display-flex flex-justify align-items-center margin-bottom-1">
-        <h4 className="margin-0 text-base font-sans-3xs">Available layers</h4>
-        <Button
-          type="button"
-          unstyled
-          className="margin-right-05 text-base-dark"
-          onClick={onClose}
-          aria-label="Collapse layer switcher"
-        >
-          <X size={16} />
-        </Button>
-      </div>
+    <>
+      <div className="mobile-lg:display-block display-none layer-switcher z-top bg-white padding-x-1 padding-y-1 radius-md shadow-2 border-1px border-base-lighter text-3xs">
+        <div className="display-flex flex-justify align-items-center margin-bottom-1">
+          <h4 className="margin-0 text-base font-sans-3xs">Available layers</h4>
+          <Button
+            type="button"
+            unstyled
+            className="margin-right-05 text-base-dark"
+            onClick={onClose}
+            aria-label="Collapse layer switcher"
+          >
+            <X size={16} />
+          </Button>
+        </div>
 
-      <LayerItem
-        label="Fire Perimeters"
-        visible={showPerimeterNrt}
-        toggle={() => setShowPerimeterNrt(!showPerimeterNrt)}
-        isLoading={loadingStates.perimeterNrt}
-      />
-      <LayerItem
-        label="Active Fire Fronts"
-        visible={showFireline}
-        toggle={() => setShowFireline(!showFireline)}
-        isLoading={loadingStates.fireline}
-      />
-      <LayerItem
-        label="Fire Detections"
-        visible={showNewFirepix}
-        toggle={() => setShowNewFirepix(!showNewFirepix)}
-        isLoading={loadingStates.newfirepix}
-        isLast
-      />
-    </div>
+        <LayerItem
+          label="Fire Perimeters"
+          visible={showPerimeterNrt}
+          toggle={() => setShowPerimeterNrt(!showPerimeterNrt)}
+          isLoading={loadingStates.perimeterNrt}
+        />
+        <LayerItem
+          label="Active Fire Fronts"
+          visible={showFireline}
+          toggle={() => setShowFireline(!showFireline)}
+          isLoading={loadingStates.fireline}
+        />
+        <LayerItem
+          label="Fire Detections"
+          visible={showNewFirepix}
+          toggle={() => setShowNewFirepix(!showNewFirepix)}
+          isLoading={loadingStates.newfirepix}
+          isLast
+        />
+      </div>
+      <div className="mobile-lg:display-none display-block layer-switcher z-top bg-white padding-x-1 padding-y-1 radius-md shadow-2 border-1px border-base-lighter text-3xs">
+        <div className="display-flex flex-justify align-items-center margin-bottom-1">
+          <h4 className="margin-0 text-base font-sans-3xs">Available layers</h4>
+          <Button
+            type="button"
+            unstyled
+            className="margin-right-05 text-base-dark"
+            onClick={onClose}
+            aria-label="Collapse layer switcher"
+          >
+            <X size={16} />
+          </Button>
+        </div>
+
+        <LayerItem
+          label="Fire Perimeters"
+          visible={showPerimeterNrt}
+          toggle={() => setShowPerimeterNrt(!showPerimeterNrt)}
+          isLoading={loadingStates.perimeterNrt}
+        />
+        <LayerItem
+          label="Active Fire Fronts"
+          visible={showFireline}
+          toggle={() => setShowFireline(!showFireline)}
+          isLoading={loadingStates.fireline}
+        />
+        <LayerItem
+          label="Fire Detections"
+          visible={showNewFirepix}
+          toggle={() => setShowNewFirepix(!showNewFirepix)}
+          isLoading={loadingStates.newfirepix}
+          isLast
+        />
+      </div>
+    </>
   );
 };
 
