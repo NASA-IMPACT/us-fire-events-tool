@@ -8,9 +8,10 @@ import DateRangeSelector from '@/components/timeline/DateRangeSelector';
 import Header from '../components/Header';
 import LayerSwitcher from '../components/LayerSwitcher';
 import { Layers } from 'lucide-react';
+import MobileDetails from '../components/mobile-details';
 
 import 'mapbox-gl/dist/mapbox-gl.css';
-
+import './explorer.scss';
 type LoadingStates = {
   perimeterNrt: boolean;
   fireline: boolean;
@@ -116,16 +117,13 @@ const Explorer: React.FC = () => {
 
           {showLayerPanel && viewMode !== 'detail' && (
             <div
-              className="position-absolute z-top"
-              style={{
-                top: '50px',
-                right: '10px',
-                transition: 'right 0.2s ease',
-              }}
+              className="position-absolute z-top bottom-0 layer-component"
+           
             >
               <LayerSwitcher
                 onClose={() => setShowLayerPanel(false)}
                 loadingStates={loadingStates}
+                
               />
             </div>
           )}
@@ -133,15 +131,20 @@ const Explorer: React.FC = () => {
           <MapView onLoadingStatesChange={handleLoadingStatesChange} />
 
           {viewMode === 'detail' && selectedEventId ? (
-            <div
-              className="position-absolute bottom-0 z-top margin-bottom-2"
-              style={{
-                left: 'calc(50% - 185px)',
-                transform: 'translateX(-50%)',
-              }}
-            >
-              <DetailedTimeChart />
-            </div>
+            <>
+              <div
+                className="position-absolute bottom-0 z-top margin-bottom-2 display-none mobile-lg:display-block"
+                style={{
+                  left: 'calc(50% - 185px)',
+                  transform: 'translateX(-50%)',
+                }}
+              >
+                <DetailedTimeChart />
+              </div>
+              <div className=" position-absolute bottom-0 z-top  mobile-fire-details width-full ">
+                <MobileDetails onBack={handleBackToList} />
+              </div>
+            </>
           ) : (
             <div
               className="position-absolute bottom-0 z-top mobile-lg:margin-bottom-2 mobile-lg:width-auto width-full margin-bottom-0"
@@ -154,7 +157,7 @@ const Explorer: React.FC = () => {
 
         {viewMode === 'detail' && (
           <div
-            className="overflow-hidden display-flex flex-column position-absolute bg-white"
+            className="overflow-hidden display-flex flex-column position-absolute bg-white mobile-lg:display-inline display-none"
             style={{
               position: 'absolute',
               width: '360px',

@@ -5,22 +5,24 @@ export const ExportSettings = ({
   setExportFormat,
   baseFrameDelay,
   setBaseFrameDelay,
+  isMobile,
 }) => (
   <>
-    <div className="display-flex flex-align-center flex-col margin-right-2">
-      <span className="font-role-body font-weight-regular font-body-3xs color-base-ink margin-right-1">
-        Format
-      </span>
-      <select
-        className="usa-select margin-top-0"
-        value={exportFormat}
-        onChange={(e) => setExportFormat(e.target.value)}
-      >
-        <option value="webm">WebM</option>
-        <option value="gif">GIF</option>
-      </select>
-    </div>
-
+    {!isMobile && (
+      <div className="display-flex flex-align-center flex-col margin-right-2">
+        <span className="font-role-body font-weight-regular font-body-3xs color-base-ink margin-right-1">
+          Format
+        </span>
+        <select
+          className="usa-select margin-top-0"
+          value={exportFormat}
+          onChange={(e) => setExportFormat(e.target.value)}
+        >
+          <option value="webm">WebM</option>
+          <option value="gif">GIF</option>
+        </select>
+      </div>
+    )}
     <div className="display-flex flex-align-center flex-col">
       <span className="font-role-body font-weight-regular font-body-3xs color-base-ink margin-right-1">
         Speed
@@ -84,23 +86,44 @@ export const PlaybackControls = ({
   resetAnimation,
   isRecording,
   isPreparingToRecord,
-}) => (
-  <div className="display-flex flex-align-center">
-    <button
-      className="control-button padding-1"
-      onClick={togglePlayback}
-      aria-label={isPlaying ? 'Pause' : 'Play'}
-      disabled={isRecording || isPreparingToRecord}
-    >
-      {isPlaying ? <Pause size={12} /> : <Play size={16} />}
-    </button>
-    <button
-      className="control-button padding-1 margin-left-1"
-      onClick={resetAnimation}
-      aria-label="Reset"
-      disabled={isRecording || isPreparingToRecord}
-    >
-      <RotateCw size={16} />
-    </button>
-  </div>
-);
+  isMobile,
+}) =>
+  isMobile ? (
+    <div className="display-flex flex-align-center width-full flex-justify-center">
+      <button
+        className="control-button padding-1"
+        onClick={togglePlayback}
+        aria-label={isPlaying ? 'Pause' : 'Play'}
+        disabled={isRecording || isPreparingToRecord}
+      >
+        {isPlaying ? <Pause size={24} /> : <Play size={24} />}
+      </button>
+      <button
+        className="control-button padding-1 margin-left-1"
+        onClick={resetAnimation}
+        aria-label="Reset"
+        disabled={isRecording || isPreparingToRecord}
+      >
+        <RotateCw size={24} />
+      </button>
+    </div>
+  ) : (
+    <div className="display-flex flex-align-center">
+      <button
+        className="control-button padding-1"
+        onClick={togglePlayback}
+        aria-label={isPlaying ? 'Pause' : 'Play'}
+        disabled={isRecording || isPreparingToRecord}
+      >
+        {isPlaying ? <Pause size={12} /> : <Play size={16} />}
+      </button>
+      <button
+        className="control-button padding-1 margin-left-1"
+        onClick={resetAnimation}
+        aria-label="Reset"
+        disabled={isRecording || isPreparingToRecord}
+      >
+        <RotateCw size={16} />
+      </button>
+    </div>
+  );
