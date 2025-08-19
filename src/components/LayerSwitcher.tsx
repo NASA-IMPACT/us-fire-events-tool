@@ -117,9 +117,10 @@ const LayerSwitcher: React.FC<LayerSwitcherProps> = ({
           isLast
         />
       </div>
-      <div className="mobile-lg:display-none display-block layer-switcher z-top bg-white padding-x-1 padding-y-1 radius-md shadow-2 border-1px border-base-lighter text-3xs">
+      <div className="mobile-lg:display-none display-block layer-switcher z-top bg-white padding-x-1 padding-y-1 radius-md shadow-2 border-1px border-base-lighter text-3xs width-full">
         <div className="display-flex flex-justify align-items-center margin-bottom-1">
-          <h4 className="margin-0 text-base font-sans-3xs">Available layers</h4>
+          <h4 className="margin-0 text-base mobile-lg:font-sans-3xs font-sans-md">Available layers</h4>
+
           <Button
             type="button"
             unstyled
@@ -127,7 +128,7 @@ const LayerSwitcher: React.FC<LayerSwitcherProps> = ({
             onClick={onClose}
             aria-label="Collapse layer switcher"
           >
-            <X size={16} />
+            <X size={24} />
           </Button>
         </div>
 
