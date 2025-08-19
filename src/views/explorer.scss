@@ -7,11 +7,11 @@
 
 .layer-component {
     top:50px;
-    right:10px;
+
     transition: right 0.2s ease;
     @media screen and (max-width: 480px) {
         border: blue solid 4px;
         z-index: 999999;
-        width:auto;
+        width:100%;
       }
 }
