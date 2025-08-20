@@ -118,31 +118,33 @@ const EventDetails: React.FC<EventDetailsProps> = ({ onBack, isMobile }) => {
 
   return (
     <div className="height-full display-flex flex-column bg-white">
-      <div className="padding-y-2 padding-x-3 border-bottom border-base-lighter display-flex flex-row flex-align-center">
-        <button
-          className="usa-button usa-button--unstyled text-base-dark display-flex flex-align-center"
-          onClick={onBack}
-        >
-          <svg
-            className="margin-right-1"
-            width="24"
-            height="24"
-            viewBox="0 0 24 24"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
+      {!isMobile && (
+        <div className="padding-y-2 padding-x-3 border-bottom border-base-lighter display-flex flex-row flex-align-center">
+          <button
+            className="usa-button usa-button--unstyled text-base-dark display-flex flex-align-center"
+            onClick={onBack}
           >
-            <path
-              d="M20 11H7.83L13.42 5.41L12 4L4 12L12 20L13.41 18.59L7.83 13H20V11Z"
-              fill="currentColor"
-            />
-          </svg>
-          <span className="font-body font-weight-regular font-sans-3xs text-underline">
-            Back to all fire events
-          </span>
-        </button>
-      </div>
+            <svg
+              className="margin-right-1"
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M20 11H7.83L13.42 5.41L12 4L4 12L12 20L13.41 18.59L7.83 13H20V11Z"
+                fill="currentColor"
+              />
+            </svg>
+            <span className="font-body font-weight-regular font-sans-3xs text-underline">
+              Back to all fire events
+            </span>
+          </button>
+        </div>
+      )}
 
-      <div className="padding-x-3 padding-y-2 overflow-auto flex-fill">
+      <div className="mobile-lg:padding-x-3 padding-y-2 overflow-auto flex-fill">
         <div className="display-flex flex-justify flex-align-center margin-bottom-1">
           <h1
             className={`font-body font-weight-700 font-sans-lg margin-0 ${
@@ -152,27 +154,31 @@ const EventDetails: React.FC<EventDetailsProps> = ({ onBack, isMobile }) => {
             {eventName}
           </h1>
 
-          <div
-            className="display-flex position-relative margin-left-2"
-            ref={downloadRef}
-          >
-            <button
-              className="usa-button usa-button--unstyled"
-              aria-label="Download fire event data"
-              onClick={() => setShowDownloadMenu((prev) => !prev)}
+          {!isMobile && (
+            <div
+              className="display-flex position-relative margin-left-2"
+              ref={downloadRef}
             >
-              <Icon.FileDownload size={3} color="#71767A" />
-            </button>
+              <button
+                className="usa-button usa-button--unstyled"
+                aria-label="Download fire event data"
+                onClick={() => setShowDownloadMenu((prev) => !prev)}
+              >
+                <Icon.FileDownload size={3} color="#71767A" />
+              </button>
 
-            {showDownloadMenu && (
-              <DownloadMenu
-                fireId={fireId}
-                fireLatestObservationTimestamp={fireLatestObservationTimestamp}
-                featuresApiEndpoint={featuresApiEndpoint}
-                onClose={() => setShowDownloadMenu(false)}
-              />
-            )}
-          </div>
+              {showDownloadMenu && (
+                <DownloadMenu
+                  fireId={fireId}
+                  fireLatestObservationTimestamp={
+                    fireLatestObservationTimestamp
+                  }
+                  featuresApiEndpoint={featuresApiEndpoint}
+                  onClose={() => setShowDownloadMenu(false)}
+                />
+              )}
+            </div>
+          )}
         </div>
 
         <div className="margin-bottom-2">
@@ -301,27 +307,29 @@ const EventDetails: React.FC<EventDetailsProps> = ({ onBack, isMobile }) => {
             </div>
           </div>
 
-          <div className="margin-top-2">
-            <div className="display-flex flex-align-center">
-              <label className="font-body font-weight-bold font-sans-3xs text-base-ink margin-right-2">
-                Opacity
-              </label>
-              <div className="display-flex flex-align-center flex-fill">
-                <ReactSlider
-                  className="opacity-slider flex-fill"
-                  thumbClassName="thumb"
-                  trackClassName="track"
-                  min={0}
-                  max={100}
-                  value={layerOpacity}
-                  onChange={setLayerOpacity}
-                />
-                <span className="slider-value margin-left-2 text-base-dark border-1px border-base-lighter padding-x-2 padding-y-1">
-                  {layerOpacity}%
-                </span>
+          {!isMobile && (
+            <div className="margin-top-2">
+              <div className="display-flex flex-align-center">
+                <label className="font-body font-weight-bold font-sans-3xs text-base-ink margin-right-2">
+                  Opacity
+                </label>
+                <div className="display-flex flex-align-center flex-fill">
+                  <ReactSlider
+                    className="opacity-slider flex-fill"
+                    thumbClassName="thumb"
+                    trackClassName="track"
+                    min={0}
+                    max={100}
+                    value={layerOpacity}
+                    onChange={setLayerOpacity}
+                  />
+                  <span className="slider-value margin-left-2 text-base-dark border-1px border-base-lighter padding-x-2 padding-y-1">
+                    {layerOpacity}%
+                  </span>
+                </div>
               </div>
             </div>
-          </div>
+          )}
         </div>
         {!isMobile && (
           <div className="margin-top-1 padding-top-1">

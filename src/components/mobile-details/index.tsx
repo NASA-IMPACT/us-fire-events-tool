@@ -321,7 +321,7 @@ const MobileDetails: React.FC<MobileDetails> = ({ onBack }) => {
   }, [enhancedChartData]);
 
   if (!selectedEventId) return null;
-  //   console.log('mobileTimelineActive', mobileTimelineActive);
+
   return (
     <div>
       <div className="padding-y-1  border-bottom border-base-lighter display-flex flex-row flex-align-center bg-white padding-x-3 display-flex flex-justify">
