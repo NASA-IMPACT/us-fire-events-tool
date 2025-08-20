@@ -117,13 +117,13 @@ const Explorer: React.FC = () => {
 
           {showLayerPanel && viewMode !== 'detail' && (
             <div
-              className="position-absolute z-top bottom-0 layer-component"
-           
+              className={`position-absolute mobile-lg:z-top bottom-0 layer-component height-auto ${
+                showLayerPanel ? 'layer-modal-background' : ''
+              }`}
             >
               <LayerSwitcher
                 onClose={() => setShowLayerPanel(false)}
                 loadingStates={loadingStates}
-                
               />
             </div>
           )}

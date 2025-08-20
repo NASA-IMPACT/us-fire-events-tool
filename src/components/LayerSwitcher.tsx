@@ -20,6 +20,7 @@ const LayerItem: React.FC<{
   isLoading?: boolean;
   disabled?: boolean;
   isLast?: boolean;
+  isMobile?: boolean;
 }> = ({
   label,
   visible,
@@ -27,22 +28,20 @@ const LayerItem: React.FC<{
   isLoading = false,
   disabled = false,
   isLast = false,
+  isMobile,
 }) => (
-  <div
+  <Button
     onClick={toggle}
-    className={`layer-item display-flex flex-justify align-items-center ${
+    className={`layer-item display-flex flex-justify align-items-center text-no-underline ${
       isLast ? '' : 'margin-bottom-1'
+    } ${isMobile ? 'border-1px border-base-lighter bg-white' : ''} ${
+      !visible || disabled ? 'text-base-lighter' : 'text-base'
     }`}
-    style={{ cursor: 'pointer' }}
+    type={'button'}
+    unstyled={isMobile ? false : true}
   >
     <div className="display-flex align-items-center">
-      <span
-        className={`font-sans-3xs ${
-          !visible || disabled ? 'text-base-lighter' : 'text-base-dark'
-        }`}
-      >
-        {label}
-      </span>
+      <span className={`mobile-lg:font-sans-3xs font-sans-sm`}>{label}</span>
 
       {visible && isLoading && (
         <div className="margin-left-1">
@@ -66,7 +65,7 @@ const LayerItem: React.FC<{
     >
       {visible ? <Eye size={14} /> : <EyeOff size={14} />}
     </Button>
-  </div>
+  </Button>
 );
 
 const LayerSwitcher: React.FC<LayerSwitcherProps> = ({
@@ -117,9 +116,11 @@ const LayerSwitcher: React.FC<LayerSwitcherProps> = ({
           isLast
         />
       </div>
-      <div className="mobile-lg:display-none display-block layer-switcher z-top bg-white padding-x-1 padding-y-1 radius-md shadow-2 border-1px border-base-lighter text-3xs width-full">
+      <div className="mobile-lg:display-none display-block layer-switcher z-top bg-white padding-x-1 mobile-lg:padding-y-1 padding-y-3 radius-md shadow-2 border-1px border-base-lighter text-3xs width-full bottom-0 position-absolute">
         <div className="display-flex flex-justify align-items-center margin-bottom-1">
-          <h4 className="margin-0 text-base mobile-lg:font-sans-3xs font-sans-md">Available layers</h4>
+          <h4 className="margin-0 text-base mobile-lg:font-sans-3xs font-sans-md">
+            Available layers
+          </h4>
 
           <Button
             type="button"
@@ -137,18 +138,21 @@ const LayerSwitcher: React.FC<LayerSwitcherProps> = ({
           visible={showPerimeterNrt}
           toggle={() => setShowPerimeterNrt(!showPerimeterNrt)}
           isLoading={loadingStates.perimeterNrt}
+          isMobile={true}
         />
         <LayerItem
           label="Active Fire Fronts"
           visible={showFireline}
           toggle={() => setShowFireline(!showFireline)}
           isLoading={loadingStates.fireline}
+          isMobile={true}
         />
         <LayerItem
           label="Fire Detections"
           visible={showNewFirepix}
           toggle={() => setShowNewFirepix(!showNewFirepix)}
           isLoading={loadingStates.newfirepix}
+          isMobile={true}
           isLast
         />
       </div>
