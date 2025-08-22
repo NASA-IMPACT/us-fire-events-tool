@@ -8,7 +8,7 @@ import { DATE_PRESET_OPTIONS } from '@/constants';
 import AdvancedFilters from '../filters/AdvancedFilters';
 
 import 'react-calendar/dist/Calendar.css';
-// import './filterbutton.scss';
+
 
 const DateRangeSelector = () => {
   const timeRange = useFireExplorerStore.use.timeRange();
