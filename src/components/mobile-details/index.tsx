@@ -374,9 +374,9 @@ const MobileDetails: React.FC<MobileDetails> = ({ onBack }) => {
             </div>
             {mobileTimelineActive ? (
               <>
-                <div className=" details-container padding-y-2 grid-container grid-gap-2 padding-x-0 margin-bottom-2">
-                  <div className="grid-row grid-gap-2">
-                    <div className="grid-col-6 padding-y-1 ">
+                <div className=" details-container padding-y-2 grid-container  padding-x-0 margin-bottom-2">
+                  <div className="grid-row">
+                    <div className="grid-col-6 padding-right-1">
                       <label className="usa-checkbox margin-0 border-base-light border-1px radius-md padding-2 display-flex width-full maxh-8 display-flex flex-justify">
                         {' '}
                         <span>Wind direction</span>
@@ -391,7 +391,7 @@ const MobileDetails: React.FC<MobileDetails> = ({ onBack }) => {
                         <span className="usa-checkbox__label font-ui font-sans-2xs text-base-ink margin-top-0 " />
                       </label>
                     </div>
-                    <div className="grid-col-6 padding-y-1">
+                    <div className="grid-col-6 ">
                       <label className="usa-checkbox border-base-light border-1px radius-md padding-2 display-flex width-full maxh-8 display-flex flex-justify">
                         <span>3D map</span>
 
@@ -404,38 +404,6 @@ const MobileDetails: React.FC<MobileDetails> = ({ onBack }) => {
                         />
                         <span className="usa-checkbox__label font-ui font-weight-regular font-sans-2xs text-base-ink margin-top-0" />
                       </label>
-                    </div>
-                  </div>
-                  <div className="grid-row grid-gap-2">
-                    <div className="grid-col-6 padding-y-1 maxh-8">
-                      <div
-                        className="display-flex flex-align-center border-base-light border-1px radius-md padding-2 display-flex width-full flex-justify"
-                        style={{
-                          opacity: windLayerType === null ? 0.5 : 1,
-                          pointerEvents:
-                            windLayerType === null ? 'none' : 'auto',
-                        }}
-                      >
-                        {' '}
-                        <span className="font-sans-3xs text-base margin-left-1 text-base-dark">
-                          Animate
-                        </span>
-                        <ToggleSlider
-                          key={windLayerType === null ? 'off' : windLayerType}
-                          active={windLayerType === 'wind'}
-                          onToggle={(state) =>
-                            setWindLayerType(state ? 'wind' : 'grid')
-                          }
-                          barHeight={20}
-                          barWidth={40}
-                          handleSize={12}
-                          barBackgroundColor="#e0e0e0"
-                          barBackgroundColorActive="#1a6baa"
-                          handleBackgroundColor="#ffffff"
-                          handleBorderRadius={10}
-                          barBorderRadius={10}
-                        />
-                      </div>
                     </div>
                   </div>
                 </div>
