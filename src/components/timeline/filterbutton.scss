@@ -21,13 +21,16 @@
     margin: 0;
     padding: 0;
     width: auto;
-    & :hover {
-      color: #1a4480 !important;
-      background-color: transparent !important;
+    :hover {
+      color: #1a4480;
+      background-color: transparent;
     }
     & :focus {
       outline: 0.25rem solid #2491ff;
       outline-offset: 0rem;
+      background-color: transparent;
+
     }
   }
 }
+
