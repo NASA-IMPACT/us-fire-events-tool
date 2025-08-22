@@ -25,7 +25,6 @@ dist-ssr
 
 .env
 .yarnrc.yml
-.yarn
-.lock
+
 /.yarn
 yarn.lock
