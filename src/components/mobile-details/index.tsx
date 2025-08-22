@@ -20,7 +20,7 @@ import 'react-calendar/dist/Calendar.css';
 import '../timeline/rangeslider.scss';
 import DetailsToggle from './detailsToggle';
 import { Button, Icon } from '@trussworks/react-uswds';
-import { ToggleSlider } from 'react-toggle-slider';
+
 import EventDetails from '../sidebar/EventDetailsView';
 import './details.scss';
 
