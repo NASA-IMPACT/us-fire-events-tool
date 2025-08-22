@@ -8,7 +8,7 @@ import { DATE_PRESET_OPTIONS } from '@/constants';
 import AdvancedFilters from '../filters/AdvancedFilters';
 
 import 'react-calendar/dist/Calendar.css';
-import './filterbutton.scss';
+// import './filterbutton.scss';
 
 const DateRangeSelector = () => {
   const timeRange = useFireExplorerStore.use.timeRange();
@@ -150,22 +150,37 @@ const DateRangeSelector = () => {
           </div>
         </div>
         <div className="grid-col-auto">
-          <Button
-            type="button"
-            onClick={toggleAdvancedFilters}
-            className={`text-underline font-sans-3xs  filterButton 
-              `}
-          >
-            {/* ${
-              !showAdvancedFilters && 'usa-button--base'
-            }  */}
-            <Icon.FilterAlt />
-            <p className="mobile-lg:display-inline display-none">
-              {showAdvancedFilters
-                ? 'Hide advanced filters'
-                : 'Show advanced filters'}
-            </p>
-          </Button>
+          <div className="mobile-lg:display-none ">
+            <Button
+              type="button"
+              onClick={toggleAdvancedFilters}
+              className={` font-sans-3xs ${
+                showAdvancedFilters ? 'usa-button' : 'usa-button--base bg-base-light '
+              }`}
+            >
+              <Icon.FilterAlt />
+              <p className="mobile-lg:display-inline display-none">
+                {showAdvancedFilters
+                  ? 'Hide advanced filters'
+                  : 'Show advanced filters'}
+              </p>
+            </Button>
+          </div>
+          <div className="mobile-lg:display-block display-none ">
+            <Button
+              type="button"
+              onClick={toggleAdvancedFilters}
+              unstyled
+              className="text-underline font-sans-3xs usa-button--unstyled"
+            >
+              <Icon.FilterAlt />
+              <p className="mobile-lg:display-inline display-none">
+                {showAdvancedFilters
+                  ? 'Hide advanced filters'
+                  : 'Show advanced filters'}
+              </p>
+            </Button>
+          </div>
         </div>
       </div>
 

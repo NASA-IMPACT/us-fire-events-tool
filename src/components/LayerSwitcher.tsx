@@ -32,7 +32,7 @@ const LayerItem: React.FC<{
 }) => (
   <Button
     onClick={toggle}
-    className={`layer-item display-flex flex-justify align-items-center text-no-underline ${
+    className={`layer-item display-flex flex-justify align-items-center text-no-underline width-full ${
       isLast ? '' : 'margin-bottom-1'
     } ${isMobile ? 'border-1px border-base-lighter bg-white' : ''} ${
       !visible || disabled ? 'text-base-lighter' : 'text-base'
@@ -116,45 +116,53 @@ const LayerSwitcher: React.FC<LayerSwitcherProps> = ({
           isLast
         />
       </div>
-      <div className="mobile-lg:display-none display-block layer-switcher z-top bg-white padding-x-1 mobile-lg:padding-y-1 padding-y-3 radius-md shadow-2 border-1px border-base-lighter text-3xs width-full bottom-0 position-absolute">
-        <div className="display-flex flex-justify align-items-center margin-bottom-1">
-          <h4 className="margin-0 text-base mobile-lg:font-sans-3xs font-sans-md">
-            Available layers
-          </h4>
+      <div className='display-flex height-full'>
+        <Button
+          type="button"
+          onClick={onClose}
+          unstyled
+          className=" width-full heigth-auto  mobile-lg:display-none display-flex flex-column"
+        />
+        <div className="mobile-lg:display-none display-block layer-switcher z-top bg-white padding-x-1 mobile-lg:padding-y-1 padding-y-3 radius-md shadow-2 border-1px border-base-lighter text-3xs width-full bottom-0 position-absolute">
+          <div className="display-flex flex-justify align-items-center margin-bottom-1">
+            <h4 className="margin-0 text-base mobile-lg:font-sans-3xs font-sans-md">
+              Available layers
+            </h4>
 
-          <Button
-            type="button"
-            unstyled
-            className="margin-right-05 text-base-dark"
-            onClick={onClose}
-            aria-label="Collapse layer switcher"
-          >
-            <X size={24} />
-          </Button>
+            <Button
+              type="button"
+              unstyled
+              className="margin-right-05 text-base-dark"
+              onClick={onClose}
+              aria-label="Collapse layer switcher"
+            >
+              <X size={24} />
+            </Button>
+          </div>
+
+          <LayerItem
+            label="Fire Perimeters"
+            visible={showPerimeterNrt}
+            toggle={() => setShowPerimeterNrt(!showPerimeterNrt)}
+            isLoading={loadingStates.perimeterNrt}
+            isMobile={true}
+          />
+          <LayerItem
+            label="Active Fire Fronts"
+            visible={showFireline}
+            toggle={() => setShowFireline(!showFireline)}
+            isLoading={loadingStates.fireline}
+            isMobile={true}
+          />
+          <LayerItem
+            label="Fire Detections"
+            visible={showNewFirepix}
+            toggle={() => setShowNewFirepix(!showNewFirepix)}
+            isLoading={loadingStates.newfirepix}
+            isMobile={true}
+            isLast
+          />
         </div>
-
-        <LayerItem
-          label="Fire Perimeters"
-          visible={showPerimeterNrt}
-          toggle={() => setShowPerimeterNrt(!showPerimeterNrt)}
-          isLoading={loadingStates.perimeterNrt}
-          isMobile={true}
-        />
-        <LayerItem
-          label="Active Fire Fronts"
-          visible={showFireline}
-          toggle={() => setShowFireline(!showFireline)}
-          isLoading={loadingStates.fireline}
-          isMobile={true}
-        />
-        <LayerItem
-          label="Fire Detections"
-          visible={showNewFirepix}
-          toggle={() => setShowNewFirepix(!showNewFirepix)}
-          isLoading={loadingStates.newfirepix}
-          isMobile={true}
-          isLast
-        />
       </div>
     </>
   );
