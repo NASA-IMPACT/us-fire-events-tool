@@ -379,7 +379,7 @@ const MobileDetails: React.FC<MobileDetails> = ({ onBack }) => {
                     <div className="grid-col-6 padding-right-1">
                       <label className="usa-checkbox margin-0 border-base-light border-1px radius-md padding-2 display-flex width-full maxh-8 display-flex flex-justify">
                         {' '}
-                        <span>Wind direction</span>
+                        <span>Wind</span>
                         <input
                           className="usa-checkbox__input"
                           type="checkbox"

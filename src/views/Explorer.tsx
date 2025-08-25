@@ -147,7 +147,7 @@ const Explorer: React.FC = () => {
             </>
           ) : (
             <div
-              className="position-absolute bottom-0 z-top mobile-lg:margin-bottom-2 mobile-lg:width-auto width-full margin-bottom-0"
+              className="position-absolute bottom-0 z-500 mobile-lg:margin-bottom-2 mobile-lg:width-auto width-full margin-bottom-0"
               style={{ left: '50%', transform: 'translateX(-50%)' }}
             >
               <DateRangeSelector />
