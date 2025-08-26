@@ -21,6 +21,9 @@
 .layer-modal-background {
   @media screen and (max-width: 480px) {
     background-color: rgba(0, 0, 0, 0.25);
-    margin-top:-75px;
+    margin-top: -75px;
   }
+}
+.app-window {
+  height: 100dvh;
 }

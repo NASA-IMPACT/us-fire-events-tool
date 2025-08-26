@@ -77,10 +77,10 @@ const Explorer: React.FC = () => {
   );
 
   return (
-    <div className="wildfire-explorer">
+    <div className="wildfire-explorer ">
       <Header />
 
-      <div className="display-flex height-viewport">
+      <div className="display-flex app-window">
         <div className="position-relative flex-fill">
           {viewMode !== 'detail' && (
             <div
