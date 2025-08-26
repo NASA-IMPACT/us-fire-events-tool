@@ -1,5 +1,6 @@
 import * as WeatherLayers from 'weatherlayers-gl';
 import { ClipExtension } from '@deck.gl/extensions';
+import { isMobile } from 'react-device-detect';
 
 /**
  * Creates a wind particle layer
@@ -56,12 +57,12 @@ export const createWindLayer = async ({
       bounds: [-134.1214, 21.1222, -60.8912, 52.6287],
       clipBounds: [-134.1214, 21.1222, -60.8912, 52.6287],
       extensions: [new ClipExtension()],
-      numParticles: particleCount,
+      numParticles: isMobile ? 500 : particleCount,
       color: [97, 173, 234, 255],
       fadeOpacity: opacity / 100,
       dropRate: 0.003,
       dropRateBump: 0.01,
-      speedFactor,
+      speedFactor: isMobile ? 5 : speedFactor,
       lineWidth: {
         type: 'exponential',
         value: 2.0,
@@ -69,13 +70,13 @@ export const createWindLayer = async ({
         min: 1.0,
         max: 4.5,
       },
-      maxAge: 15,
-      paths: 25,
+      maxAge: isMobile ? 8 : 15,
+      paths: isMobile ? 10 : 25,
       iconAtlas: '',
       iconMapping: {},
       fadeIn: true,
       useWorkers: true,
-      updateRate: 16,
+      updateRate: isMobile ? 32 : 16,
       blendMode: 'screen',
       particleGradient: {
         0.0: [50, 50, 50, 0],
