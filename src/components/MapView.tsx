@@ -1,4 +1,4 @@
-import { useEffect, useCallback, useState } from 'react';
+import { useEffect } from 'react';
 import DeckGL from '@deck.gl/react';
 import { Map } from 'react-map-gl/mapbox';
 
@@ -100,6 +100,7 @@ const MapView: React.FC<MapViewProps> = ({ onLoadingStatesChange }) => {
       getTooltip={({ object }) =>
         getMapTooltip({ object, featurePassesFilters })
       }
+      useDevicePixels={false}
       widgets={[
         new ZoomWidget({
           placement: 'top-left',
