@@ -363,18 +363,16 @@ const MobileDetails: React.FC<MobileDetails> = ({ onBack }) => {
         </div>
       </div>
 
-      <div className="detailed-time-chart bg-white radius-md padding-3 shadow-2 z-top width-full≈">
+      <div className="detailed-time-chart bg-white radius-md padding-2 shadow-2 z-top width-full≈">
         {drawerOpen && (
           <div>
-            <div className="margin-bottom-2">
-              <DetailsToggle
-                setMobileTimelineActive={setMobileTimelineActive}
-                mobileTimelineActive={mobileTimelineActive}
-              />
-            </div>
+            <DetailsToggle
+              setMobileTimelineActive={setMobileTimelineActive}
+              mobileTimelineActive={mobileTimelineActive}
+            />
             {mobileTimelineActive ? (
               <>
-                <div className=" details-container padding-y-2 grid-container  padding-x-0 margin-bottom-2">
+                <div className=" details-container padding-y-2 grid-container  padding-x-0">
                   <div className="grid-row">
                     <div className="grid-col-6 padding-right-1">
                       <label className="usa-checkbox margin-0 border-base-light border-1px radius-md padding-2 display-flex width-full maxh-8 display-flex flex-justify">
