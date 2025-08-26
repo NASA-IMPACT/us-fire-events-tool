@@ -1,5 +1,6 @@
 import { GeoJsonLayer } from '@deck.gl/layers';
 import { PathStyleExtension } from '@deck.gl/extensions';
+import { isMobile } from 'react-device-detect';
 
 /**
  * Creates a GeoJson layer for fire perimeters visualization
@@ -91,6 +92,8 @@ export const createGeoJsonLayer2D = ({
     },
 
     getDashArray: (feature) => {
+      if (isMobile) return [0, 0];
+
       const state = getPerimeterState(feature);
 
       switch (state) {
@@ -106,13 +109,9 @@ export const createGeoJsonLayer2D = ({
     },
 
     lineWidthMinPixels: 1,
-    material: {
-      ambient: 0.8,
-      diffuse: 0.6,
-      shininess: 10,
-    },
+    material: isMobile ? false : { ambient: 0.8, diffuse: 0.6, shininess: 10 },
     opacity: opacity / 100,
-    pickable: true,
+    pickable: !isMobile,
 
     updateTriggers: {
       getFillColor: [
@@ -134,7 +133,7 @@ export const createGeoJsonLayer2D = ({
         ...(updateTriggers.getDashArray || []),
       ],
     },
-    extensions: [new PathStyleExtension({ dash: true })],
+    extensions: isMobile ? [] : [new PathStyleExtension({ dash: true })],
     parameters: {
       depthTest: false,
     },
