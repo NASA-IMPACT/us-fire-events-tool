@@ -3,6 +3,7 @@ import {
   _TerrainExtension as TerrainExtension,
   PathStyleExtension,
 } from '@deck.gl/extensions';
+import { isMobile } from 'react-device-detect';
 
 /**
  * Creates a GeoJson layer for fire perimeters visualization with 3D terrain support
@@ -44,13 +45,9 @@ export const createGeoJsonLayer3D = ({
     const featureTime = new Date(feature.properties.t).getTime();
     const currentTime = timeMarker?.getTime() || Date.now();
 
-    if (featureTime < currentTime) {
-      return 'past';
-    } else if (featureTime === currentTime) {
-      return 'current';
-    } else {
-      return 'future';
-    }
+    if (featureTime < currentTime) return 'past';
+    if (featureTime === currentTime) return 'current';
+    return 'future';
   };
 
   return new GeoJsonLayer({
@@ -58,6 +55,7 @@ export const createGeoJsonLayer3D = ({
     data: sortedData,
     filled: true,
     stroked: true,
+
     getFillColor: (feature) => {
       const state = getPerimeterState(feature);
 
@@ -72,6 +70,7 @@ export const createGeoJsonLayer3D = ({
           return [136, 140, 160, 255];
       }
     },
+
     getLineColor: (feature) => {
       const state = getPerimeterState(feature);
 
@@ -86,11 +85,14 @@ export const createGeoJsonLayer3D = ({
           return [115, 120, 124, 255];
       }
     },
+
     getLineWidth: (feature) => {
       const state = getPerimeterState(feature);
       return state === 'current' ? 100 : 1.5;
     },
+
     getDashArray: (feature) => {
+      if (isMobile) return [0, 0];
       const state = getPerimeterState(feature);
 
       switch (state) {
@@ -104,15 +106,13 @@ export const createGeoJsonLayer3D = ({
           return [0, 0];
       }
     },
+
     lineWidthMinPixels: 1,
-    lineWidthMaxPixels: 2,
-    material: {
-      ambient: 0.8,
-      diffuse: 0.6,
-      shininess: 10,
-    },
+    lineWidthMaxPixels: isMobile ? 6 : 30,
+
+    material: isMobile ? false : { ambient: 0.8, diffuse: 0.6, shininess: 10 },
     opacity: opacity / 100,
-    pickable: true,
+    pickable: !isMobile,
 
     updateTriggers: {
       getFillColor: [
@@ -134,13 +134,13 @@ export const createGeoJsonLayer3D = ({
         ...(updateTriggers.getDashArray || []),
       ],
     },
+
     extensions: [
       new TerrainExtension(),
-      new PathStyleExtension({ dash: true }),
+      ...(isMobile ? [] : [new PathStyleExtension({ dash: true })]),
     ],
-    parameters: {
-      depthTest: false,
-    },
+
+    parameters: { depthTest: false },
     onClick,
   });
 };
