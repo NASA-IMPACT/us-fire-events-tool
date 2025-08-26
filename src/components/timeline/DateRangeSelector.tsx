@@ -8,7 +8,7 @@ import { DATE_PRESET_OPTIONS } from '@/constants';
 import AdvancedFilters from '../filters/AdvancedFilters';
 
 import 'react-calendar/dist/Calendar.css';
-
+import './calendar-mobile-overrides.scss';
 
 const DateRangeSelector = () => {
   const timeRange = useFireExplorerStore.use.timeRange();
@@ -119,16 +119,7 @@ const DateRangeSelector = () => {
               </button>
 
               {showCalendar && (
-                <div
-                  ref={calendarRef}
-                  style={{
-                    position: 'absolute',
-                    zIndex: 999,
-                    top: '-270px',
-                    right: 0,
-                    boxShadow: '0 0 10px rgba(0,0,0,0.1)',
-                  }}
-                >
+                <div ref={calendarRef} className="calendar-override">
                   <Calendar
                     onChange={(date) => {
                       if (date instanceof Date) {
@@ -155,7 +146,9 @@ const DateRangeSelector = () => {
               type="button"
               onClick={toggleAdvancedFilters}
               className={` font-sans-3xs ${
-                showAdvancedFilters ? 'usa-button' : 'usa-button--base bg-base-light '
+                showAdvancedFilters
+                  ? 'usa-button'
+                  : 'usa-button--base bg-base-light '
               }`}
             >
               <Icon.FilterAlt />
