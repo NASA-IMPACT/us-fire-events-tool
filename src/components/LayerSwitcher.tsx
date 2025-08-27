@@ -41,7 +41,7 @@ const LayerItem: React.FC<{
     unstyled={isMobile ? false : true}
   >
     <div className="display-flex align-items-center">
-      <span className={`mobile-lg:font-sans-3xs font-sans-sm`}>{label}</span>
+      <span className={`tablet:font-sans-3xs font-sans-sm`}>{label}</span>
 
       {visible && isLoading && (
         <div className="margin-left-1">
@@ -82,7 +82,7 @@ const LayerSwitcher: React.FC<LayerSwitcherProps> = ({
 
   return (
     <>
-      <div className="mobile-lg:display-block display-none layer-switcher z-top bg-white padding-x-1 padding-y-1 radius-md shadow-2 border-1px border-base-lighter text-3xs">
+      <div className="tablet:display-block display-none layer-switcher z-top bg-white padding-x-1 padding-y-1 radius-md shadow-2 border-1px border-base-lighter text-3xs">
         <div className="display-flex flex-justify align-items-center margin-bottom-1">
           <h4 className="margin-0 text-base font-sans-3xs">Available layers</h4>
           <Button
@@ -121,11 +121,11 @@ const LayerSwitcher: React.FC<LayerSwitcherProps> = ({
           type="button"
           onClick={onClose}
           unstyled
-          className=" width-full heigth-auto  mobile-lg:display-none display-flex flex-column"
+          className=" width-full heigth-auto  tablet:display-none display-flex flex-column"
         />
-        <div className="mobile-lg:display-none display-block layer-switcher z-top bg-white padding-x-1 mobile-lg:padding-y-1 padding-y-3 radius-md shadow-2 border-1px border-base-lighter text-3xs width-full bottom-0 position-absolute">
+        <div className="tablet:display-none display-block layer-switcher z-top bg-white padding-x-1 tablet:padding-y-1 padding-y-3 radius-md shadow-2 border-1px border-base-lighter text-3xs width-full bottom-0 position-absolute">
           <div className="display-flex flex-justify align-items-center margin-bottom-1">
-            <h4 className="margin-0 text-base mobile-lg:font-sans-3xs font-sans-md">
+            <h4 className="margin-0 text-base tablet:font-sans-3xs font-sans-md">
               Available layers
             </h4>
 

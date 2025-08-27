@@ -1,6 +1,6 @@
 .mobile-fire-details {
   display: none;
-  @media screen and (max-width: 480px) {
+  @media screen and (max-width: 640px) {
     display: block;
   }
 }
@@ -10,7 +10,7 @@
   right: 10px;
   transition: right 0.2s ease;
 
-  @media screen and (max-width: 480px) {
+  @media screen and (max-width: 640px) {
     bottom: 0;
     width: 100%;
     height: 100%;
@@ -19,7 +19,7 @@
 }
 
 .layer-modal-background {
-  @media screen and (max-width: 480px) {
+  @media screen and (max-width: 640px) {
     background-color: rgba(0, 0, 0, 0.25);
     margin-top: -75px;
   }
