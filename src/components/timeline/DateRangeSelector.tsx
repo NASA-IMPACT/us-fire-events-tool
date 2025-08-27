@@ -60,15 +60,15 @@ const DateRangeSelector = () => {
   }, [showCalendar]);
 
   return (
-    <div className="bg-white radius-md mobile-lg:padding-y-2 padding-y-3 padding-x-3 shadow-2 z-top text-no-wrap">
+    <div className="bg-white radius-md tablet:padding-y-2 padding-y-3 padding-x-3 shadow-2 z-top text-no-wrap">
       <div className="grid-row grid-gap-lg flex-no-wrap  ">
         <div
-          className=" grid-col display-flex flex-column mobile-lg:flex-row  "
+          className=" grid-col display-flex flex-column tablet:flex-row  "
           style={{
             gap: '0.75rem',
           }}
         >
-          <div className="display-flex flex-align-center mobile-lg:margin-right-2 ">
+          <div className="display-flex flex-align-center tablet:margin-right-2 ">
             <span className="font-sans-3xs text-base-dark font-weight-bold margin-right-2">
               Find fire events within
             </span>
@@ -141,7 +141,7 @@ const DateRangeSelector = () => {
           </div>
         </div>
         <div className="grid-col-auto">
-          <div className="mobile-lg:display-none ">
+          <div className="tablet:display-none ">
             <Button
               type="button"
               onClick={toggleAdvancedFilters}
@@ -152,14 +152,14 @@ const DateRangeSelector = () => {
               }`}
             >
               <Icon.FilterAlt />
-              <p className="mobile-lg:display-inline display-none">
+              <p className="tablet:display-inline display-none">
                 {showAdvancedFilters
                   ? 'Hide advanced filters'
                   : 'Show advanced filters'}
               </p>
             </Button>
           </div>
-          <div className="mobile-lg:display-block display-none ">
+          <div className="tablet:display-block display-none ">
             <Button
               type="button"
               onClick={toggleAdvancedFilters}
@@ -167,7 +167,7 @@ const DateRangeSelector = () => {
               className="text-underline font-sans-3xs usa-button--unstyled"
             >
               <Icon.FilterAlt />
-              <p className="mobile-lg:display-inline display-none">
+              <p className="tablet:display-inline display-none">
                 {showAdvancedFilters
                   ? 'Hide advanced filters'
                   : 'Show advanced filters'}

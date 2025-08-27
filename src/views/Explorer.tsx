@@ -117,7 +117,7 @@ const Explorer: React.FC = () => {
 
           {showLayerPanel && viewMode !== 'detail' && (
             <div
-              className={`position-absolute mobile-lg:z-top bottom-0 layer-component height-auto ${
+              className={`position-absolute tablet:z-top bottom-0 layer-component height-auto ${
                 showLayerPanel ? 'layer-modal-background' : ''
               }`}
             >
@@ -133,7 +133,7 @@ const Explorer: React.FC = () => {
           {viewMode === 'detail' && selectedEventId ? (
             <>
               <div
-                className="position-absolute bottom-0 z-top margin-bottom-2 display-none mobile-lg:display-block"
+                className="position-absolute bottom-0 z-top margin-bottom-2 display-none tablet:display-block"
                 style={{
                   left: 'calc(50% - 185px)',
                   transform: 'translateX(-50%)',
@@ -147,7 +147,7 @@ const Explorer: React.FC = () => {
             </>
           ) : (
             <div
-              className="position-absolute bottom-0 z-500 mobile-lg:margin-bottom-2 mobile-lg:width-auto width-full margin-bottom-0"
+              className="position-absolute bottom-0 z-500 tablet:margin-bottom-2 tablet:width-auto width-full margin-bottom-0"
               style={{ left: '50%', transform: 'translateX(-50%)' }}
             >
               <DateRangeSelector />
@@ -157,7 +157,7 @@ const Explorer: React.FC = () => {
 
         {viewMode === 'detail' && (
           <div
-            className="overflow-hidden display-flex flex-column position-absolute bg-white mobile-lg:display-inline display-none"
+            className="overflow-hidden display-flex flex-column position-absolute bg-white tablet:display-inline display-none"
             style={{
               position: 'absolute',
               width: '360px',

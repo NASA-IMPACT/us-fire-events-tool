@@ -46,8 +46,8 @@ const Header: React.FC = () => {
   });
 
   return (
-    <header className="header bg-white height-5 padding-y-05 padding-x-105 display-flex flex-row  mobile-lg:flex-justify-between flex-align-center width-full position-fixed top-0 left-0 z-top">
-      <div className="display-flex flex-align-center width-full mobile-lg:flex-justify-start flex-justify">
+    <header className="header bg-white height-5 padding-y-05 padding-x-105 display-flex flex-row  tablet:flex-justify-between flex-align-center width-full position-fixed top-0 left-0 z-top">
+      <div className="display-flex flex-align-center width-full tablet:flex-justify-start flex-justify">
         <a
           href="https://earthdata.nasa.gov/dashboard"
           className="display-flex flex-align-center text-no-underline"
@@ -58,7 +58,7 @@ const Header: React.FC = () => {
             className="height-4 margin-right-2"
             aria-hidden="false"
           />
-          <span className="font-public-sans font-sans-2xs font-weight-bold text-base margin-right-2 display-none mobile-lg:display-block ">
+          <span className="font-public-sans font-sans-2xs font-weight-bold text-base margin-right-2 display-none tablet:display-block ">
             Earthdata VEDA Dashboard
           </span>
         </a>

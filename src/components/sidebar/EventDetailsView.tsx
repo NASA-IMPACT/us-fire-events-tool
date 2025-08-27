@@ -144,7 +144,7 @@ const EventDetails: React.FC<EventDetailsProps> = ({ onBack, isMobile }) => {
         </div>
       )}
 
-      <div className="mobile-lg:padding-x-3 padding-y-2 overflow-auto flex-fill">
+      <div className="tablet:padding-x-3 padding-y-2 overflow-auto flex-fill">
         <div className="display-flex flex-justify flex-align-center margin-bottom-1">
           <h1
             className={`font-body font-weight-700 font-sans-lg margin-0 ${
