@@ -40,8 +40,7 @@ npm install --legacy-peer-deps
 
 # Create a .env file in the project root and set your environment variables
 VITE_MAPBOX_TOKEN=your-mapbox-access-token
-VITE_OPENVEDA_API_ENDPOINT='your-openveda-api-endpoint'
-VITE_FEATURES_API_ENDPOINT='your-features-api-endpoint'
+VITE_FEATURES_API_ENDPOINT='https://openveda.cloud/api/features'
 
 # Start the development server
 npm run dev
