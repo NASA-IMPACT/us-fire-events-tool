@@ -37,7 +37,14 @@ export const createMapSlice: StateCreator<MapSlice> = (set) => ({
     }),
   setViewStateForUrl: (viewState) => set({ viewStateForUrl: viewState }),
   setMapBounds: (bounds) => set({ mapBounds: bounds }),
-  setLayerOpacity: (opacity) => set({ layerOpacity: opacity }),
+  setLayerOpacity: (opacity) => {
+    if (typeof opacity !== 'number' || isNaN(opacity)) {
+      return;
+    }
+
+    const clampedOpacity = Math.max(0, Math.min(100, opacity));
+    set({ layerOpacity: clampedOpacity });
+  },
   updateViewStateForUrl: (updates) =>
     set((state) => ({
       viewStateForUrl: { ...state.viewStateForUrl, ...updates },
