@@ -35,10 +35,12 @@ const EventDetails: React.FC<EventDetailsProps> = ({ onBack, isMobile }) => {
   const [showDownloadMenu, setShowDownloadMenu] = useState(false);
   const downloadRef = useRef<HTMLDivElement>(null);
 
-  const setMapState = useFireExplorerStore((state) => state.setMapState);
+  const setLayerOpacity = useFireExplorerStore.use.setLayerOpacity();
 
-  const setLayerOpacity = (opacity: number) => {
-    setMapState({ layerOpacity: opacity });
+  const handleOpacityChange = (value: number | number[]) => {
+    // ReactSlider can pass arrays for multi-thumb sliders, handle both cases
+    const opacityValue = Array.isArray(value) ? value[0] : value;
+    setLayerOpacity(opacityValue);
   };
 
   useEffect(() => {
@@ -321,7 +323,7 @@ const EventDetails: React.FC<EventDetailsProps> = ({ onBack, isMobile }) => {
                     min={0}
                     max={100}
                     value={layerOpacity}
-                    onChange={setLayerOpacity}
+                    onChange={handleOpacityChange}
                   />
                   <span className="slider-value margin-left-2 text-base-dark border-1px border-base-lighter padding-x-2 padding-y-1">
                     {layerOpacity}%
