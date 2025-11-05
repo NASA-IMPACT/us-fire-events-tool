@@ -118,6 +118,36 @@ const EventDetails: React.FC<EventDetailsProps> = ({ onBack, isMobile }) => {
   const newPixels = eventProperties.n_newpixels || 0;
   const totalPixels = eventProperties.n_pixels || 0;
 
+  const getShareLink = async () => {
+    try {
+      const currentUrl = window.location.href;
+      const response = await fetch(
+        `https://openveda.cloud/service/link/shorten?url=${encodeURIComponent(
+          currentUrl
+        )}`
+      );
+
+      if (!response.ok) {
+        throw new Error('Failed to shorten URL');
+      }
+
+      const data = await response.json();
+      const shortenedUrl = data.url || data.shortUrl || data.shortened_url;
+
+      if (!shortenedUrl) {
+        throw new Error('No shortened URL returned from service');
+      }
+      await navigator.clipboard.writeText(shortenedUrl);
+    } catch (error) {
+      console.error('Error sharing link:', error);
+
+      try {
+        await navigator.clipboard.writeText(window.location.href);
+      } catch (clipboardError) {
+        console.error('Failed to copy to clipboard:', clipboardError);
+      }
+    }
+  };
   return (
     <div className="height-full display-flex flex-column bg-white">
       {!isMobile && (
@@ -156,11 +186,11 @@ const EventDetails: React.FC<EventDetailsProps> = ({ onBack, isMobile }) => {
             {eventName}
           </h1>
 
-          {!isMobile && (
-            <div
-              className="display-flex position-relative margin-left-2"
-              ref={downloadRef}
-            >
+          <div
+            className="display-flex position-relative margin-left-2"
+            ref={downloadRef}
+          >
+            {!isMobile && (
               <button
                 className="usa-button usa-button--unstyled"
                 aria-label="Download fire event data"
@@ -168,19 +198,24 @@ const EventDetails: React.FC<EventDetailsProps> = ({ onBack, isMobile }) => {
               >
                 <Icon.FileDownload size={3} color="#71767A" />
               </button>
+            )}
+            <button
+              className="usa-button usa-button--unstyled"
+              aria-label="Share fire event link"
+              onClick={getShareLink}
+            >
+              <Icon.Share size={3} color="#71767A" />
+            </button>
 
-              {showDownloadMenu && (
-                <DownloadMenu
-                  fireId={fireId}
-                  fireLatestObservationTimestamp={
-                    fireLatestObservationTimestamp
-                  }
-                  featuresApiEndpoint={featuresApiEndpoint}
-                  onClose={() => setShowDownloadMenu(false)}
-                />
-              )}
-            </div>
-          )}
+            {showDownloadMenu && (
+              <DownloadMenu
+                fireId={fireId}
+                fireLatestObservationTimestamp={fireLatestObservationTimestamp}
+                featuresApiEndpoint={featuresApiEndpoint}
+                onClose={() => setShowDownloadMenu(false)}
+              />
+            )}
+          </div>
         </div>
 
         <div className="margin-bottom-2">
