@@ -14,6 +14,7 @@ export interface UIState {
   timeRange: { start: Date; end: Date };
   timeMarker: Date;
   selectedDuration: { label: string; value: number };
+  showLinkCopiedAlert: boolean;
 }
 
 export interface UIActions {
@@ -28,6 +29,7 @@ export interface UIActions {
   setShowNewFirepix: (enabled: boolean) => void;
   setTimeMarker: (date: Date) => void;
   setSelectedDuration: (duration: { label: string; value: number }) => void;
+  setShowLinkCopiedAlert: (show: boolean) => void;
 }
 
 export type UISlice = UIState & UIActions;
@@ -47,6 +49,7 @@ export const createUISlice: StateCreator<UISlice> = (set) => ({
   },
   timeMarker: new Date(),
   selectedDuration: DATE_PRESET_OPTIONS[2],
+  showLinkCopiedAlert: false,
   setViewMode: (mode) => set({ viewMode: mode }),
   setTimeRange: (range) => set({ timeRange: range }),
   togglePlay: () => set((state) => ({ isPlaying: !state.isPlaying })),
@@ -58,4 +61,5 @@ export const createUISlice: StateCreator<UISlice> = (set) => ({
   setShowNewFirepix: (enabled) => set({ showNewFirepix: enabled }),
   setTimeMarker: (date) => set({ timeMarker: date }),
   setSelectedDuration: (duration) => set({ selectedDuration: duration }),
+  setShowLinkCopiedAlert: (show) => set({ showLinkCopiedAlert: show }),
 });

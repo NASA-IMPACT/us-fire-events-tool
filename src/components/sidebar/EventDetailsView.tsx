@@ -138,18 +138,20 @@ const EventDetails: React.FC<EventDetailsProps> = ({ onBack, isMobile }) => {
         throw new Error('No shortened URL returned from service');
       }
       await navigator.clipboard.writeText(shortenedUrl);
+      useFireExplorerStore.getState().setShowLinkCopiedAlert(true);
     } catch (error) {
       console.error('Error sharing link:', error);
 
       try {
         await navigator.clipboard.writeText(window.location.href);
+        useFireExplorerStore.getState().setShowLinkCopiedAlert(true);
       } catch (clipboardError) {
         console.error('Failed to copy to clipboard:', clipboardError);
       }
     }
   };
   return (
-    <div className="height-full display-flex flex-column bg-white">
+    <div className="event-details height-full display-flex flex-column bg-white">
       {!isMobile && (
         <div className="padding-y-2 padding-x-3 border-bottom border-base-lighter display-flex flex-row flex-align-center">
           <button
@@ -176,7 +178,7 @@ const EventDetails: React.FC<EventDetailsProps> = ({ onBack, isMobile }) => {
         </div>
       )}
 
-      <div className="tablet:padding-x-3 padding-y-2 overflow-auto flex-fill">
+      <div className="tablet:padding-x-3 padding-y-2 overflow-auto flex-fill tablet:padding-right-1">
         <div className="display-flex flex-justify flex-align-center margin-bottom-1">
           <h1
             className={`font-body font-weight-700 font-sans-lg margin-0 ${

@@ -27,3 +27,18 @@
 .app-window {
   height: 100dvh;
 }
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.alert-slide-down {
+  animation: slideDown 0.3s ease-in-out;
+}
