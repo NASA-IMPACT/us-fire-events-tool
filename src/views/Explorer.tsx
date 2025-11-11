@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useFireExplorerStore } from '@/state/useFireExplorerStore';
 import { getDefaultTimeRange } from '../utils/dateUtils';
 import MapView from '../components/MapView';
@@ -12,6 +12,7 @@ import MobileDetails from '../components/mobile-details';
 
 import 'mapbox-gl/dist/mapbox-gl.css';
 import './explorer.scss';
+import { Alert } from '@trussworks/react-uswds';
 type LoadingStates = {
   perimeterNrt: boolean;
   fireline: boolean;
@@ -28,6 +29,9 @@ const Explorer: React.FC = () => {
 
   const viewMode = useFireExplorerStore.use.viewMode();
   const setViewMode = useFireExplorerStore.use.setViewMode();
+  const showLinkCopiedAlert = useFireExplorerStore.use.showLinkCopiedAlert();
+  const setShowLinkCopiedAlert =
+    useFireExplorerStore.use.setShowLinkCopiedAlert();
   const toggle3DMap = useFireExplorerStore.use.toggle3DMap();
   const show3DMap = useFireExplorerStore.use.show3DMap();
   const windLayerType = useFireExplorerStore.use.windLayerType();
@@ -59,6 +63,15 @@ const Explorer: React.FC = () => {
     setLoadingStates(newLoadingStates);
   };
 
+  useEffect(() => {
+    if (showLinkCopiedAlert) {
+      const timer = setTimeout(() => {
+        setShowLinkCopiedAlert(false);
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [showLinkCopiedAlert, setShowLinkCopiedAlert]);
+
   const hasLoadingLayers = Object.entries(loadingStates).some(
     ([layerKey, isLoading]) => {
       if (!isLoading) return false;
@@ -82,6 +95,13 @@ const Explorer: React.FC = () => {
 
       <div className="display-flex app-window">
         <div className="position-relative flex-fill">
+          {showLinkCopiedAlert && (
+            <div className="z-top position-absolute width-full tablet:width-desktop padding-x-6 padding-y-2 alert-slide-down">
+              <Alert type={'success'} headingLevel={'h1'}>
+                Link Copied to Clipboard
+              </Alert>
+            </div>
+          )}
           {viewMode !== 'detail' && (
             <div
               className="display-flex position-absolute z-top bg-white border-0 shadow-2 radius-md cursor-pointer"
