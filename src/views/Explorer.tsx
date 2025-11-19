@@ -97,7 +97,7 @@ const Explorer: React.FC = () => {
         <div className="position-relative flex-fill">
           {showLinkCopiedAlert && (
             <div className="z-top position-absolute width-full tablet:width-desktop padding-x-6 padding-y-2 alert-slide-down">
-              <Alert type={'success'} headingLevel={'h1'}>
+              <Alert type="success" headingLevel="h1">
                 Link Copied to Clipboard
               </Alert>
             </div>
