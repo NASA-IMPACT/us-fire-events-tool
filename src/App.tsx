@@ -44,6 +44,10 @@ const AppContent = () => {
           ...parsed,
           viewStateForUrl: parsed.viewState,
         });
+        // Instead of calling fitToMapBounds
+        // within the selectEvent action handler (eventsSlice), which is called within setToolState above
+        // we could call fitbounds here instead. I believe the only other call of selectEvent (in useLayers handleClick)
+        // has a fitBounds call just following the selectEvent call.
       } catch (e) {
         console.error('Invalid fireEventExplorer param', e);
       }

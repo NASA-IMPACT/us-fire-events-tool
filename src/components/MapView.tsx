@@ -73,6 +73,11 @@ const MapView: React.FC<MapViewProps> = ({ onLoadingStatesChange }) => {
 
   useEffect(() => {
     const handleFitBounds = (event) => {
+      console.log({ event });
+
+      // perhaps padding should be handled here rather than on the map event,
+      // where we can get the viewMode and adjust the padding as needed
+
       if (fitBounds && event.detail && event.detail.bounds) {
         fitBounds(event.detail.bounds, {
           padding: event.detail.padding || 40,

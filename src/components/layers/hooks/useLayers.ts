@@ -104,8 +104,8 @@ const useLayerHandlers = (setViewMode: (mode: string) => void) => {
       }
 
       selectEvent(fireId, baseUrl);
-      fitMapToBounds(object);
-      setViewMode('detail');
+      setViewMode('detail'); // After a fitMapToBounds event is bound, the view mode is always set to 'detail'
+      fitMapToBounds(object); // Note, fitMapToBounds is called again (currently it's called in selectEvent as well)
     },
     [getFireId, selectEvent, baseUrl, setViewMode]
   );

@@ -43,9 +43,12 @@ const Explorer: React.FC = () => {
   const selectEvent = useFireExplorerStore.use.selectEvent();
   const setTimeRange = useFireExplorerStore.use.setTimeRange();
 
+  console.log({ viewMode });
+
   const handleBackToList = () => {
     selectEvent(null);
     setViewMode('explorer');
+    // perhaps there should be a fitbounds here instead to better separate concerns
 
     if (show3DMap) {
       toggle3DMap();

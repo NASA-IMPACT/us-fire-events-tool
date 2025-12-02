@@ -103,6 +103,8 @@ export const fitMapToBounds = (feature: any) => {
           [lon - 0.05, lat - 0.05],
           [lon + 0.05, lat + 0.05],
         ],
+        // Why / How is this padding set, could I have access to the viewMode to set this?
+        // Then we could accommodate the right panel and bottom panel
         padding: 40,
       };
 

@@ -71,6 +71,9 @@ export const createEventsSlice: StateCreator<
               new Date(a.properties.t).getTime()
           );
           fitMapToBounds(sorted[0]);
+          // Why is fitbounds called here, it seems it's called again within the handleClick in useLayers.ts > useLayerHandlers
+          // should this action handler be managing fitBounds? Could it be called where selectEvent (or its proxy) is called
+          // to be more specific to the view / state it's called by
         }
       } catch (error) {
         console.error('Error fetching fire perimeters:', error);
