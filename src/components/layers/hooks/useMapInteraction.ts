@@ -119,7 +119,7 @@ export const useMapInteraction = ({
   );
 
   const fitBounds = useCallback(
-    (bounds, { padding = 40 } = {}) => {
+    (bounds) => {
       if (!bounds || bounds.length !== 2) {
         console.warn('Invalid bounds provided to fitBounds', bounds);
         return;
@@ -152,7 +152,7 @@ export const useMapInteraction = ({
 
         const newViewport = new WebMercatorViewport(viewState).fitBounds(
           bounds,
-          { padding }
+          { padding: { top: 40, left: 40, right: 400, bottom: 255 } }
         );
 
         if (
@@ -168,10 +168,10 @@ export const useMapInteraction = ({
 
         setViewState(
           {
-          ...viewState,
-          longitude: newViewport.longitude,
-          latitude: newViewport.latitude,
-          zoom: newViewport.zoom,
+            ...viewState,
+            longitude: newViewport.longitude,
+            latitude: newViewport.latitude,
+            zoom: newViewport.zoom,
           },
           {
             transitionInterpolator: new FlyToInterpolator({ speed: 2 }),
