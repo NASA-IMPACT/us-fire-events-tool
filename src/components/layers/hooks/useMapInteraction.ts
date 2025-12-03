@@ -1,8 +1,11 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { WebMercatorViewport, FlyToInterpolator } from '@deck.gl/core';
-import { INTERACTION_TIMEOUT } from '../config/constants';
+import { INTERACTION_TIMEOUT, MAP_VIEWPORT_PADDING } from '../config/constants';
 
-import _ from 'lodash';
+import {
+  DETAIL_EVENT_PANEL_WIDTH_DESKTOP,
+  DETAIL_TIME_CHART_PANEL_HEIGHT,
+} from '@/constants';
 
 /**
  * Hook for handling map interactions and view state
@@ -152,7 +155,14 @@ export const useMapInteraction = ({
 
         const newViewport = new WebMercatorViewport(viewState).fitBounds(
           bounds,
-          { padding: { top: 40, left: 40, right: 400, bottom: 255 } }
+          {
+            padding: {
+              top: MAP_VIEWPORT_PADDING,
+              left: MAP_VIEWPORT_PADDING,
+              right: MAP_VIEWPORT_PADDING + DETAIL_EVENT_PANEL_WIDTH_DESKTOP,
+              bottom: MAP_VIEWPORT_PADDING + DETAIL_TIME_CHART_PANEL_HEIGHT,
+            },
+          }
         );
 
         if (
