@@ -5,6 +5,7 @@ import { INTERACTION_TIMEOUT, MAP_VIEWPORT_PADDING } from '../config/constants';
 import {
   DETAIL_EVENT_PANEL_WIDTH_DESKTOP,
   DETAIL_TIME_CHART_PANEL_HEIGHT,
+  HEADER_HEIGHT,
 } from '@/constants';
 
 /**
@@ -157,7 +158,7 @@ export const useMapInteraction = ({
           bounds,
           {
             padding: {
-              top: MAP_VIEWPORT_PADDING,
+              top: MAP_VIEWPORT_PADDING + HEADER_HEIGHT,
               left: MAP_VIEWPORT_PADDING,
               right: MAP_VIEWPORT_PADDING + DETAIL_EVENT_PANEL_WIDTH_DESKTOP,
               bottom: MAP_VIEWPORT_PADDING + DETAIL_TIME_CHART_PANEL_HEIGHT,

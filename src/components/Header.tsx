@@ -7,6 +7,7 @@ import {
 } from '@trussworks/react-uswds';
 
 import './header.scss';
+import { HEADER_HEIGHT } from '@/constants';
 
 const Header: React.FC = () => {
   const modalRef = useRef<ModalRef>(null);
@@ -46,8 +47,10 @@ const Header: React.FC = () => {
   });
 
   return (
-    <>
-      <header className="header bg-white height-5 padding-y-05 padding-x-105 display-flex flex-row  tablet:flex-justify-between flex-align-center width-full position-fixed top-0 left-0 z-top">
+    <header
+      className="header bg-white padding-x-105 display-flex flex-row  tablet:flex-justify-between flex-align-center width-full position-fixed top-0 left-0 z-top"
+      style={{ height: HEADER_HEIGHT }}
+    >
       <div className="display-flex flex-align-center width-full tablet:flex-justify-start flex-justify">
         <a
           href="https://earthdata.nasa.gov/dashboard"
@@ -268,7 +271,6 @@ const Header: React.FC = () => {
         </div>
       </Modal>
     </header>
-    </>
   );
 };
 
