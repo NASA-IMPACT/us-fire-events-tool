@@ -4,7 +4,6 @@ import {
   ModalRef,
   ModalToggleButton,
   Tag,
-  SiteAlert
 } from '@trussworks/react-uswds';
 
 import './header.scss';
