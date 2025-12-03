@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
-import { WebMercatorViewport } from '@deck.gl/core';
+import { WebMercatorViewport, FlyToInterpolator } from '@deck.gl/core';
 import { INTERACTION_TIMEOUT } from '../config/constants';
 
 import _ from 'lodash';
@@ -166,12 +166,18 @@ export const useMapInteraction = ({
           return;
         }
 
-        setViewState({
+        setViewState(
+          {
           ...viewState,
           longitude: newViewport.longitude,
           latitude: newViewport.latitude,
           zoom: newViewport.zoom,
-        });
+          },
+          {
+            transitionInterpolator: new FlyToInterpolator({ speed: 2 }),
+            transitionDuration: 'auto',
+          }
+        );
       } catch (error) {
         console.error('Error in fitBounds:', error);
       }
