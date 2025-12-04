@@ -27,3 +27,5 @@ export const INITIAL_VIEW_STATE = {
 };
 
 export const MAP_STYLE = 'mapbox://styles/covid-nasa/cmb6kewie00nq01r2b84y3gsj';
+
+export const MAP_VIEWPORT_PADDING = 40;

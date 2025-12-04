@@ -74,9 +74,7 @@ const MapView: React.FC<MapViewProps> = ({ onLoadingStatesChange }) => {
   useEffect(() => {
     const handleFitBounds = (event) => {
       if (fitBounds && event.detail && event.detail.bounds) {
-        fitBounds(event.detail.bounds, {
-          padding: event.detail.padding || 40,
-        });
+        fitBounds(event.detail.bounds);
       }
     };
 

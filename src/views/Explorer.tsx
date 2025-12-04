@@ -13,6 +13,7 @@ import MobileDetails from '../components/mobile-details';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import './explorer.scss';
 import { Alert } from '@trussworks/react-uswds';
+import { DETAIL_EVENT_PANEL_WIDTH_DESKTOP } from '@/constants';
 type LoadingStates = {
   perimeterNrt: boolean;
   fireline: boolean;
@@ -180,7 +181,7 @@ const Explorer: React.FC = () => {
             className="overflow-hidden display-flex flex-column position-absolute bg-white tablet:display-inline display-none"
             style={{
               position: 'absolute',
-              width: '360px',
+              width: `${DETAIL_EVENT_PANEL_WIDTH_DESKTOP}px`,
               top: '50px',
               right: '10px',
               height: 'calc(100% - 66px)',
