@@ -1,6 +1,6 @@
 # Fire events visualization tool
 
-Web application for visualizing fire data from VIIRS satellite observations. It highlights active fires, fire perimeters and fireline activity to help understand fire progression.
+Web application for visualizing fire data from VIIRS satellite observations. It highlights active fires, fire perimeters and fireline activity to help understand fire progression. This application is currently viewable at https://www.earthdata.nasa.gov/dashboard/tools/fire-event-explorer.
 
 ## Data sources
 
