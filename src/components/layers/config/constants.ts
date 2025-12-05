@@ -8,7 +8,7 @@ export const LAYER_TYPES = {
 };
 
 export const INTERACTION_TIMEOUT = 500;
-export const WIND_DATA_FETCH_DEBOUNCE = 500;
+export const DATA_FETCH_DEBOUNCE = 1000;
 
 export const USA_BBOX = [-165.0, 24.5, -66.0, 69.5];
 
