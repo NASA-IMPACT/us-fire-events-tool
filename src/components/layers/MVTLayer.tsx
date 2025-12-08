@@ -50,7 +50,10 @@ export const createMVTLayer = ({
     filterEnabled: true,
     onTileLoad,
     debounceTime: DATA_FETCH_DEBOUNCE,
-    maxRequests: 3,
+    maxRequests: 6,
+    tileSize:4096,
+    minZoom: 4,
+    maxZoom: 9,
     extensions: [new DataFilterExtension({ filterSize: 1 })],
   });
 };
