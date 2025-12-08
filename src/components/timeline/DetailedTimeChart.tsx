@@ -21,6 +21,7 @@ import {
 
 import 'react-calendar/dist/Calendar.css';
 import './rangeslider.scss';
+import { DETAIL_TIME_CHART_PANEL_HEIGHT } from '@/constants';
 
 const yAxisOptions = ['Fire area (km²)', 'Mean FRP', 'Duration (days)'];
 
@@ -317,7 +318,7 @@ const DetailedTimeChart = () => {
   return (
     <div
       className="detailed-time-chart bg-white radius-md padding-3 shadow-2 z-top"
-      style={{ width: '800px', height: '215px' }}
+      style={{ width: '800px', height: `${DETAIL_TIME_CHART_PANEL_HEIGHT}px` }}
     >
       <div className="display-flex flex-align-center flex-justify margin-bottom-2">
         <YAxisSelector

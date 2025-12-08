@@ -1,8 +1,12 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
-import { WebMercatorViewport } from '@deck.gl/core';
-import { INTERACTION_TIMEOUT } from '../config/constants';
+import { WebMercatorViewport, FlyToInterpolator } from '@deck.gl/core';
+import { INTERACTION_TIMEOUT, MAP_VIEWPORT_PADDING } from '../config/constants';
 
-import _ from 'lodash';
+import {
+  DETAIL_EVENT_PANEL_WIDTH_DESKTOP,
+  DETAIL_TIME_CHART_PANEL_HEIGHT,
+  HEADER_HEIGHT,
+} from '@/constants';
 
 /**
  * Hook for handling map interactions and view state
@@ -119,7 +123,7 @@ export const useMapInteraction = ({
   );
 
   const fitBounds = useCallback(
-    (bounds, { padding = 40 } = {}) => {
+    (bounds) => {
       if (!bounds || bounds.length !== 2) {
         console.warn('Invalid bounds provided to fitBounds', bounds);
         return;
@@ -152,7 +156,14 @@ export const useMapInteraction = ({
 
         const newViewport = new WebMercatorViewport(viewState).fitBounds(
           bounds,
-          { padding }
+          {
+            padding: {
+              top: MAP_VIEWPORT_PADDING + HEADER_HEIGHT,
+              left: MAP_VIEWPORT_PADDING,
+              right: MAP_VIEWPORT_PADDING + DETAIL_EVENT_PANEL_WIDTH_DESKTOP,
+              bottom: MAP_VIEWPORT_PADDING + DETAIL_TIME_CHART_PANEL_HEIGHT,
+            },
+          }
         );
 
         if (
@@ -166,12 +177,18 @@ export const useMapInteraction = ({
           return;
         }
 
-        setViewState({
-          ...viewState,
-          longitude: newViewport.longitude,
-          latitude: newViewport.latitude,
-          zoom: newViewport.zoom,
-        });
+        setViewState(
+          {
+            ...viewState,
+            longitude: newViewport.longitude,
+            latitude: newViewport.latitude,
+            zoom: newViewport.zoom,
+          },
+          {
+            transitionInterpolator: new FlyToInterpolator({ speed: 2 }),
+            transitionDuration: 'auto',
+          }
+        );
       } catch (error) {
         console.error('Error in fitBounds:', error);
       }

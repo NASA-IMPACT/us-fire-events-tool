@@ -103,7 +103,6 @@ export const fitMapToBounds = (feature: any) => {
           [lon - 0.05, lat - 0.05],
           [lon + 0.05, lat + 0.05],
         ],
-        padding: 40,
       };
 
       const fitBoundsEvent = new CustomEvent('fitbounds', {
@@ -127,7 +126,6 @@ export const fitMapToBounds = (feature: any) => {
         [minLon, minLat],
         [maxLon, maxLat],
       ],
-      padding: 40,
     };
 
     const fitBoundsEvent = new CustomEvent('fitbounds', {
