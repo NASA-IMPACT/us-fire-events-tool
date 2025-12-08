@@ -1,6 +1,10 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
-import { WebMercatorViewport, FlyToInterpolator } from '@deck.gl/core';
-import { INTERACTION_TIMEOUT, MAP_VIEWPORT_PADDING } from '../config/constants';
+import { WebMercatorViewport } from '@deck.gl/core';
+import {
+  FLY_TO_TRANSITION,
+  INTERACTION_TIMEOUT,
+  MAP_VIEWPORT_PADDING,
+} from '../config/constants';
 
 import {
   DETAIL_EVENT_PANEL_WIDTH_DESKTOP,
@@ -184,10 +188,7 @@ export const useMapInteraction = ({
             latitude: newViewport.latitude,
             zoom: newViewport.zoom,
           },
-          {
-            transitionInterpolator: new FlyToInterpolator({ speed: 2 }),
-            transitionDuration: 'auto',
-          }
+          FLY_TO_TRANSITION
         );
       } catch (error) {
         console.error('Error in fitBounds:', error);
