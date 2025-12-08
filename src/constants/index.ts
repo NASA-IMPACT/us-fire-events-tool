@@ -14,3 +14,9 @@ export const DATE_PRESET_OPTIONS = [
   { label: '6 months', value: SIX_MONTHS },
   { label: '12 months', value: YEAR },
 ];
+
+export const HEADER_HEIGHT = 40;
+
+export const DETAIL_EVENT_PANEL_WIDTH_DESKTOP = 360;
+
+export const DETAIL_TIME_CHART_PANEL_HEIGHT = 215;
