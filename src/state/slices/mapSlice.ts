@@ -31,7 +31,7 @@ export const createMapSlice: StateCreator<MapSlice> = (set) => ({
   layerOpacity: 100,
   setViewState: (viewState, transitionOptions) =>
     set({
-      viewState: { ...viewState, ...transitionOptions },
+      viewState: { ...INITIAL_VIEW_STATE, ...viewState, ...transitionOptions },
     }),
   setViewStateForUrl: (viewState) => set({ viewStateForUrl: viewState }),
   setMapBounds: (bounds) => set({ mapBounds: bounds }),
