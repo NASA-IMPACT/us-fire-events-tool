@@ -1,3 +1,5 @@
+import { FlyToInterpolator, TRANSITION_EVENTS } from '@deck.gl/core';
+
 export const LAYER_TYPES = {
   MVT: 'mvt',
   GEOJSON_2D: 'geojson-2d',
@@ -24,6 +26,12 @@ export const INITIAL_VIEW_STATE = {
     left: undefined,
     right: undefined,
   },
+};
+
+export const FLY_TO_TRANSITION = {
+  transitionInterpolator: new FlyToInterpolator({ speed: 2 }),
+  transitionDuration: 'auto',
+  transitionInterruption: TRANSITION_EVENTS.IGNORE,
 };
 
 export const MAP_STYLE = 'mapbox://styles/covid-nasa/cmb6kewie00nq01r2b84y3gsj';
