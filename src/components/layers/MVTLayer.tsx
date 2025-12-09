@@ -1,6 +1,6 @@
 import { MVTLayer } from '@deck.gl/geo-layers';
 import { DataFilterExtension } from '@deck.gl/extensions';
-import { USA_BBOX } from './config/constants';
+import { DATA_FETCH_DEBOUNCE, USA_BBOX } from './config/constants';
 
 /**
  * Creates an MVT layer for fire-related visualization (perimeters, firelines, firepix).
@@ -49,7 +49,11 @@ export const createMVTLayer = ({
     filterRange: [1, 1],
     filterEnabled: true,
     onTileLoad,
-    maxRequests: 3,
+    debounceTime: DATA_FETCH_DEBOUNCE,
+    maxRequests: 6,
+    tileSize:4096,
+    minZoom: 4,
+    maxZoom: 9,
     extensions: [new DataFilterExtension({ filterSize: 1 })],
   });
 };

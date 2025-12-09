@@ -14,6 +14,10 @@ import 'mapbox-gl/dist/mapbox-gl.css';
 import './explorer.scss';
 import { Alert } from '@trussworks/react-uswds';
 import { DETAIL_EVENT_PANEL_WIDTH_DESKTOP } from '@/constants';
+import {
+  FLY_TO_TRANSITION,
+  INITIAL_VIEW_STATE,
+} from '@/components/layers/config/constants';
 type LoadingStates = {
   perimeterNrt: boolean;
   fireline: boolean;
@@ -30,6 +34,7 @@ const Explorer: React.FC = () => {
 
   const viewMode = useFireExplorerStore.use.viewMode();
   const setViewMode = useFireExplorerStore.use.setViewMode();
+  const setViewState = useFireExplorerStore.use.setViewState();
   const showLinkCopiedAlert = useFireExplorerStore.use.showLinkCopiedAlert();
   const setShowLinkCopiedAlert =
     useFireExplorerStore.use.setShowLinkCopiedAlert();
@@ -46,6 +51,7 @@ const Explorer: React.FC = () => {
 
   const handleBackToList = () => {
     selectEvent(null);
+    setViewState(INITIAL_VIEW_STATE, FLY_TO_TRANSITION);
     setViewMode('explorer');
 
     if (show3DMap) {
