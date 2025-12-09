@@ -25,7 +25,7 @@ const useMVTUrls = () => {
 
   return useMemo<Record<MVTLayerId, string>>(
     () => ({
-      perimeterNrt: `${baseUrl}/collections/pg_temp.eis_fire_lf_perimeter_nrt_latest/tiles/WebMercatorQuad/{z}/{x}/{y}?datetime=${datetimeParam}&bbox=-165.0,24.5,-66.0,69.5&properties=duration,farea,meanfrp,fperim,n_pixels,n_newpixels,pixden,fireid,primarykey,t,region`,
+      perimeterNrt: `${baseUrl}/collections/public.eis_fire_lf_perimeter_nrt/tiles/WebMercatorQuad/{z}/{x}/{y}?datetime=${datetimeParam}&bbox=-165.0,24.5,-66.0,69.5&properties=duration,farea,meanfrp,fperim,n_pixels,n_newpixels,pixden,fireid,primarykey,t,region`,
       fireline: `${baseUrl}/collections/public.eis_fire_lf_fireline_nrt/tiles/WebMercatorQuad/{z}/{x}/{y}?datetime=${datetimeParam}&bbox=-165.0,24.5,-66.0,69.5&properties=duration,farea,meanfrp,fperim,n_pixels,n_newpixels,pixden,fireid,primarykey,t,region`,
       newfirepix: `${baseUrl}/collections/public.eis_fire_lf_newfirepix_nrt/tiles/WebMercatorQuad/{z}/{x}/{y}?datetime=${datetimeParam}&bbox=-165.0,24.5,-66.0,69.5&properties=duration,farea,meanfrp,fperim,n_pixels,n_newpixels,pixden,fireid,primarykey,t,region`,
     }),
@@ -261,12 +261,53 @@ export const useLayers = ({
   const [layers, setLayers] = useState([]);
   const layerRefs = useRef<Record<string, any>>({});
 
+  // Mutable registry storing the latest timestamp seen for every unique fire ID.
+  // Format: { [fireId: string]: "YYYY-MM-DDTHH:mm:ss" }
+  // Performance note: storing ~50k - 100k short string entries in a JS object should consume negligible memory
+  // so this approach is okayish for the current dataset scale of the fire API. However, this is an interim solution. Ideally,
+  // this logic will be replaced by a more robust client-side DB querying (eg. duckdb-wasm with parquet) without manually iterating MVT features.
+  // See: https://github.com/NASA-IMPACT/us-fire-events-tool/issues/24
+  const latestFireTimesRef = useRef({});
+  const [perimeterFilterVersion, setPerimeterFilterVersion] = useState(0);
+  const updateTimeoutRef = useRef(null);
+
   const MVT_URLS = useMVTUrls();
   const featurePassesFilters = useFeatureFilters();
   const { handleClick } = useLayerHandlers(setViewMode);
   const { loadingStates, createTileLoadHandler, createTileErrorHandler } =
     useLoadingStates(layerRefs, isInteracting);
   const updateTriggers = useUpdateTriggers();
+
+  // We're using this handler to scan the features of incoming vector tiles (from the MVTLayer) to progressively
+  // build a client-side registry of the most recent timestamp for each unique fire ID. We're comparing the timestamps
+  // of loaded features against a local reference, then detect when a newer version of a fire perimeter has been loaded.
+  // If a newer timestamp is found, it updates the reference and triggers a debounced filter update which forces the
+  // layer to re-evaluate the visibility and hide older historical polygons in favor of the most recent ones.
+  const handlePerimeterTileLoad = useCallback((tile) => {
+    createTileLoadHandler()();
+
+    const features = tile.content || [];
+    let hasNewData = false;
+
+    for (let i = 0; i < features.length; i++) {
+      const p = features[i].properties;
+      if (!p || !p.fireid || !p.t) continue;
+
+      const currentLatest = latestFireTimesRef.current[p.fireid];
+
+      if (!currentLatest || p.t > currentLatest) {
+        latestFireTimesRef.current[p.fireid] = p.t;
+        hasNewData = true;
+      }
+    }
+
+    if (hasNewData) {
+      if (updateTimeoutRef.current) clearTimeout(updateTimeoutRef.current);
+      updateTimeoutRef.current = setTimeout(() => {
+        setPerimeterFilterVersion(v => v + 1);
+      }, 100);
+    }
+  }, [createTileLoadHandler]);
 
   const windLayerType = useFireExplorerStore.use.windLayerType();
   const show3DMap = useFireExplorerStore.use.show3DMap();
@@ -311,10 +352,17 @@ export const useLayers = ({
           data: MVT_URLS.perimeterNrt,
           filterFunction: featurePassesFilters,
           opacity: layerOpacity,
-          onTileLoad: createTileLoadHandler(),
+          onTileLoad: handlePerimeterTileLoad,
+          latestTimestampMap: latestFireTimesRef.current,
           onTileError: createTileErrorHandler('perimeterNrt'),
           onClick: handleClick,
-          updateTriggers,
+          updateTriggers: {
+            ...updateTriggers,
+            getFilterValue: [
+              ...(updateTriggers.getFilterValue || []),
+              perimeterFilterVersion
+            ]
+          },
         });
       }
 
@@ -410,6 +458,7 @@ export const useLayers = ({
     handleClick,
     updateTriggers,
     timeRange,
+    perimeterFilterVersion,
     // eslint-disable-next-line react-hooks/exhaustive-deps
     ...(show3DMap ? [viewState] : []),
   ]);
