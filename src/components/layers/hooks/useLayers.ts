@@ -283,31 +283,34 @@ export const useLayers = ({
   // of loaded features against a local reference, then detect when a newer version of a fire perimeter has been loaded.
   // If a newer timestamp is found, it updates the reference and triggers a debounced filter update which forces the
   // layer to re-evaluate the visibility and hide older historical polygons in favor of the most recent ones.
-  const handlePerimeterTileLoad = useCallback((tile) => {
-    createTileLoadHandler()();
+  const handlePerimeterTileLoad = useCallback(
+    (tile) => {
+      createTileLoadHandler()();
 
-    const features = tile.content || [];
-    let hasNewData = false;
+      const features = tile.content || [];
+      let hasNewData = false;
 
-    for (let i = 0; i < features.length; i++) {
-      const p = features[i].properties;
-      if (!p || !p.fireid || !p.t) continue;
+      for (let i = 0; i < features.length; i++) {
+        const p = features[i].properties;
+        if (!p || !p.fireid || !p.t) continue;
 
-      const currentLatest = latestFireTimesRef.current[p.fireid];
+        const currentLatest = latestFireTimesRef.current[p.fireid];
 
-      if (!currentLatest || p.t > currentLatest) {
-        latestFireTimesRef.current[p.fireid] = p.t;
-        hasNewData = true;
+        if (!currentLatest || p.t > currentLatest) {
+          latestFireTimesRef.current[p.fireid] = p.t;
+          hasNewData = true;
+        }
       }
-    }
 
-    if (hasNewData) {
-      if (updateTimeoutRef.current) clearTimeout(updateTimeoutRef.current);
-      updateTimeoutRef.current = setTimeout(() => {
-        setPerimeterFilterVersion(v => v + 1);
-      }, 100);
-    }
-  }, [createTileLoadHandler]);
+      if (hasNewData) {
+        if (updateTimeoutRef.current) clearTimeout(updateTimeoutRef.current);
+        updateTimeoutRef.current = setTimeout(() => {
+          setPerimeterFilterVersion((v) => v + 1);
+        }, 100);
+      }
+    },
+    [createTileLoadHandler]
+  );
 
   const windLayerType = useFireExplorerStore.use.windLayerType();
   const show3DMap = useFireExplorerStore.use.show3DMap();
@@ -360,8 +363,8 @@ export const useLayers = ({
             ...updateTriggers,
             getFilterValue: [
               ...(updateTriggers.getFilterValue || []),
-              perimeterFilterVersion
-            ]
+              perimeterFilterVersion,
+            ],
           },
         });
       }
