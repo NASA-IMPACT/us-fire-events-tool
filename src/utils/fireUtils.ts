@@ -1,3 +1,5 @@
+import { handleError } from "./errorHandler";
+
 export const fetchAlternativeFirePerimeters = async (
   fireId: string,
   baseUrl: string
@@ -20,7 +22,8 @@ export const fetchAlternativeFirePerimeters = async (
 
 export const fetchFirePerimeters = async (fireId: string, baseUrl: string) => {
   const url = `${baseUrl}/collections/public.eis_fire_lf_perimeter_nrt/items?filter=fireid%3D${fireId}&limit=500&f=geojson`;
-
+  // NOTE-SANDRA: should naturally throw error here instead of catching, it is diluting the actual error happening
+  // NOTE-SANDRA: Limit 500 is too much, it is working with limit 50
   try {
     const response = await fetch(url);
     if (!response.ok) {
@@ -31,6 +34,7 @@ export const fetchFirePerimeters = async (fireId: string, baseUrl: string) => {
     return await response.json();
   } catch (error) {
     console.error('Error fetching fire perimeters:', error);
+    handleError({message: error?.toString() || 'Unknown error', description: 'Error fetching fire perimeters'});
     return null;
   }
 };
