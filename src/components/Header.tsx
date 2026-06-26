@@ -156,9 +156,24 @@ const Header: React.FC = () => {
               create video outputs in GIF or WebM formats.
             </p>
 
-            <p className="wildfire-explorer__modal-description font-sans-sm line-height-body-5 text-ink margin-bottom-1">
+            <p className="wildfire-explorer__modal-description font-sans-sm line-height-body-5 text-ink">
               These fire tracking data are from the Fire Event Data Suite (FEDS)
-              algorithm. Find out more:
+              algorithm.
+            </p>
+
+            <p className="wildfire-explorer__modal-description font-sans-sm line-height-body-5 text-ink">
+              DISCLAIMER: The FEDS data product 
+              is intended to provide situational awareness for ongoing fire 
+              events in the US and Canada, not as a precise estimate of the fire 
+              perimeter for emergency response. This research product estimates 
+              individual fire event perimeters and properties every 12 hours; 
+              the spatial and temporal resolution of each modeled fire perimeter 
+              reflects the characteristics and availability of VIIRS 375 m active 
+              fire detections from FIRMS.
+            </p>
+
+            <p className="wildfire-explorer__modal-description font-sans-sm line-height-body-5 text-ink margin-bottom-1">
+              Find out more:
             </p>
 
             <ul className="wildfire-explorer__modal-list usa-list font-sans-sm margin-top-0 margin-bottom-4">
