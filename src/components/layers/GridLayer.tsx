@@ -34,7 +34,8 @@ export const createGridLayer = async ({ timeMarker, opacity = 92 }) => {
       .toString()
       .padStart(2, '0');
 
-    const imageUrl = `https://openveda.cloud/api/raster/cog/preview.png?rescale=-127,128&url=vrt:///vsicurl/https://noaa-hrrr-bdp-pds.s3.amazonaws.com/hrrr.${runDateStr}/conus/hrrr.t${runHourStr}z.wrfsfcf${forecastHour}.grib2?bands=10,11&format=png`;
+    const vrtUrl = `vrt://https://noaa-hrrr-bdp-pds.s3.amazonaws.com/hrrr.${runDateStr}/conus/hrrr.t${runHourStr}z.wrfsfcf${forecastHour}.grib2?bands=10,11`;
+    const imageUrl = `https://openveda.cloud/api/raster/cog/preview.png?rescale=-127,128&url=${encodeURIComponent(vrtUrl)}&format=png`;
 
     let image;
 
